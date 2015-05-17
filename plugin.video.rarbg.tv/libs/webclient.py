@@ -39,8 +39,6 @@ class Cache(object):
         """Decorator call"""
         current_time = datetime.now()
         try:
-            if post_data is not None:
-                raise KeyError
             compr_page, timestamp = self.cache[url]
             page = zlib.decompress(compr_page)
             if current_time - timestamp > timedelta(minutes=15):
