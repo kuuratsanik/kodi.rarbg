@@ -5,41 +5,59 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
 import os
-import cPickle as pickle
+from datetime import datetime, timedelta
+from cPickle import load, dump, PickleError
 import xbmcaddon
 import xbmc
-import xbmcvfs
+
+
+class _Storage(object):
+    """Persistent storage"""
+    def __init__(self, path):
+        self._storage = {}
+        filename = os.path.join(path, 'storage.pcl')
+        if os.path.exists(filename):
+            mode = 'r+b'
+        else:
+            mode = 'w+b'
+        self._file = open(filename, mode)
+        try:
+            self._storage = load(self._file)
+        except (PickleError, EOFError):
+            pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.flush()
+
+    def __getitem__(self, key):
+        return self._storage[key]
+
+    def __setitem__(self, key, value):
+        self._storage[key] = value
+
+    def flush(self):
+        """
+        Flush storage to disk
+        :return:
+        """
+        self._file.seek(0)
+        dump(self._file, self._storage)
+        self._file.truncate()
+        self._file.close()
 
 
 class Addon(xbmcaddon.Addon):
     """
     Helper class to access addon parameters
     """
-    def __init__(self):
-        """Class constructor"""
-        self._storage = {}
-        self._storage_file = None
-        self._storage_filename = os.path.join(xbmc.translatePath('special://profile/addon_data').decode('utf-8'),
-                                              self.id,
-                                              'storage.pcl')
-        if not xbmcvfs.exists(self._storage_filename):
-            with open(self._storage_filename, 'wb') as file_:
-                pickle.dump(self._storage, file_)
-
     def log(self, message):
         """
         Logger method
         """
         xbmc.log('{0}: {1}'.format(self.id, message))
-
-    def get_storage(self, storage):
-        """
-        Get named storage object
-        :param storage:
-        :return: dict
-        """
-        with open(self._storage_filename, 'rb') as file_:
-            pass
 
     @property
     def id(self):
@@ -56,3 +74,39 @@ class Addon(xbmcaddon.Addon):
         :return:
         """
         return self.getAddonInfo('path').decode('utf-8')
+
+    def get_storage(self):
+        """
+        Get a storage object
+        :return:
+        """
+        return _Storage(xbmc.translatePath('special://profile/addon_data/{0}'.format(self.id)).decode('utf-8'))
+
+
+def cached(duration=10):
+    """
+    Cache decorator
+    duration - cache time in min
+    :param duration: int
+    :return:
+    """
+    def outer_wrapper(func):
+        def inner_wrapper(*args, **kwargs):
+            addon = Addon()
+            with addon.get_storage() as storage:
+                try:
+                    storage['cache']
+                except KeyError:
+                    storage['cache'] = {}
+                current_time = datetime.now()
+                key = str(args) + str(kwargs)
+                try:
+                    page, timestamp = storage['cache'][key]
+                    if current_time - timestamp > timedelta(minutes=duration):
+                        raise KeyError
+                except KeyError:
+                    page = func(*args, **kwargs)
+                    storage['cache'][key] = (page, current_time)
+            return page
+        return inner_wrapper
+    return outer_wrapper
