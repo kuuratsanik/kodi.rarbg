@@ -55,7 +55,7 @@ def episode_list_view(plugin_url, plugin_handle, page):
 def episode_view(plugin_handle, url):
     """
     Episode page
-    :param plugin_url:
+
     :param plugin_handle:
     :param url:
     :return:

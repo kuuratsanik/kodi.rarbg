@@ -6,7 +6,7 @@
 
 import re
 from bs4 import BeautifulSoup
-import webclient
+from webclient import load_page
 from addon import cached
 
 
@@ -14,22 +14,12 @@ _LINKS = {'episodes': 'https://www.rarbg.to/torrents.php?category=1%3B18%3B41&pa
 
 
 @cached(15)
-def _load_page(url, post_data=None):
-    """
-    Load web-page
-    :param url: str
-    :param post_data: str
-    :return:
-    """
-    return webclient.load_page(url, post_data)
-
-
 def load_episodes(page):
     """
     Load recent episodes page and return a parsed list of episodes
     :return:
     """
-    html = _load_page(_LINKS['episodes'].format(page))
+    html = load_page(_LINKS['episodes'].format(page))
     return _parse_episodes(html)
 
 
@@ -76,19 +66,20 @@ def _parse_episodes(html):
     return episodes
 
 
+@cached(60)
 def load_episode_page(url):
     """
     Load episode page and return parsed data
     :param url:
     :return:
     """
-    return _parse_episode_page(_load_page(url))
+    return _parse_episode_page(load_page(url))
 
 
 def _parse_episode_page(html):
     """
     Parse episode page
-    :param url:
+    :param html:
     :return:
     """
     soup = BeautifulSoup(html)
