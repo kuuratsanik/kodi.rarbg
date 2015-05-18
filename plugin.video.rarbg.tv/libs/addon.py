@@ -10,10 +10,28 @@ from cPickle import load, dump, PickleError
 import xbmcaddon
 import xbmc
 
+# Addon configuration folder
+_configdir = xbmc.translatePath(
+    'special://profile/addon_data/{0}'.format(xbmcaddon.Addon().getAddonInfo('id'))).decode('utf-8')
+if not os.path.exists(_configdir):
+    os.mkdir(_configdir)
 
-class _Storage(object):
-    """Persistent storage"""
-    def __init__(self, path):
+
+class Storage(object):
+    """
+    Persistent storage for arbitrary data
+
+    It is designed as a context manager and better be used
+    with 'with' statement.
+    Usage:
+
+    with Storage() as storage:
+        storage[key1] = value1
+        value2 = storage[key2]
+    ...
+
+    """
+    def __init__(self, path=_configdir):
         self._storage = {}
         filename = os.path.join(path, 'storage.pcl')
         if os.path.exists(filename):
@@ -44,7 +62,7 @@ class _Storage(object):
         :return:
         """
         self._file.seek(0)
-        dump(self._file, self._storage)
+        dump(self._storage, self._file)
         self._file.truncate()
         self._file.close()
 
@@ -75,38 +93,41 @@ class Addon(xbmcaddon.Addon):
         """
         return self.getAddonInfo('path').decode('utf-8')
 
-    def get_storage(self):
-        """
-        Get a storage object
-        :return:
-        """
-        return _Storage(xbmc.translatePath('special://profile/addon_data/{0}'.format(self.id)).decode('utf-8'))
-
 
 def cached(duration=10):
     """
     Cache decorator
+
+    Used to cache function return data
+
     duration - cache time in min
+    Usage:
+
+    @cached(30)
+    def my_func(*args, **kwargs):
+        ...
+        return value
+
     :param duration: int
     :return:
     """
     def outer_wrapper(func):
         def inner_wrapper(*args, **kwargs):
-            addon = Addon()
-            with addon.get_storage() as storage:
+            with Storage() as storage:
+                # Initialize cache
                 try:
                     storage['cache']
                 except KeyError:
                     storage['cache'] = {}
                 current_time = datetime.now()
-                key = str(args) + str(kwargs)
+                key = func.__name__ + str(args) + str(kwargs)
                 try:
-                    page, timestamp = storage['cache'][key]
+                    data, timestamp = storage['cache'][key]
                     if current_time - timestamp > timedelta(minutes=duration):
                         raise KeyError
                 except KeyError:
-                    page = func(*args, **kwargs)
-                    storage['cache'][key] = (page, current_time)
-            return page
+                    data = func(*args, **kwargs)
+                    storage['cache'][key] = (data, current_time)
+            return data
         return inner_wrapper
     return outer_wrapper

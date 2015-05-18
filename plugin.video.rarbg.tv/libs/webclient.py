@@ -7,7 +7,6 @@
 import urllib2
 import socket
 import zlib
-from datetime import datetime, timedelta
 from urlparse import urlsplit
 
 
