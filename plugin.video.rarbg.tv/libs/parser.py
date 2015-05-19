@@ -15,19 +15,22 @@ from addon import Addon, cached
 __addon__ = Addon()
 
 _LINKS = {'episodes': 'https://www.rarbg.to/torrents.php?{0}&page={1}',
-          'imdb_view': 'https://www.rarbg.to/torrents.php?imdb={0}',
-          'tv_view': 'https://www.rarbg.to/tv/{0}/'}
+          'imdb_view': 'https://www.rarbg.to/torrents.php?imdb={0}&page={1}',  # Recent episodes for a TV show
+          'tv_view': 'https://www.rarbg.to/tv/{0}/'}  # All seasons of a TV show
 
 
 @cached(15)
-def load_episodes(page, search_query):
+def load_episodes(page, search_query, imdb):
     """
     Load recent episodes page and return a parsed list of episodes
     :return: dict
     """
-    url = _LINKS['episodes'].format(__addon__.quality, page)
-    if search_query:
-        url += '&search={0}'.format(search_query)
+    if imdb:
+        url = _LINKS['imdb_view'].format(imdb, page)
+    else:
+        url = _LINKS['episodes'].format(__addon__.quality, page)
+        if search_query:
+            url += '&search={0}'.format(search_query)
     return _parse_episodes(load_page(url))
 
 
@@ -116,10 +119,13 @@ def _parse_episode_page(html):
     actors = actors_tag.next.text.replace(' ,', ',')
     plot_tag = soup.find(text='Plot:')
     plot = plot_tag.next.text.replace('|', '')
+    imdb_tag = soup.find('a', text=re.compile(r'imdb.com'))
+    imdb = re.search(r'/(tt\d+?)/', imdb_tag.text).group(1)
     episode_data = {'filename': filename,
                     'torrent': torrent,
                     'magnet': magnet,
                     'poster': poster,
+                    'imdb': imdb,
                     'info': {'title': title,
                              'rating': float(rating),
                              'genre': genres,

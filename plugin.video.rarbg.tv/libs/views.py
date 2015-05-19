@@ -11,9 +11,10 @@ import xbmcplugin
 import xbmcgui
 #
 import parser
-from addon import Addon
+from addon import Addon, Storage
 
-_icons = Addon().icons_dir
+__addon__ = Addon()
+_icons = __addon__.icons_dir
 
 
 def root_view(plugin_url, plugin_handle):
@@ -27,10 +28,13 @@ def root_view(plugin_url, plugin_handle):
     search_item = xbmcgui.ListItem(label='[Search episodes]', thumbnailImage=os.path.join(_icons, 'search.png'))
     search_url = '{0}?action=search_episodes&page=1'.format(plugin_url)
     xbmcplugin.addDirectoryItem(plugin_handle, search_url, search_item, isFolder=True)
+    myshows_item = xbmcgui.ListItem(label='[My Shows]', thumbnailImage=os.path.join(_icons, 'bookmarks.png'))
+    myshows_url = '{0}?action=my_shows'.format(plugin_url)
+    xbmcplugin.addDirectoryItem(plugin_handle, myshows_url, myshows_item, isFolder=True)
     xbmcplugin.endOfDirectory(plugin_handle, True)
 
 
-def episode_list_view(plugin_url, plugin_handle, page, search_query=''):
+def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb=''):
     """
     The list of episode receases by most recent first
     :param plugin_url:
@@ -40,7 +44,7 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query=''):
     # Add 'Home' item
     home_item = xbmcgui.ListItem(label='<< Home', thumbnailImage=os.path.join(_icons, 'home.png'))
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
-    episodes = parser.load_episodes(page, search_query)  # Get episodes
+    episodes = parser.load_episodes(page, search_query, imdb)  # Get episodes
     if episodes['episodes']:
         if episodes['prev']:  # Previous page if any
             prev_item = xbmcgui.ListItem(label='{0} < Prev'.format(episodes['prev']),
@@ -48,6 +52,8 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query=''):
             if search_query:
                 prev_url = '{0}?action=search_episode&query={1}&page={2}'.format(plugin_url, search_query,
                                                                                  episodes['prev'])
+            elif imdb:
+                prev_url = '{0}?action=episode_list&imdb={1}&page={2}'.format(plugin_url, imdb, episodes['prev'])
             else:
                 prev_url = '{0}?action=episode_list&page={1}'.format(plugin_url, episodes['prev'])
             xbmcplugin.addDirectoryItem(plugin_handle, prev_url, prev_item, isFolder=True)
@@ -63,6 +69,8 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query=''):
             if search_query:
                 next_url = '{0}?action=search_episode&query={1}&page={2}'.format(plugin_url, search_query,
                                                                                  episodes['next'])
+            elif imdb:
+                next_url = '{0}?action=episode_list&imdb={1}&page={2}'.format(plugin_url, imdb, episodes['next'])
             else:
                 next_url = '{0}?action=episode_list&page={1}'.format(plugin_url, episodes['next'])
             xbmcplugin.addDirectoryItem(plugin_handle, next_url, prev_item, isFolder=True)
@@ -82,6 +90,33 @@ def episode_view(plugin_handle, url):
     episode_data = parser.load_episode_page(url)
     ep_item = xbmcgui.ListItem(label=episode_data['filename'], thumbnailImage=episode_data['poster'])
     ep_item.setInfo('video', episode_data['info'])
+    ep_item.addContextMenuItems([
+        ('Add to "My Shows"',
+         'RunScript({0}/libs/commands.py,myshows,{1},{2},{3},{4})'.format(
+             __addon__.addon_dir,
+             __addon__.config_dir,
+             episode_data['info']['title'],
+             episode_data['imdb'],
+             episode_data['poster']))])
     url = 'plugin://plugin.video.yatp/?action=play&torrent={0}'.format(urlsafe_b64encode(episode_data['torrent']))
     xbmcplugin.addDirectoryItem(plugin_handle, url, ep_item, isFolder=False)
     xbmcplugin.endOfDirectory(plugin_handle, True)
+
+
+def my_shows_view(plugin_url, plugin_handle):
+    """
+    The list of favorite TV shows
+    :return:
+    """
+    with Storage() as storage:
+        try:
+            myshows = storage['myshows']
+        except KeyError:
+            success = False
+        else:
+            success = True
+            for show in myshows:
+                list_item = xbmcgui.ListItem(label=show[0], thumbnailImage=show[2])
+                url = '{0}?action=episode_list&page=1&imdb={1}'.format(plugin_url, show[1])
+                xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, isFolder=True)
+    xbmcplugin.endOfDirectory(plugin_handle, success)

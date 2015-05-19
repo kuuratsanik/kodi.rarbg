@@ -22,11 +22,11 @@ class Addon(xbmcaddon.Addon):
         if not xbmcvfs.exists(self._configdir):
             xbmcvfs.mkdir(self._configdir)
 
-    def log(self, message):
+    def log(self, message, level=xbmc.LOGNOTICE):
         """
         Logger method
         """
-        xbmc.log('{0}: {1}'.format(self.id, message))
+        xbmc.log('{0}: {1}'.format(self.id, message), level)
 
     @property
     def id(self):

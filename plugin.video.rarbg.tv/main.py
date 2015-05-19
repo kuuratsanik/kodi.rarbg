@@ -14,7 +14,10 @@ import xbmc
 import xbmcgui
 # Custom modules
 from libs import views
+from libs.addon import Addon
 
+
+__addon__ = Addon()
 __url__ = sys.argv[0]
 __handle__ = int(sys.argv[1])
 xbmcplugin.setContent(__handle__, 'tvshows')
@@ -28,12 +31,12 @@ def plugin_root():
     views.root_view(__url__, __handle__)
 
 
-def episode_list(page):
+def episode_list(page, imdb):
     """
     The list of episode releases by most recent first
     :return:
     """
-    views.episode_list_view(__url__, __handle__, page)
+    views.episode_list_view(__url__, __handle__, page, imdb=imdb)
 
 
 def episode_page(encoded_url):
@@ -56,12 +59,20 @@ def search_episodes(page, query):
         keyboard.doModal()
         query_text = keyboard.getText()
         if keyboard.isConfirmed() and query_text:
-            views.episode_list_view(__url__, __handle__, '1', quote_plus(query_text))
+            views.episode_list_view(__url__, __handle__, '1', search_query=quote_plus(query_text))
         else:
             xbmcgui.Dialog().notification('Note!', 'Search cancelled', 'info', 3000)
             xbmcplugin.endOfDirectory(__handle__, False)
     else:
-        views.episode_list_view(__url__, __handle__, page, query)
+        views.episode_list_view(__url__, __handle__, page, search_query=query)
+
+
+def my_shows():
+    """
+    The list of favorite shows
+    :return:
+    """
+    views.my_shows_view(__url__, __handle__)
 
 
 def router(paramstring):
@@ -73,18 +84,27 @@ def router(paramstring):
     params = dict(parse_qsl(paramstring[1:]))
     if params:
         if params['action'] == 'episode_list':
-            episode_list(params['page'])
+            try:
+                imdb = params['imdb']
+            except KeyError:
+                imdb = ''
+            episode_list(params['page'], imdb)
         elif params['action'] == 'episode':
             episode_page(params['url'])
         elif params['action'] == 'search_episodes':
             try:
                 query = params['query']
             except KeyError:
-                query= ''
+                query = ''
             search_episodes(params['page'], query)
+        elif params['action'] == 'my_shows':
+            my_shows()
+        else:
+            raise RuntimeError('Invalid action: {0}'.format(params['action']))
     else:
         plugin_root()
 
 
 if __name__ == '__main__':
+    __addon__.log(str(sys.argv))
     router(sys.argv[2])

@@ -8,6 +8,12 @@ import urllib2
 import socket
 import zlib
 from urlparse import urlsplit
+#
+from xbmc import LOGDEBUG
+#
+from addon import Addon
+
+__addon__ = Addon()
 
 
 def load_page(url, post_data=None):
@@ -18,6 +24,7 @@ def load_page(url, post_data=None):
     :param url: str
     :param post_data: str
     """
+    __addon__.log(url)
     headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
                 'Host': urlsplit(url).hostname,
                 'Accept-Charset': 'UTF-8',
@@ -36,4 +43,5 @@ def load_page(url, post_data=None):
         elif session.info().getheader('Content-Encoding', '') == 'deflate':
             page = zlib.decompress(page, -zlib.MAX_WBITS)
         session.close()
+    __addon__.log(page, LOGDEBUG)
     return page
