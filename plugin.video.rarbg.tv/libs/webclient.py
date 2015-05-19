@@ -13,6 +13,10 @@ from urlparse import urlsplit
 def load_page(url, post_data=None):
     """
     Web-client
+
+    post_data - URL-encoded data for POST request
+    :param url: str
+    :param post_data: str
     """
     headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
                 'Host': urlsplit(url).hostname,

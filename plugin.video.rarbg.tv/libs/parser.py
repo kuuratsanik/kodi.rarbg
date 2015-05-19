@@ -5,28 +5,37 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
 import re
+# Additional modules
 from bs4 import BeautifulSoup
+# Custom modules
 from webclient import load_page
-from addon import cached
+from addon import Addon, cached
 
 
-_LINKS = {'episodes': 'https://www.rarbg.to/torrents.php?category=1%3B18%3B41&page={0}'}
+__addon__ = Addon()
+
+_LINKS = {'episodes': 'https://www.rarbg.to/torrents.php?{0}&page={1}',
+          'imdb_view': 'https://www.rarbg.to/torrents.php?imdb={0}',
+          'tv_view': 'https://www.rarbg.to/tv/{0}/'}
 
 
 @cached(15)
-def load_episodes(page):
+def load_episodes(page, search_query):
     """
     Load recent episodes page and return a parsed list of episodes
-    :return:
+    :return: dict
     """
-    html = load_page(_LINKS['episodes'].format(page))
-    return _parse_episodes(html)
+    url = _LINKS['episodes'].format(__addon__.quality, page)
+    if search_query:
+        url += '&search={0}'.format(search_query)
+    return _parse_episodes(load_page(url))
 
 
 def _parse_episodes(html):
     """
     Parse the list of episodes
-    :return:
+    :param html: str
+    :return: dict
     """
     soup = BeautifulSoup(html)
     episode_rows = soup.find_all('tr', {'class': 'lista2'})
@@ -71,7 +80,7 @@ def load_episode_page(url):
     """
     Load episode page and return parsed data
     :param url:
-    :return:
+    :return: dict
     """
     return _parse_episode_page(load_page(url))
 
@@ -79,8 +88,8 @@ def load_episode_page(url):
 def _parse_episode_page(html):
     """
     Parse episode page
-    :param html:
-    :return:
+    :param html: str
+    :return: dict
     """
     soup = BeautifulSoup(html)
     filename = soup.h1.text

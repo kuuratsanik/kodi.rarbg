@@ -7,14 +7,60 @@
 import os
 from datetime import datetime, timedelta
 from cPickle import load, dump, PickleError
+#
 import xbmcaddon
 import xbmc
+import xbmcvfs
 
-# Addon configuration folder
-_configdir = xbmc.translatePath(
-    'special://profile/addon_data/{0}'.format(xbmcaddon.Addon().getAddonInfo('id'))).decode('utf-8')
-if not os.path.exists(_configdir):
-    os.mkdir(_configdir)
+
+class Addon(xbmcaddon.Addon):
+    """
+    Helper class to access addon parameters
+    """
+    def __init__(self):
+        self._configdir = xbmc.translatePath('special://profile/addon_data/{0}'.format(self.id).decode('utf-8'))
+        if not xbmcvfs.exists(self._configdir):
+            xbmcvfs.mkdir(self._configdir)
+
+    def log(self, message):
+        """
+        Logger method
+        """
+        xbmc.log('{0}: {1}'.format(self.id, message))
+
+    @property
+    def id(self):
+        """
+        Addon ID as a string
+        :return: str
+        """
+        return self.getAddonInfo('id')
+
+    @property
+    def addon_dir(self):
+        """
+        Addon folder
+        :return:
+        """
+        return self.getAddonInfo('path').decode('utf-8')
+
+    @property
+    def config_dir(self):
+        """
+        Addon configuration folder
+        """
+        return self._configdir
+
+    @property
+    def icons_dir(self):
+        return os.path.join(self.addon_dir, 'resources', 'icons')
+
+    @property
+    def quality(self):
+        """
+        Return video quality category
+        """
+        return ['category=18', 'category=41', 'category=18&category=41'][int(self.getSetting('quality'))]
 
 
 class Storage(object):
@@ -31,9 +77,9 @@ class Storage(object):
     ...
 
     """
-    def __init__(self, path=_configdir):
+    def __init__(self):
         self._storage = {}
-        filename = os.path.join(path, 'storage.pcl')
+        filename = os.path.join(Addon().config_dir, 'storage.pcl')
         if os.path.exists(filename):
             mode = 'r+b'
         else:
@@ -67,33 +113,6 @@ class Storage(object):
         self._file.close()
 
 
-class Addon(xbmcaddon.Addon):
-    """
-    Helper class to access addon parameters
-    """
-    def log(self, message):
-        """
-        Logger method
-        """
-        xbmc.log('{0}: {1}'.format(self.id, message))
-
-    @property
-    def id(self):
-        """
-        Addon ID as a string
-        :return: str
-        """
-        return self.getAddonInfo('id')
-
-    @property
-    def path(self):
-        """
-        Addon folder
-        :return:
-        """
-        return self.getAddonInfo('path').decode('utf-8')
-
-
 def cached(duration=10):
     """
     Cache decorator
@@ -101,6 +120,7 @@ def cached(duration=10):
     Used to cache function return data
 
     duration - cache time in min
+    negative value means cache indefinitely
     Usage:
 
     @cached(30)
@@ -123,7 +143,7 @@ def cached(duration=10):
                 key = func.__name__ + str(args) + str(kwargs)
                 try:
                     data, timestamp = storage['cache'][key]
-                    if current_time - timestamp > timedelta(minutes=duration):
+                    if duration > 0 and current_time - timestamp > timedelta(minutes=duration):
                         raise KeyError
                 except KeyError:
                     data = func(*args, **kwargs)

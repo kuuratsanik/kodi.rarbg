@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <addon id="plugin.video.rarbg.tv"
 version="0.0.1"
-name="Rarbg TV-Shows"
+name="Rarbg TV Shows"
 provider-name="Roman_V_M">
 <requires>
   <import addon="plugin.video.yatp" version="0.0.1" />
