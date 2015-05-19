@@ -9,6 +9,7 @@ from base64 import urlsafe_b64encode
 #
 import xbmcplugin
 import xbmcgui
+from xbmc import LOGERROR
 #
 import parser
 from addon import Addon, Storage
@@ -46,6 +47,7 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
     episodes = parser.load_episodes(page, search_query, imdb)  # Get episodes
     if episodes['episodes']:
+        success = True
         if episodes['prev']:  # Previous page if any
             prev_item = xbmcgui.ListItem(label='{0} < Prev'.format(episodes['prev']),
                                          thumbnailImage=os.path.join(_icons, 'previous.png'))
@@ -75,8 +77,10 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
                 next_url = '{0}?action=episode_list&page={1}'.format(plugin_url, episodes['next'])
             xbmcplugin.addDirectoryItem(plugin_handle, next_url, prev_item, isFolder=True)
     else:
+        success = False
         xbmcgui.Dialog().notification('Error!', 'No episodes to dislpay!', 'error', 3000)
-    xbmcplugin.endOfDirectory(plugin_handle, True)
+        __addon__.log('Empty episode list returned.', LOGERROR)
+    xbmcplugin.endOfDirectory(plugin_handle, success)
 
 
 def episode_view(plugin_handle, url):
@@ -88,19 +92,30 @@ def episode_view(plugin_handle, url):
     :return:
     """
     episode_data = parser.load_episode_page(url)
-    ep_item = xbmcgui.ListItem(label=episode_data['filename'], thumbnailImage=episode_data['poster'])
-    ep_item.setInfo('video', episode_data['info'])
-    ep_item.addContextMenuItems([
-        ('Add to "My Shows"',
-         'RunScript({0}/libs/commands.py,myshows,{1},{2},{3},{4})'.format(
-             __addon__.addon_dir,
-             __addon__.config_dir,
-             episode_data['info']['title'],
-             episode_data['imdb'],
-             episode_data['poster']))])
-    url = 'plugin://plugin.video.yatp/?action=play&torrent={0}'.format(urlsafe_b64encode(episode_data['torrent']))
-    xbmcplugin.addDirectoryItem(plugin_handle, url, ep_item, isFolder=False)
-    xbmcplugin.endOfDirectory(plugin_handle, True)
+    if episode_data['filename']:
+        success = True
+        ep_item = xbmcgui.ListItem(label=episode_data['filename'], thumbnailImage=episode_data['poster'])
+        ep_item.setInfo('video', episode_data['info'])
+        ep_item.addContextMenuItems([
+            ('Add to "My Shows"',
+             'RunScript({0}/libs/commands.py,myshows,{1},{2},{3},{4})'.format(
+                 __addon__.addon_dir,
+                 __addon__.config_dir,
+                 episode_data['info']['title'],
+                 episode_data['imdb'],
+                 episode_data['poster']))])
+        url ='plugin://plugin.video.yatp/?action=play&torrent={torrent}&title={title}&season={season}&episode={episode}&thumb={poster}'.format(
+            torrent=urlsafe_b64encode(episode_data['torrent']),
+            title=episode_data['info']['title'],
+            season=episode_data['info']['season'],
+            episode=episode_data['info']['episode'],
+            poster=urlsafe_b64encode(episode_data['poster']))
+        xbmcplugin.addDirectoryItem(plugin_handle, url, ep_item, isFolder=False)
+    else:
+        success = False
+        xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)
+        __addon__.log('Empty episode data returned.', LOGERROR)
+    xbmcplugin.endOfDirectory(plugin_handle, success)
 
 
 def my_shows_view(plugin_url, plugin_handle):
