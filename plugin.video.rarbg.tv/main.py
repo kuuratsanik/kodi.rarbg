@@ -34,6 +34,8 @@ def plugin_root():
 def episode_list(page, imdb):
     """
     The list of episode releases by most recent first
+    :param page: str - page#
+    :param imdb: str - IMDB ID (tt123456)
     :return:
     """
     views.episode_list_view(__url__, __handle__, page, imdb=imdb)
@@ -42,7 +44,7 @@ def episode_list(page, imdb):
 def episode_page(encoded_url):
     """
     Episode page
-    :param encoded_url:
+    :param encoded_url: str - episode page URL in base64 encoding
     :return:
     """
     views.episode_view(__handle__, urlsafe_b64decode(encoded_url))
@@ -51,7 +53,8 @@ def episode_page(encoded_url):
 def search_episodes(page, query):
     """
     Search episodes
-    :param page: str
+    :param page: str - page #
+    :param query: str - search query
     :return:
     """
     if not query:
@@ -78,7 +81,7 @@ def my_shows():
 def router(paramstring):
     """
     Plugin router function
-    :param paramstring: str
+    :param paramstring: str - URL-encoded addon call paramstring
     :return:
     """
     params = dict(parse_qsl(paramstring[1:]))

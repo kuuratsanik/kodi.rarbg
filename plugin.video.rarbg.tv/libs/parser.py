@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 # Custom modules
 from webclient import load_page
 from addon import Addon, cached
+from anticaptcha import anticaptcha
 
 
 __addon__ = Addon()
@@ -17,6 +18,16 @@ __addon__ = Addon()
 _LINKS = {'episodes': 'https://www.rarbg.to/torrents.php?{0}&page={1}',
           'imdb_view': 'https://www.rarbg.to/torrents.php?imdb={0}&page={1}',  # Recent episodes for a TV show
           'tv_view': 'https://www.rarbg.to/tv/{0}/'}  # All seasons of a TV show
+
+
+@anticaptcha
+def _load_page(url, method='get', data=None):
+    """
+    Load web-page
+    :param url: str - URL
+    :return:
+    """
+    return load_page(url, method, data)
 
 
 @cached(15)
@@ -31,7 +42,7 @@ def load_episodes(page, search_query, imdb):
         url = _LINKS['episodes'].format(__addon__.quality, page)
         if search_query:
             url += '&search={0}'.format(search_query)
-    return _parse_episodes(load_page(url))
+    return _parse_episodes(_load_page(url))
 
 
 def _parse_episodes(html):
@@ -85,7 +96,7 @@ def load_episode_page(url):
     :param url:
     :return: dict
     """
-    return _parse_episode_page(load_page(url))
+    return _parse_episode_page(func(url))
 
 
 def _parse_episode_page(html):
