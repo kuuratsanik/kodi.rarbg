@@ -11,14 +11,14 @@ import os
 from cPickle import load, dump, PickleError
 #
 import xbmcgui
-
+import xbmc
 
 def add_to_favorites(config_dir, title, imdb, poster):
     """
     Add a TV Show to favorites
-    :param configdir: str
-    :param title: str
-    :param imdb: str
+    :param configdir: str - Addon config folder
+    :param title: str - TV show title
+    :param imdb: str - IMDB ID (tt1234567)
     :return:
     """
     storage = {}
@@ -42,11 +42,31 @@ def add_to_favorites(config_dir, title, imdb, poster):
             file_.seek(0)
             dump(storage, file_)
             file_.truncate()
-            xbmcgui.Dialog().notification('Note!', 'The show added to "My Shows"', 'note', 3000)
+            xbmcgui.Dialog().notification('Note!', 'The show added to "My Shows"', 'info', 3000)
         else:
             xbmcgui.Dialog().notification('Error!', 'The show already in "My Shows".', 'error', 3000)
 
 
+def remove_from_favorites(config_dir, index):
+    """
+    Remove a TV show from "My Shows"
+    :param config_dir: str - Addon config folder
+    :param index: str - digital index of the item to be removed
+    :return:
+    """
+    filename = os.path.join(config_dir, 'storage.pcl')
+    with open(filename, 'r+b') as file_:
+        storage = load(file_)
+        del storage['myshows'][int(index)]
+        file_.seek(0)
+        dump(storage, file_)
+        file_.truncate()
+    xbmcgui.Dialog().notification('Note!', 'The show removed from "My Shows"', 'info', 3000)
+    xbmc.executebuiltin('Container.Refresh')
+
+
 if __name__ == '__main__':
-    if sys.argv[1] == 'myshows':
+    if sys.argv[1] == 'myshows_add':
         add_to_favorites(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    elif sys.argv[1] == 'myshows_remove':
+        remove_from_favorites(sys.argv[2], sys.argv[3])

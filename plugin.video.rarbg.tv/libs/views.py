@@ -114,7 +114,7 @@ def episode_view(plugin_handle, url):
         ep_item.setInfo('video', episode_data['info'])
         ep_item.addContextMenuItems([
             ('Add to "My Shows"',
-             'RunScript({0}/libs/commands.py,myshows,{1},{2},{3},{4})'.format(
+             'RunScript({0}/libs/commands.py,myshows_add,{1},{2},{3},{4})'.format(
                  __addon__.addon_dir,
                  __addon__.config_dir,
                  episode_data['info']['title'],
@@ -139,15 +139,23 @@ def my_shows_view(plugin_url, plugin_handle):
     The list of favorite TV shows
     :return:
     """
+    home_item = xbmcgui.ListItem(label='<< Home', thumbnailImage=os.path.join(_icons, 'home.png'))
+    xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
     with Storage() as storage:
         try:
             myshows = storage['myshows']
         except KeyError:
-            success = False
+            pass
         else:
-            success = True
+            index = -1
             for show in myshows:
+                index += 1
                 list_item = xbmcgui.ListItem(label=show[0], thumbnailImage=show[2])
                 url = '{0}?action=episode_list&page=1&imdb={1}'.format(plugin_url, show[1])
+                list_item.addContextMenuItems([('Remove from "My Shows"',
+                                                'RunScript({0}/libs/commands.py,myshows_remove,{1},{2})'.format(
+                                                    __addon__.addon_dir,
+                                                    __addon__.config_dir,
+                                                    index))])
                 xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, isFolder=True)
-    xbmcplugin.endOfDirectory(plugin_handle, success)
+    xbmcplugin.endOfDirectory(plugin_handle, True)
