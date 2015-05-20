@@ -60,7 +60,7 @@ class Addon(xbmcaddon.Addon):
         """
         Return video quality category
         """
-        return ['category=18', 'category=41', 'category=18&category=41'][int(self.getSetting('quality'))]
+        return (['18'], ['41'], ['18', '41'])[int(self.getSetting('quality'))]
 
 
 class Storage(object):

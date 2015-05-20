@@ -61,7 +61,15 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
             xbmcplugin.addDirectoryItem(plugin_handle, prev_url, prev_item, isFolder=True)
         # Populate the episode list
         for episode in episodes['episodes']:
-            list_item = xbmcgui.ListItem(label=episode['title'], thumbnailImage=episode['thumb'])
+            if int(episode['seeders']) <= 10:
+                episode['seeders'] = episode['seeders'].join(('[COLOR=red]', '[/COLOR]'))
+            elif int(episode['seeders']) <= 20:
+                episode['seeders'] = episode['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
+            list_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode['title'],
+                                                                                                  episode['size'],
+                                                                                                  episode['seeders'],
+                                                                                                  episode['leechers']),
+                                         thumbnailImage=episode['thumb'])
             list_item.setInfo('video', episode['info'])
             url = '{0}?action=episode&url={1}'.format(plugin_url, urlsafe_b64encode(episode['link']))
             xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, isFolder=True)
@@ -94,7 +102,15 @@ def episode_view(plugin_handle, url):
     episode_data = parser.load_episode_page(url)
     if episode_data['filename']:
         success = True
-        ep_item = xbmcgui.ListItem(label=episode_data['filename'], thumbnailImage=episode_data['poster'])
+        if int(episode_data['seeders']) <= 10:
+            episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=red]', '[/COLOR]'))
+        elif int(episode_data['seeders']) <= 20:
+            episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
+        ep_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode_data['filename'],
+                                                                                            episode_data['size'],
+                                                                                            episode_data['seeders'],
+                                                                                            episode_data['leechers']),
+                                   thumbnailImage=episode_data['poster'])
         ep_item.setInfo('video', episode_data['info'])
         ep_item.addContextMenuItems([
             ('Add to "My Shows"',

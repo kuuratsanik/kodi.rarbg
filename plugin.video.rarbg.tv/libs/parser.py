@@ -15,8 +15,7 @@ from anticaptcha import anticaptcha
 
 __addon__ = Addon()
 
-_LINKS = {'episodes': 'https://www.rarbg.to/torrents.php?{0}&page={1}',
-          'imdb_view': 'https://www.rarbg.to/torrents.php?imdb={0}&page={1}',  # Recent episodes for a TV show
+_LINKS = {'torrents': 'https://www.rarbg.to/torrents.php?',
           'tv_view': 'https://www.rarbg.to/tv/{0}/'}  # All seasons of a TV show
 
 
@@ -31,25 +30,26 @@ def _load_page(url, method='get', data=None):
 
 
 @cached(15)
-def load_episodes(page, search_query, imdb):
+def load_episodes(page, search_query, imdb, quality=__addon__.quality):
     """
     Load recent episodes page and return a parsed list of episodes
     :return: dict
     """
+    data = {'page': page}
     if imdb:
-        url = _LINKS['imdb_view'].format(imdb, page)
+        data['imdb'] = imdb
     else:
-        url = _LINKS['episodes'].format(__addon__.quality, page)
+        data['category[]'] = quality
         if search_query:
-            url += '&search={0}'.format(search_query)
-    return _parse_episodes(_load_page(url))
+            data['search'] = search_query
+    return _parse_episodes(_load_page(_LINKS['torrents'], data=data))
 
 
 def _parse_episodes(html):
     """
     Parse the list of episodes
-    :param html: str
-    :return: dict
+    :param html: str - html page
+    :return: dict - episodes
     """
     soup = BeautifulSoup(html)
     episode_rows = soup.find_all('tr', {'class': 'lista2'})
@@ -71,8 +71,12 @@ def _parse_episodes(html):
             rating = re.search(r'(\d\.\d)/10', extra_info[1]).group(1)
         else:
             genre = rating = ''
-        listing.append({'title': title, 'link': link, 'thumb': thumb,
-                        'info': {'genre': genre, 'rating': float(rating), 'imdb': imdb}})
+        size = row.contents[-5].text
+        seeders = row.contents[-4].text
+        leechers = row.contents[-3].text
+        listing.append({'title': title, 'link': link, 'thumb': thumb, 'imdb': imdb, 'size': size, 'seeders': seeders,
+                        'leechers': leechers,
+                        'info': {'genre': genre, 'rating': float(rating)}})
     episodes = {'episodes': listing}
     prev_page_tag = soup.find('a', {'title': 'previous page'})
     if prev_page_tag is not None:
@@ -93,8 +97,8 @@ def _parse_episodes(html):
 def load_episode_page(url):
     """
     Load episode page and return parsed data
-    :param url:
-    :return: dict
+    :param url: str - URL
+    :return: dict - episode data
     """
     return _parse_episode_page(_load_page(url))
 
@@ -102,8 +106,8 @@ def load_episode_page(url):
 def _parse_episode_page(html):
     """
     Parse episode page
-    :param html: str
-    :return: dict
+    :param html: str - html page
+    :return: dict - episode data
     """
     soup = BeautifulSoup(html)
     filename = soup.h1.text
@@ -132,11 +136,20 @@ def _parse_episode_page(html):
     plot = plot_tag.next.text.replace('|', '')
     imdb_tag = soup.find('a', text=re.compile(r'imdb.com'))
     imdb = re.search(r'/(tt\d+?)/', imdb_tag.text).group(1)
+    size_tag = soup.find(text=' Size:')
+    size = size_tag.next.text
+    peers_tag = soup.find(text='Peers:')
+    peers_match = re.search('Seeders : (\d+) , Leechers : (\d+)', peers_tag.next.text)
+    seeders = peers_match.group(1)
+    leechers = peers_match.group(2)
     episode_data = {'filename': filename,
                     'torrent': torrent,
                     'magnet': magnet,
                     'poster': poster,
                     'imdb': imdb,
+                    'size': size,
+                    'seeders': seeders,
+                    'leechers': leechers,
                     'info': {'title': title,
                              'rating': float(rating),
                              'genre': genres,
