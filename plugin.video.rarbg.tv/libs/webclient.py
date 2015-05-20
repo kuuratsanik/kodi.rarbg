@@ -58,16 +58,16 @@ def load_page(url, method='get', data=None):
     :param data: dict - data to be sent to a server
     :return:
     """
-    __addon__.log(url)
+    __addon__.log('URL: {0}'.format(url))
     headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
                 'Accept-Charset': 'UTF-8',
                 'Accept': 'text/html',
                 'Accept-Language': 'en-US, en',
                 'Accept-Encoding': 'gzip, deflate'}
     if method == 'get':
-        response = requests.get(url, params=data, headers=headers)
+        response = requests.get(url, params=data, headers=headers, verify=False)
     elif method == 'post':
-        response = requests.post(url, data=data, headers=headers)
+        response = requests.post(url, data=data, headers=headers, verify=False)
     else:
         raise RuntimeError('Invalid load_page method!')
     page = response.text

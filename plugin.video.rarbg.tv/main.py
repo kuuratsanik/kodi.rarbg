@@ -109,5 +109,5 @@ def router(paramstring):
 
 
 if __name__ == '__main__':
-    __addon__.log(str(sys.argv))
+    __addon__.log('sys.argv: {0}'.format(str(sys.argv)))
     router(sys.argv[2])

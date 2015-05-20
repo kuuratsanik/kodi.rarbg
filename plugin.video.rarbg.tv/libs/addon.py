@@ -26,7 +26,7 @@ class Addon(xbmcaddon.Addon):
         """
         Logger method
         """
-        xbmc.log('{0}: {1}'.format(self.id, message), level)
+        xbmc.log('{0}: {1}'.format(self.id, message.encode('utf-8', 'replace')), level)
 
     @property
     def id(self):

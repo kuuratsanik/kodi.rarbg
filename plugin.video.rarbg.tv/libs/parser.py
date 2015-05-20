@@ -96,7 +96,7 @@ def load_episode_page(url):
     :param url:
     :return: dict
     """
-    return _parse_episode_page(func(url))
+    return _parse_episode_page(_load_page(url))
 
 
 def _parse_episode_page(html):
