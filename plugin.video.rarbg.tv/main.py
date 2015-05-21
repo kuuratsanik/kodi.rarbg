@@ -58,7 +58,7 @@ def search_episodes(page, query):
     :return:
     """
     if not query:
-        keyboard = xbmc.Keyboard('Enter search query')
+        keyboard = xbmc.Keyboard('', 'Enter a search query')
         keyboard.doModal()
         query_text = keyboard.getText()
         if keyboard.isConfirmed() and query_text:

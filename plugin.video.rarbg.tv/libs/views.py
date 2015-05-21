@@ -63,7 +63,7 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
         for episode in episodes['episodes']:
             if int(episode['seeders']) <= 10:
                 episode['seeders'] = episode['seeders'].join(('[COLOR=red]', '[/COLOR]'))
-            elif int(episode['seeders']) <= 20:
+            elif int(episode['seeders']) <= 25:
                 episode['seeders'] = episode['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
             list_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode['title'],
                                                                                                   episode['size'],
@@ -104,7 +104,7 @@ def episode_view(plugin_handle, url):
         success = True
         if int(episode_data['seeders']) <= 10:
             episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=red]', '[/COLOR]'))
-        elif int(episode_data['seeders']) <= 20:
+        elif int(episode_data['seeders']) <= 25:
             episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
         ep_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode_data['filename'],
                                                                                             episode_data['size'],
