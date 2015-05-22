@@ -3,16 +3,23 @@ __author__ = 'romanmi'
 import sys
 import os
 import base64
-from datetime import timedelta
+import json
 import unittest
 # Additional modules
 import mock
 
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'plugin.video.rarbg.tv'))
-
 with mock.patch('sys.argv', ['plugin://plugin.video.rarbg.tv', '5', '']):
-    import main
-from libs import addon
+    with mock.patch('xbmcaddon.Addon') as mock_Addon:
+        with mock.patch('libs.addon.Addon') as mock_myAddon:
+            mock_Addon.return_value.getAddonInfo.return_value = 'test'
+            mock_storage = mock.MagicMock()
+            mock_storage.__enter__.return_value = {}
+            mock_myAddon.return_value.get_storage.return_value = mock_storage
+            mock_myAddon.return_value.config_dir = 'test'
+            import main
+            import libs.webclient
+
 
 class MainRouterTestCase(unittest.TestCase):
     """
@@ -26,7 +33,7 @@ class MainRouterTestCase(unittest.TestCase):
     @mock.patch('main.views.episode_list_view')
     def test_calling_episode_list(self, mock_episode_list_view):
         main.router('?action=episode_list&page=3')
-        mock_episode_list_view.assert_called_with('plugin://plugin.video.rarbg.tv', 5, '3')
+        mock_episode_list_view.assert_called_with('plugin://plugin.video.rarbg.tv', 5, '3', imdb='')
 
     @mock.patch('main.views.episode_view')
     def test_calling_episode_page(self, mock_episode_view):
@@ -37,7 +44,7 @@ class MainRouterTestCase(unittest.TestCase):
     @mock.patch('main.views.episode_list_view')
     def test_calling_episode_search_with_existing_query(self, mock_episode_list_view):
         main.router('?action=search_episodes&page=1&query=Test2')
-        mock_episode_list_view.assert_called_with('plugin://plugin.video.rarbg.tv', 5, '1', 'Test2')
+        mock_episode_list_view.assert_called_with('plugin://plugin.video.rarbg.tv', 5, '1', search_query='Test2')
 
     @mock.patch('main.xbmcplugin.endOfDirectory')
     @mock.patch('main.xbmcgui.Dialog')
@@ -51,7 +58,7 @@ class MainRouterTestCase(unittest.TestCase):
         m_keyboard.getText.return_value = 'Test1'
         m_keyboard.isConfirmed.return_value = True
         main.router('?action=search_episodes&page=1')
-        mock_episode_list_view.assert_called_with('plugin://plugin.video.rarbg.tv', 5, '1', 'Test1')
+        mock_episode_list_view.assert_called_with('plugin://plugin.video.rarbg.tv', 5, '1', search_query='Test1')
         # Test entering empty text from the on-screen Keyboard
         m_keyboard.getText.return_value = ''
         main.router('?action=search_episodes&page=1')
@@ -60,59 +67,24 @@ class MainRouterTestCase(unittest.TestCase):
         # Test cancelling on-screen Keyboard
         m_keyboard.getText.return_value = 'Test2'
         m_keyboard.isConfirmed.return_value = False
-        main.router('?action=search_episodse&page=1')
+        main.router('?action=search_episodes&page=1')
         m_notification.assert_called_with('Note!', 'Search cancelled', 'info', 3000)
         mock_endOfDirectory.assert_called_with(5, False)
 
 
-class AddonStorageTestCase(unittest.TestCase):
+class WebClientTestCase(unittest.TestCase):
     """
-    Test addon Storage class
+    Test web-client
     """
-    def tearDown(self):
-        os.remove(os.path.join(os.path.dirname(__file__), 'temp', 'storage.pcl'))
-        os.remove(os.path.join(os.path.dirname(__file__), 'temp'))
+    def test_load_page_get_request(self):
+        page = libs.webclient.load_page('http://httpbin.org/html')
+        self.assertTrue('Herman Melville' in page)
 
-    @mock.patch('libs.addon.Addon')
-    def test_addon_storage(self, mock_Addon):
-        mock_Addon.return_value.config_dir = os.path.join(os.path.dirname(__file__), 'temp')
-        # Test storage initialization
-        with addon.Storage() as storage1:
-            storage1['item1'] = 'value1'
-            self.assertEqual(storage1['item1'], 'value1')
-        # Test existing storage
-        with addon.Storage() as storage2:
-            storage2['item2'] = 'value2'
-            self.assertEqual(storage2['item2'], 'value2')
+    def test_load_page_post_request(self):
+        post_data = {'param': 'value'}
+        page = libs.webclient.load_page('http://httpbin.org/post', method='post', data=post_data)
+        self.assertEqual(json.loads(page)['form']['param'], 'value')
 
-
-class AddonCahcedTestCase(unittest.TestCase):
-    """
-    Test cached decorator
-    """
-    @mock.patch('libs.addon.Storage')
-    def test_cachde_decorator_(self, mock_Storage):
-        storage = {}
-        mock_Storage.return_value.__enter__.return_value = storage
-
-        @addon.cached(1)
-        def cached_function(arg):
-            return 'test'
-
-        # Test if function return value is stored in the cache
-        cached_function('argument')
-        self.assertTrue(storage['cache'])
-        # Test if function return value is retrieved from the cache
-        for key in storage['cache'].keys():
-            value, timestamp = storage['cache'][key]
-            storage['cache'][key] = ('altered', timestamp)
-        self.assertEqual(cached_function('argument'), 'altered')
-        # Test if function is called again if the cached value is expired
-        for key in storage['cache'].keys():
-            value, timestamp = storage['cache'][key]
-            timestamp = timestamp - timedelta(minutes=10)
-            storage['cache'][key] = ('altered', timestamp)
-        self.assertEqual(cached_function('argument'), 'test')
 
 if __name__ == '__main__':
     unittest.main()

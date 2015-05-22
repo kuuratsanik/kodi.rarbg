@@ -13,11 +13,12 @@ import xbmc
 import xbmcvfs
 
 
-class Addon(xbmcaddon.Addon):
+class Addon(object):
     """
     Helper class to access addon parameters
     """
     def __init__(self):
+        self._addon = xbmcaddon.Addon()
         self._configdir = xbmc.translatePath('special://profile/addon_data/{0}'.format(self.id).decode('utf-8'))
         if not xbmcvfs.exists(self._configdir):
             xbmcvfs.mkdir(self._configdir)
@@ -34,7 +35,7 @@ class Addon(xbmcaddon.Addon):
         Addon ID as a string
         :return: str
         """
-        return self.getAddonInfo('id')
+        return self._addon.getAddonInfo('id')
 
     @property
     def addon_dir(self):
@@ -42,7 +43,7 @@ class Addon(xbmcaddon.Addon):
         Addon folder
         :return:
         """
-        return self.getAddonInfo('path').decode('utf-8')
+        return self._addon.getAddonInfo('path').decode('utf-8')
 
     @property
     def config_dir(self):
@@ -60,7 +61,7 @@ class Addon(xbmcaddon.Addon):
         """
         Return video quality category
         """
-        return (['18'], ['41'], ['18', '41'])[int(self.getSetting('quality'))]
+        return (['18'], ['41'], ['18', '41'])[int(self._addon.getSetting('quality'))]
 
 
 class Storage(object):
@@ -71,15 +72,20 @@ class Storage(object):
     with 'with' statement.
     Usage:
 
-    with Storage() as storage:
+    with Storage('c:\storage\') as storage:
         storage[key1] = value1
         value2 = storage[key2]
     ...
 
     """
-    def __init__(self):
+    def __init__(self, storage_dir):
+        """
+        Class constructor
+        :param storage_dir: str - directory for storage
+        :return:
+        """
         self._storage = {}
-        filename = os.path.join(Addon().config_dir, 'storage.pcl')
+        filename = os.path.join(storage_dir, 'storage.pcl')
         if os.path.exists(filename):
             mode = 'r+b'
         else:
@@ -133,7 +139,7 @@ def cached(duration=10):
     """
     def outer_wrapper(func):
         def inner_wrapper(*args, **kwargs):
-            with Storage() as storage:
+            with Storage(Addon().config_dir) as storage:
                 # Initialize cache
                 try:
                     storage['cache']

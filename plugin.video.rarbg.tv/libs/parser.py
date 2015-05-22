@@ -8,9 +8,8 @@ import re
 # Additional modules
 from bs4 import BeautifulSoup
 # Custom modules
-from webclient import load_page
+from webclient import anti_captcha
 from addon import Addon, cached
-from anticaptcha import anticaptcha
 
 
 __addon__ = Addon()
@@ -19,14 +18,13 @@ _LINKS = {'torrents': 'https://www.rarbg.to/torrents.php?',
           'tv_view': 'https://www.rarbg.to/tv/{0}/'}  # All seasons of a TV show
 
 
-@anticaptcha
 def _load_page(url, method='get', data=None):
     """
     Load web-page
     :param url: str - URL
     :return:
     """
-    return load_page(url, method, data)
+    return anti_captcha(url, method, data)
 
 
 @cached(15)
@@ -68,15 +66,21 @@ def _parse_episodes(html):
         if extra_info_tag is not None:
             extra_info = extra_info_tag.text.split(' IMDB: ')
             genre = extra_info[0]
-            rating = re.search(r'(\d\.\d)/10', extra_info[1]).group(1)
+            try:
+                rating = re.search(r'(\d\.\d)/10', extra_info[1]).group(1)
+            except IndexError:
+                rating = None
         else:
             genre = rating = ''
         size = row.contents[-5].text
         seeders = row.contents[-4].text
         leechers = row.contents[-3].text
-        listing.append({'title': title, 'link': link, 'thumb': thumb, 'imdb': imdb, 'size': size, 'seeders': seeders,
+        episode_data = {'title': title, 'link': link, 'thumb': thumb, 'imdb': imdb, 'size': size, 'seeders': seeders,
                         'leechers': leechers,
-                        'info': {'genre': genre, 'rating': float(rating)}})
+                        'info': {'genre': genre}}
+        if rating is not None:
+            episode_data['info']['rating'] = float(rating)
+        listing.append(episode_data)
     episodes = {'episodes': listing}
     prev_page_tag = soup.find('a', {'title': 'previous page'})
     if prev_page_tag is not None:
@@ -116,8 +120,8 @@ def _parse_episode_page(html):
         season = ep_info_match.group(1)
         episode = ep_info_match.group(2)
     else:
-        season = ''
-        episode = ''
+        season = None
+        episode = None
     torrent_tag = soup.find('a', {'onmouseover': re.compile(r'Click here to download torrent')})
     torrent = 'https://www.rarbg.to'+ torrent_tag['href']
     magnet_tag = soup.find('a', {'href': re.compile(r'magnet')})
@@ -155,8 +159,8 @@ def _parse_episode_page(html):
                              'genre': genres,
                              'cast': actors.split(', '),
                              'plot': plot}}
-    if season:
+    if season is not None:
         episode_data['info']['season'] = int(season)
-    if episode:
+    if episode is not None:
         episode_data['info']['episode'] = int(episode)
     return episode_data

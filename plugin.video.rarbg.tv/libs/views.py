@@ -12,7 +12,7 @@ import xbmcgui
 from xbmc import LOGERROR
 #
 import parser
-from addon import Addon, Storage
+from addon import Addon
 
 __addon__ = Addon()
 _icons = __addon__.icons_dir
@@ -32,7 +32,7 @@ def root_view(plugin_url, plugin_handle):
     myshows_item = xbmcgui.ListItem(label='[My Shows]', thumbnailImage=os.path.join(_icons, 'bookmarks.png'))
     myshows_url = '{0}?action=my_shows'.format(plugin_url)
     xbmcplugin.addDirectoryItem(plugin_handle, myshows_url, myshows_item, isFolder=True)
-    xbmcplugin.endOfDirectory(plugin_handle, True)
+    xbmcplugin.endOfDirectory(plugin_handle)
 
 
 def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb=''):
@@ -47,12 +47,11 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
     episodes = parser.load_episodes(page, search_query, imdb)  # Get episodes
     if episodes['episodes']:
-        success = True
         if episodes['prev']:  # Previous page if any
             prev_item = xbmcgui.ListItem(label='{0} < Prev'.format(episodes['prev']),
                                          thumbnailImage=os.path.join(_icons, 'previous.png'))
             if search_query:
-                prev_url = '{0}?action=search_episode&query={1}&page={2}'.format(plugin_url, search_query,
+                prev_url = '{0}?action=search_episodes&query={1}&page={2}'.format(plugin_url, search_query,
                                                                                  episodes['prev'])
             elif imdb:
                 prev_url = '{0}?action=episode_list&imdb={1}&page={2}'.format(plugin_url, imdb, episodes['prev'])
@@ -77,7 +76,7 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
             prev_item = xbmcgui.ListItem(label='Next > {0}'.format(episodes['next']),
                                          thumbnailImage=os.path.join(_icons, 'next.png'))
             if search_query:
-                next_url = '{0}?action=search_episode&query={1}&page={2}'.format(plugin_url, search_query,
+                next_url = '{0}?action=search_episodes&query={1}&page={2}'.format(plugin_url, search_query,
                                                                                  episodes['next'])
             elif imdb:
                 next_url = '{0}?action=episode_list&imdb={1}&page={2}'.format(plugin_url, imdb, episodes['next'])
@@ -85,10 +84,9 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
                 next_url = '{0}?action=episode_list&page={1}'.format(plugin_url, episodes['next'])
             xbmcplugin.addDirectoryItem(plugin_handle, next_url, prev_item, isFolder=True)
     else:
-        success = False
         xbmcgui.Dialog().notification('Error!', 'No episodes to dislpay!', 'error', 3000)
         __addon__.log('Empty episode list returned.', LOGERROR)
-    xbmcplugin.endOfDirectory(plugin_handle, success)
+    xbmcplugin.endOfDirectory(plugin_handle)
 
 
 def episode_view(plugin_handle, url):
@@ -101,7 +99,6 @@ def episode_view(plugin_handle, url):
     """
     episode_data = parser.load_episode_page(url)
     if episode_data['filename']:
-        success = True
         if int(episode_data['seeders']) <= 10:
             episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=red]', '[/COLOR]'))
         elif int(episode_data['seeders']) <= 25:
@@ -120,18 +117,23 @@ def episode_view(plugin_handle, url):
                  episode_data['info']['title'],
                  episode_data['imdb'],
                  episode_data['poster']))])
-        url ='plugin://plugin.video.yatp/?action=play&torrent={torrent}&title={title}&season={season}&episode={episode}&thumb={poster}'.format(
+        url = 'plugin://plugin.video.yatp/?action=play&torrent={torrent}&title={title}&thumb={poster}'.format(
             torrent=urlsafe_b64encode(episode_data['torrent']),
             title=episode_data['info']['title'],
-            season=episode_data['info']['season'],
-            episode=episode_data['info']['episode'],
             poster=urlsafe_b64encode(episode_data['poster']))
+        try:
+            url += '&season={0}'.format(episode_data['info']['season'])
+        except KeyError:
+            pass
+        try:
+            url += '&episode={0}'.format(episode_data['info']['episode'])
+        except KeyError:
+            pass
         xbmcplugin.addDirectoryItem(plugin_handle, url, ep_item, isFolder=False)
     else:
-        success = False
         xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)
         __addon__.log('Empty episode data returned.', LOGERROR)
-    xbmcplugin.endOfDirectory(plugin_handle, success)
+    xbmcplugin.endOfDirectory(plugin_handle)
 
 
 def my_shows_view(plugin_url, plugin_handle):
@@ -141,7 +143,7 @@ def my_shows_view(plugin_url, plugin_handle):
     """
     home_item = xbmcgui.ListItem(label='<< Home', thumbnailImage=os.path.join(_icons, 'home.png'))
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
-    with Storage() as storage:
+    with __addon__.get_storage() as storage:
         try:
             myshows = storage['myshows']
         except KeyError:
@@ -158,4 +160,4 @@ def my_shows_view(plugin_url, plugin_handle):
                                                     __addon__.config_dir,
                                                     index))])
                 xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, isFolder=True)
-    xbmcplugin.endOfDirectory(plugin_handle, True)
+    xbmcplugin.endOfDirectory(plugin_handle)
