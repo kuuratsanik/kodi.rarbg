@@ -12,7 +12,7 @@ import xbmcgui
 from xbmc import LOGERROR
 #
 import parser
-from addon import Addon
+from addon import Addon, Storage
 
 __addon__ = Addon()
 _icons = __addon__.icons_dir
@@ -143,7 +143,7 @@ def my_shows_view(plugin_url, plugin_handle):
     """
     home_item = xbmcgui.ListItem(label='<< Home', thumbnailImage=os.path.join(_icons, 'home.png'))
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
-    with __addon__.get_storage() as storage:
+    with Storage(__addon__.config_dir) as storage:
         try:
             myshows = storage['myshows']
         except KeyError:
