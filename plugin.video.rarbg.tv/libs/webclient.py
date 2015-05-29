@@ -5,12 +5,13 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
 import re
+import urlparse
 #
 import requests
 #
 from xbmc import LOGDEBUG, LOGERROR
 #
-from addon import Addon
+from addon import Addon, Storage
 from dialog import Dialog
 
 __addon__ = Addon()
@@ -31,14 +32,20 @@ def load_page(url, method='get', data=None):
                 'Accept': 'text/html',
                 'Accept-Language': 'en-US, en',
                 'Accept-Encoding': 'gzip, deflate'}
-    if method == 'get':
-        response = requests.get(url, params=data, headers=headers, verify=False)
-    elif method == 'post':
-        response = requests.post(url, data=data, headers=headers, verify=False)
-    else:
-        raise RuntimeError('Invalid load_page method!')
-    page = response.text
-    __addon__.log(page, LOGDEBUG)
+    with Storage(__addon__.config_dir, 'cookies.pcl') as cookie_jar:
+        try:
+            cookies = cookie_jar[urlparse.urlparse(url).hostname]
+        except KeyError:
+            cookies = None
+        if method == 'get':
+            response = requests.get(url, params=data, headers=headers, verify=False, cookies=cookies)
+        elif method == 'post':
+            response = requests.post(url, data=data, headers=headers, verify=False, cookies=cookies)
+        else:
+            raise RuntimeError('Invalid load_page method!')
+        cookie_jar[urlparse.urlparse(url).hostname] = response.cookies.get_dict()
+        page = response.text
+        __addon__.log(page, LOGDEBUG)
     return page
 
 

@@ -131,7 +131,10 @@ def _parse_episode_page(html):
     title_tag = soup.find(text='Title:')
     title = re.sub(r' \(TV Series.+?\)', '', title_tag.next.text)
     rating_tag = soup.find(text='IMDB Rating:')
-    rating = re.search(r'(\d\.\d)/10', rating_tag.next.text).group(1)
+    if rating_tag is not None:
+        rating = re.search(r'(\d\.\d)/10', rating_tag.next.text).group(1)
+    else:
+        rating = None
     genres_tag = soup.find(text='Genres:')
     genres = genres_tag.next.text.replace(' ,', ',')
     actors_tag = soup.find(text='Actors:')
@@ -155,7 +158,6 @@ def _parse_episode_page(html):
                     'seeders': seeders,
                     'leechers': leechers,
                     'info': {'title': title,
-                             'rating': float(rating),
                              'genre': genres,
                              'cast': actors.split(', '),
                              'plot': plot}}
@@ -163,4 +165,6 @@ def _parse_episode_page(html):
         episode_data['info']['season'] = int(season)
     if episode is not None:
         episode_data['info']['episode'] = int(episode)
+    if rating is not None:
+        episode_data['info']['rating'] = float(rating)
     return episode_data
