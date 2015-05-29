@@ -78,14 +78,14 @@ class Storage(object):
     ...
 
     """
-    def __init__(self, storage_dir):
+    def __init__(self, storage_dir, filename='storage.pcl'):
         """
         Class constructor
         :param storage_dir: str - directory for storage
         :return:
         """
         self._storage = {}
-        filename = os.path.join(storage_dir, 'storage.pcl')
+        filename = os.path.join(storage_dir, filename)
         if os.path.exists(filename):
             mode = 'r+b'
         else:
