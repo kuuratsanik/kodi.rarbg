@@ -32,6 +32,7 @@ def load_page(url, method='get', data=None):
                 'Accept': 'text/html',
                 'Accept-Language': 'en-US, en',
                 'Accept-Encoding': 'gzip, deflate'}
+    page = ''
     with Storage(__addon__.config_dir, 'cookies.pcl') as cookie_jar:
         try:
             cookies = cookie_jar[urlparse.urlparse(url).hostname]
