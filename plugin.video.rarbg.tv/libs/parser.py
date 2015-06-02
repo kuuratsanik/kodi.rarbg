@@ -116,12 +116,8 @@ def _parse_episode_page(html):
     soup = BeautifulSoup(html)
     filename = soup.h1.text
     ep_info_match = re.search(r'[Ss](\d+)[Ee](\d+)', soup.h1.text)
-    if ep_info_match is not None:
-        season = ep_info_match.group(1)
-        episode = ep_info_match.group(2)
-    else:
-        season = None
-        episode = None
+    season = ep_info_match.group(1) if ep_info_match is not None else None
+    episode = ep_info_match.group(2) if ep_info_match is not None else None
     torrent_tag = soup.find('a', {'onmouseover': re.compile(r'Click here to download torrent')})
     torrent = 'https://www.rarbg.to'+ torrent_tag['href']
     magnet_tag = soup.find('a', {'href': re.compile(r'magnet')})
@@ -131,10 +127,7 @@ def _parse_episode_page(html):
     title_tag = soup.find(text='Title:')
     title = re.sub(r' \(TV Series.+?\)', '', title_tag.next.text)
     rating_tag = soup.find(text='IMDB Rating:')
-    if rating_tag is not None:
-        rating = re.search(r'(\d\.\d)/10', rating_tag.next.text).group(1)
-    else:
-        rating = None
+    rating = re.search(r'(\d\.\d)/10', rating_tag.next.text).group(1) if rating_tag is not None else None
     genres_tag = soup.find(text='Genres:')
     genres = genres_tag.next.text.replace(' ,', ',')
     actors_tag = soup.find(text='Actors:')

@@ -149,9 +149,7 @@ def my_shows_view(plugin_url, plugin_handle):
         except KeyError:
             pass
         else:
-            index = -1
-            for show in myshows:
-                index += 1
+            for index, show in enumerate(myshows):
                 list_item = xbmcgui.ListItem(label=show[0], thumbnailImage=show[2])
                 url = '{0}?action=episode_list&page=1&imdb={1}'.format(plugin_url, show[1])
                 list_item.addContextMenuItems([('Remove from "My Shows"',
