@@ -90,6 +90,5 @@ target/
 # Virtual environment
 venv/
 
-tests/storage.pcl
-
-tests/cookies.pcl
+# Pickle files
+*.pcl
