@@ -108,6 +108,15 @@ class Storage(object):
     def __setitem__(self, key, value):
         self._storage[key] = value
 
+    def get(self, key, default=None):
+        """
+        Get a stored value, or 'default' if no value.
+        :param key:
+        :param default:
+        :return:
+        """
+        return self._storage.get(key, default)
+
     def flush(self):
         """
         Flush storage to disk
@@ -117,6 +126,7 @@ class Storage(object):
         dump(self._storage, self._file)
         self._file.truncate()
         self._file.close()
+        del self._file
 
 
 def cached(duration=10):

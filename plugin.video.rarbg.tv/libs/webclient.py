@@ -34,10 +34,7 @@ def load_page(url, method='get', data=None):
                 'Accept-Encoding': 'gzip, deflate'}
     page = ''
     with Storage(__addon__.config_dir, 'cookies.pcl') as cookie_jar:
-        try:
-            cookies = cookie_jar[urlparse.urlparse(url).hostname]
-        except KeyError:
-            cookies = None
+        cookies = cookie_jar.get(urlparse.urlparse(url).hostname)
         if method == 'get':
             response = requests.get(url, params=data, headers=headers, verify=False, cookies=cookies)
         elif method == 'post':
