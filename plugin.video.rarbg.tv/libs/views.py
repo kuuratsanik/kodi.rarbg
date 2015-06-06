@@ -24,12 +24,15 @@ def root_view(plugin_url, plugin_handle):
     :return:
     """
     episodes_item = xbmcgui.ListItem(label='[Recent episodes]', thumbnailImage=os.path.join(_icons, 'tv.png'))
+    episodes_item.setArt({'fanart': __addon__.fanart})
     episodes_url = '{0}?action=episode_list&page=1'.format(plugin_url)
     xbmcplugin.addDirectoryItem(plugin_handle, episodes_url, episodes_item, isFolder=True)
     search_item = xbmcgui.ListItem(label='[Search episodes]', thumbnailImage=os.path.join(_icons, 'search.png'))
+    search_item.setArt({'fanart': __addon__.fanart})
     search_url = '{0}?action=search_episodes&page=1'.format(plugin_url)
     xbmcplugin.addDirectoryItem(plugin_handle, search_url, search_item, isFolder=True)
     myshows_item = xbmcgui.ListItem(label='[My Shows]', thumbnailImage=os.path.join(_icons, 'bookmarks.png'))
+    myshows_item.setArt({'fanart': __addon__.fanart})
     myshows_url = '{0}?action=my_shows'.format(plugin_url)
     xbmcplugin.addDirectoryItem(plugin_handle, myshows_url, myshows_item, isFolder=True)
     xbmcplugin.endOfDirectory(plugin_handle)
@@ -50,6 +53,7 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
         if episodes['prev']:  # Previous page if any
             prev_item = xbmcgui.ListItem(label='{0} < Prev'.format(episodes['prev']),
                                          thumbnailImage=os.path.join(_icons, 'previous.png'))
+            prev_item.setArt({'fanart': __addon__.fanart})
             if search_query:
                 prev_url = '{0}?action=search_episodes&query={1}&page={2}'.format(plugin_url, search_query,
                                                                                  episodes['prev'])
@@ -70,11 +74,13 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
                                                                                                   episode['leechers']),
                                          thumbnailImage=episode['thumb'])
             list_item.setInfo('video', episode['info'])
+            list_item.setArt({'fanart': __addon__.fanart})
             url = '{0}?action=episode&url={1}'.format(plugin_url, urlsafe_b64encode(episode['link']))
             xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, isFolder=True)
         if episodes['next']:  # Next page if any
-            prev_item = xbmcgui.ListItem(label='Next > {0}'.format(episodes['next']),
+            next_item = xbmcgui.ListItem(label='Next > {0}'.format(episodes['next']),
                                          thumbnailImage=os.path.join(_icons, 'next.png'))
+            next_item.setArt({'fanart': __addon__.fanart})
             if search_query:
                 next_url = '{0}?action=search_episodes&query={1}&page={2}'.format(plugin_url, search_query,
                                                                                  episodes['next'])
@@ -82,7 +88,7 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
                 next_url = '{0}?action=episode_list&imdb={1}&page={2}'.format(plugin_url, imdb, episodes['next'])
             else:
                 next_url = '{0}?action=episode_list&page={1}'.format(plugin_url, episodes['next'])
-            xbmcplugin.addDirectoryItem(plugin_handle, next_url, prev_item, isFolder=True)
+            xbmcplugin.addDirectoryItem(plugin_handle, next_url, next_item, isFolder=True)
     else:
         xbmcgui.Dialog().notification('Error!', 'No episodes to dislpay!', 'error', 3000)
         __addon__.log('Empty episode list returned.', LOGERROR)
@@ -109,6 +115,7 @@ def episode_view(plugin_handle, url):
                                                                                             episode_data['leechers']),
                                    thumbnailImage=episode_data['poster'])
         ep_item.setInfo('video', episode_data['info'])
+        ep_item.setArt({'fanart': __addon__.fanart})
         ep_item.addContextMenuItems([
             ('Add to "My Shows"',
              'RunScript({0}/libs/commands.py,myshows_add,{1},{2},{3},{4})'.format(
@@ -151,6 +158,7 @@ def my_shows_view(plugin_url, plugin_handle):
         else:
             for index, show in enumerate(myshows):
                 list_item = xbmcgui.ListItem(label=show[0], thumbnailImage=show[2])
+                list_item.setArt({'fanart': __addon__.fanart})
                 url = '{0}?action=episode_list&page=1&imdb={1}'.format(plugin_url, show[1])
                 list_item.addContextMenuItems([('Remove from "My Shows"',
                                                 'RunScript({0}/libs/commands.py,myshows_remove,{1},{2})'.format(

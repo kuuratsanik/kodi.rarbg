@@ -116,6 +116,8 @@ def _parse_episode_page(html):
     soup = BeautifulSoup(html)
     filename = soup.h1.text
     ep_info_match = re.search(r'[Ss](\d+)[Ee](\d+)', soup.h1.text)
+    if ep_info_match is None:
+        ep_info_match = re.search(r'(\d+)[Xx](\d+)', soup.h1.text)
     season = ep_info_match.group(1) if ep_info_match is not None else None
     episode = ep_info_match.group(2) if ep_info_match is not None else None
     torrent_tag = soup.find('a', {'onmouseover': re.compile(r'Click here to download torrent')})

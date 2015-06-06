@@ -64,7 +64,7 @@ def search_episodes(page, query):
         if keyboard.isConfirmed() and query_text:
             views.episode_list_view(__url__, __handle__, '1', search_query=quote_plus(query_text))
         else:
-            xbmcgui.Dialog().notification('Note!', 'Search cancelled', 'info', 3000)
+            xbmcgui.Dialog().notification('Note!', 'Search cancelled', __addon__.icon, 3000)
             xbmcplugin.endOfDirectory(__handle__, False)
     else:
         views.episode_list_view(__url__, __handle__, page, search_query=query)
@@ -87,19 +87,11 @@ def router(paramstring):
     params = dict(parse_qsl(paramstring[1:]))
     if params:
         if params['action'] == 'episode_list':
-            try:
-                imdb = params['imdb']
-            except KeyError:
-                imdb = ''
-            episode_list(params['page'], imdb)
+            episode_list(params['page'], params.get('imdb', ''))
         elif params['action'] == 'episode':
             episode_page(params['url'])
         elif params['action'] == 'search_episodes':
-            try:
-                query = params['query']
-            except KeyError:
-                query = ''
-            search_episodes(params['page'], query)
+            search_episodes(params['page'], params.get('query', ''))
         elif params['action'] == 'my_shows':
             my_shows()
         else:
