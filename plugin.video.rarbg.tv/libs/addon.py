@@ -63,6 +63,26 @@ class Addon(object):
         """
         return (['18'], ['41'], ['18', '41'])[int(self._addon.getSetting('quality'))]
 
+    @property
+    def icon(self):
+        """
+        Addon icon
+        """
+        icon = os.path.join(self.addon_dir, 'icon.png')
+        if os.path.exists(icon):
+            return icon
+        return ''
+
+    @property
+    def fanart(self):
+        """
+        Addon fanart
+        """
+        fanart = os.path.join(self.addon_dir, 'fanart.jpg')
+        if os.path.exists(fanart):
+            return fanart
+        return ''
+
 
 class Storage(object):
     """
