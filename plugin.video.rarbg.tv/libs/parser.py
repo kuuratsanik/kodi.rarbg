@@ -59,9 +59,14 @@ def _parse_episodes(html):
         else:
             continue
         title_tag = row.find('a', {'onmouseover': True, 'onmouseout': True})
+        if title_tag is None:
+            title_tag = row.find('a', {'href': re.compile(r'/torrent/'), 'title': True})
         title = title_tag.text
         link = 'http://www.rarbg.to' + title_tag['href']
-        thumb = 'http:' + re.search(r'<img src=\\\'(.+?)\\\'', title_tag['onmouseover']).group(1)
+        if title_tag.get('onmouseover') is not None:
+            thumb = 'http:' + re.search(r'<img src=\\\'(.+?)\\\'', title_tag['onmouseover']).group(1)
+        else:
+            thumb = ''
         extra_info_tag = row.find('span', {'style': 'color:DarkSlateGray'})
         if extra_info_tag is not None:
             extra_info = extra_info_tag.text.split(' IMDB: ')
@@ -125,25 +130,28 @@ def _parse_episode_page(html):
     magnet_tag = soup.find('a', {'href': re.compile(r'magnet')})
     magnet = magnet_tag['href']
     poster_tag = soup.find('img', {'itemprop': 'image', 'border': '0'})
-    poster = 'http:' + poster_tag['src']
+    poster = 'http:' + poster_tag['src'] if poster_tag is not None else ''
     title_tag = soup.find(text='Title:')
     title = re.sub(r' \(TV Series.+?\)', '', title_tag.next.text)
     rating_tag = soup.find(text='IMDB Rating:')
     rating = re.search(r'(\d\.\d)/10', rating_tag.next.text).group(1) if rating_tag is not None else None
     genres_tag = soup.find(text='Genres:')
-    genres = genres_tag.next.text.replace(' ,', ',')
+    genres = genres_tag.next.text.replace(' ,', ',') if genres_tag is not None else ''
     actors_tag = soup.find(text='Actors:')
-    actors = actors_tag.next.text.replace(' ,', ',')
+    actors = actors_tag.next.text.replace(' ,', ',') if actors_tag is not None else ''
     plot_tag = soup.find(text='Plot:')
-    plot = plot_tag.next.text.replace('|', '')
+    plot = plot_tag.next.text.replace('|', '') if plot_tag is not None else ''
     imdb_tag = soup.find('a', text=re.compile(r'imdb.com'))
     imdb = re.search(r'/(tt\d+?)/', imdb_tag.text).group(1)
     size_tag = soup.find(text=' Size:')
     size = size_tag.next.text
     peers_tag = soup.find(text='Peers:')
-    peers_match = re.search('Seeders : (\d+) , Leechers : (\d+)', peers_tag.next.text)
-    seeders = peers_match.group(1)
-    leechers = peers_match.group(2)
+    if peers_tag is not None:
+        peers_match = re.search('Seeders : (\d+) , Leechers : (\d+)', peers_tag.next.text)
+        seeders = peers_match.group(1)
+        leechers = peers_match.group(2)
+    else:
+        seeders = leechers = '-'
     episode_data = {'filename': filename,
                     'torrent': torrent,
                     'magnet': magnet,
