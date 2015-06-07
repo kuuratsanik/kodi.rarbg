@@ -68,9 +68,9 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
         # Populate the episode list
         for episode in episodes['episodes']:
             if int(episode['seeders']) <= 10:
-                episode['seeders'] = episode['seeders'].join(('[COLOR=red]', '[/COLOR]'))
+                episode['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode['seeders'])
             elif int(episode['seeders']) <= 25:
-                episode['seeders'] = episode['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
+                episode['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode['seeders'])
             thumb = episode['thumb'] if episode['thumb'] else os.path.join(__addon__.icons_dir, 'tv.png')
             list_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode['title'],
                                                                                                   episode['size'],
@@ -111,10 +111,13 @@ def episode_view(plugin_handle, url):
     """
     episode_data = parser.load_episode_page(url)
     if episode_data['filename']:
-        if int(episode_data['seeders']) <= 10:
-            episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=red]', '[/COLOR]'))
-        elif int(episode_data['seeders']) <= 25:
-            episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
+        try:
+            if int(episode_data['seeders']) <= 10:
+                episode_data['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode_data['seeders'])
+            elif int(episode_data['seeders']) <= 25:
+                episode_data['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode_data['seeders'])
+        except ValueError:
+            pass
         poster = episode_data['poster'] if episode_data['poster'] else os.path.join(__addon__.icons_dir, 'tv.png')
         ep_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode_data['filename'],
                                                                                             episode_data['size'],

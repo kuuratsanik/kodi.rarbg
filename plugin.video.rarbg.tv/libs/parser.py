@@ -136,19 +136,22 @@ def _parse_episode_page(html):
     rating_tag = soup.find(text='IMDB Rating:')
     rating = re.search(r'(\d\.\d)/10', rating_tag.next.text).group(1) if rating_tag is not None else None
     genres_tag = soup.find(text='Genres:')
-    genres = genres_tag.next.text.replace(' ,', ',')
+    genres = genres_tag.next.text.replace(' ,', ',') if genres_tag is not None else ''
     actors_tag = soup.find(text='Actors:')
-    actors = actors_tag.next.text.replace(' ,', ',')
+    actors = actors_tag.next.text.replace(' ,', ',') if actors_tag is not None else ''
     plot_tag = soup.find(text='Plot:')
-    plot = plot_tag.next.text.replace('|', '')
+    plot = plot_tag.next.text.replace('|', '') if plot_tag is not None else ''
     imdb_tag = soup.find('a', text=re.compile(r'imdb.com'))
     imdb = re.search(r'/(tt\d+?)/', imdb_tag.text).group(1)
     size_tag = soup.find(text=' Size:')
     size = size_tag.next.text
     peers_tag = soup.find(text='Peers:')
-    peers_match = re.search('Seeders : (\d+) , Leechers : (\d+)', peers_tag.next.text)
-    seeders = peers_match.group(1)
-    leechers = peers_match.group(2)
+    if peers_tag is not None:
+        peers_match = re.search('Seeders : (\d+) , Leechers : (\d+)', peers_tag.next.text)
+        seeders = peers_match.group(1)
+        leechers = peers_match.group(2)
+    else:
+        seeders = leechers = '-'
     episode_data = {'filename': filename,
                     'torrent': torrent,
                     'magnet': magnet,
