@@ -46,13 +46,16 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
     :return:
     """
     # Add 'Home' item
-    home_item = xbmcgui.ListItem(label='<< Home', thumbnailImage=os.path.join(_icons, 'home.png'))
+    home_item = xbmcgui.ListItem(label='<< Home',
+                                 thumbnailImage=os.path.join(_icons, 'home.png'),
+                                 iconImage=os.path.join(_icons, 'home.png'))
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
     episodes = parser.load_episodes(page, search_query, imdb)  # Get episodes
     if episodes['episodes']:
         if episodes['prev']:  # Previous page if any
             prev_item = xbmcgui.ListItem(label='{0} < Prev'.format(episodes['prev']),
-                                         thumbnailImage=os.path.join(_icons, 'previous.png'))
+                                         thumbnailImage=os.path.join(_icons, 'previous.png'),
+                                         iconImage=os.path.join(_icons, 'previous.png'))
             prev_item.setArt({'fanart': __addon__.fanart})
             if search_query:
                 prev_url = '{0}?action=search_episodes&query={1}&page={2}'.format(plugin_url, search_query,
@@ -68,18 +71,21 @@ def episode_list_view(plugin_url, plugin_handle, page, search_query='', imdb='')
                 episode['seeders'] = episode['seeders'].join(('[COLOR=red]', '[/COLOR]'))
             elif int(episode['seeders']) <= 25:
                 episode['seeders'] = episode['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
+            thumb = episode['thumb'] if episode['thumb'] else os.path.join(__addon__.icons_dir, 'tv.png')
             list_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode['title'],
                                                                                                   episode['size'],
                                                                                                   episode['seeders'],
                                                                                                   episode['leechers']),
-                                         thumbnailImage=episode['thumb'])
+                                         thumbnailImage=thumb,
+                                         iconImage=thumb)
             list_item.setInfo('video', episode['info'])
             list_item.setArt({'fanart': __addon__.fanart})
             url = '{0}?action=episode&url={1}'.format(plugin_url, urlsafe_b64encode(episode['link']))
             xbmcplugin.addDirectoryItem(plugin_handle, url, list_item, isFolder=True)
         if episodes['next']:  # Next page if any
             next_item = xbmcgui.ListItem(label='Next > {0}'.format(episodes['next']),
-                                         thumbnailImage=os.path.join(_icons, 'next.png'))
+                                         thumbnailImage=os.path.join(_icons, 'next.png'),
+                                         iconImage=os.path.join(_icons, 'next.png'))
             next_item.setArt({'fanart': __addon__.fanart})
             if search_query:
                 next_url = '{0}?action=search_episodes&query={1}&page={2}'.format(plugin_url, search_query,
@@ -109,11 +115,13 @@ def episode_view(plugin_handle, url):
             episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=red]', '[/COLOR]'))
         elif int(episode_data['seeders']) <= 25:
             episode_data['seeders'] = episode_data['seeders'].join(('[COLOR=yellow]', '[/COLOR]'))
+        poster = episode_data['poster'] if episode_data['poster'] else os.path.join(__addon__.icons_dir, 'tv.png')
         ep_item = xbmcgui.ListItem(label='{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode_data['filename'],
                                                                                             episode_data['size'],
                                                                                             episode_data['seeders'],
                                                                                             episode_data['leechers']),
-                                   thumbnailImage=episode_data['poster'])
+                                   thumbnailImage=poster,
+                                   iconImage=poster)
         ep_item.setInfo('video', episode_data['info'])
         ep_item.setArt({'fanart': __addon__.fanart})
         ep_item.addContextMenuItems([
@@ -126,7 +134,7 @@ def episode_view(plugin_handle, url):
                  episode_data['poster']))])
         url = 'plugin://plugin.video.yatp/?action=play&torrent={torrent}&title={title}&thumb={poster}'.format(
             torrent=urlsafe_b64encode(episode_data['torrent']),
-            title=episode_data['info']['title'],
+            title=urlsafe_b64encode(episode_data['info']['title']),
             poster=urlsafe_b64encode(episode_data['poster']))
         try:
             url += '&season={0}'.format(episode_data['info']['season'])
@@ -148,7 +156,9 @@ def my_shows_view(plugin_url, plugin_handle):
     The list of favorite TV shows
     :return:
     """
-    home_item = xbmcgui.ListItem(label='<< Home', thumbnailImage=os.path.join(_icons, 'home.png'))
+    home_item = xbmcgui.ListItem(label='<< Home',
+                                 thumbnailImage=os.path.join(_icons, 'home.png'),
+                                 iconImage=os.path.join(_icons, 'home.png'))
     xbmcplugin.addDirectoryItem(plugin_handle, plugin_url, home_item, isFolder=True)
     with Storage(__addon__.config_dir) as storage:
         try:
@@ -157,7 +167,9 @@ def my_shows_view(plugin_url, plugin_handle):
             pass
         else:
             for index, show in enumerate(myshows):
-                list_item = xbmcgui.ListItem(label=show[0], thumbnailImage=show[2])
+                list_item = xbmcgui.ListItem(label=show[0],
+                                             thumbnailImage=show[2],
+                                             iconImage=show[2])
                 list_item.setArt({'fanart': __addon__.fanart})
                 url = '{0}?action=episode_list&page=1&imdb={1}'.format(plugin_url, show[1])
                 list_item.addContextMenuItems([('Remove from "My Shows"',

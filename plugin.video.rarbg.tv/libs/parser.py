@@ -59,9 +59,14 @@ def _parse_episodes(html):
         else:
             continue
         title_tag = row.find('a', {'onmouseover': True, 'onmouseout': True})
+        if title_tag is None:
+            title_tag = row.find('a', {'href': re.compile(r'/torrent/'), 'title': True})
         title = title_tag.text
         link = 'http://www.rarbg.to' + title_tag['href']
-        thumb = 'http:' + re.search(r'<img src=\\\'(.+?)\\\'', title_tag['onmouseover']).group(1)
+        if title_tag.get('onmouseover') is not None:
+            thumb = 'http:' + re.search(r'<img src=\\\'(.+?)\\\'', title_tag['onmouseover']).group(1)
+        else:
+            thumb = ''
         extra_info_tag = row.find('span', {'style': 'color:DarkSlateGray'})
         if extra_info_tag is not None:
             extra_info = extra_info_tag.text.split(' IMDB: ')
@@ -125,7 +130,7 @@ def _parse_episode_page(html):
     magnet_tag = soup.find('a', {'href': re.compile(r'magnet')})
     magnet = magnet_tag['href']
     poster_tag = soup.find('img', {'itemprop': 'image', 'border': '0'})
-    poster = 'http:' + poster_tag['src']
+    poster = 'http:' + poster_tag['src'] if poster_tag is not None else ''
     title_tag = soup.find(text='Title:')
     title = re.sub(r' \(TV Series.+?\)', '', title_tag.next.text)
     rating_tag = soup.find(text='IMDB Rating:')
