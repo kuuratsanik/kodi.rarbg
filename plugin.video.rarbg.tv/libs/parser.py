@@ -170,4 +170,43 @@ def _parse_episode_page(html):
         episode_data['info']['episode'] = int(episode)
     if rating is not None:
         episode_data['info']['rating'] = float(rating)
+    mediainfo_tag = soup.find('div', {'id': 'mediainfo_container'})
+    if mediainfo_tag is not None:
+        formats = re.findall(u'Codec ID.+?\: (.+)', mediainfo_tag.text)
+        video_format = {'V_MPEG4/ISO/AVC': 'h264', 'avc1': 'h264', 'XVID': 'xvid'}.get(formats[0], '')
+        audio_format = {'A_AC3': 'ac3', 'A_DTS': 'dts', '55': 'mp3', '40': 'aac'}.get(formats[1], '')
+        video_width = int(re.search(r'Width.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
+        video_height = int(re.search(r'Height.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
+        video_aspect = float(video_width) / video_height
+        video_duration_group = re.search(r'Duration.+?\: (?:(\d+)h )?(\d+)mn(?: (\d+)s)?', mediainfo_tag.text)
+        hours = int(video_duration_group.group(1)) if video_duration_group.group(1) else 0
+        minutes = int(video_duration_group.group(2)) if video_duration_group.group(2) else 0
+        seconds = int(video_duration_group.group(3)) if video_duration_group.group(3) else 0
+        video_duration = 3600 * hours + 60 * minutes + seconds
+        languages = re.findall(u'Language.+?\: (.+)', mediainfo_tag.text)
+        try:
+            audio_language = languages[1][:2].lower()
+        except IndexError:
+            audio_language = ''
+        audio_channels = int(re.search(r'Channel\(s\).+?\: (\d)', mediainfo_tag.text).group(1))
+        if re.search('Text', mediainfo_tag.text) is not None:
+            subs_language = languages[-1][:2].lower()
+        else:
+            subs_language = ''
+        episode_data['video'] = {'codec': video_format,
+                                 'aspect': video_aspect,
+                                 'width': video_width,
+                                 'height': video_height,
+                                 'duration': video_duration}
+        episode_data['audio'] = {'codec': audio_format, 'language': audio_language, 'channels': audio_channels}
+        episode_data['subtitle'] = {'language': subs_language}
+    else:
+        duration_match = re.search(r'\[Duration\]\: (?:(\d+)h )?(\d+)mn(?: (\d+)s)?',
+                                   soup.find(text=re.compile(r'\[Duration\]\:')))
+        if duration_match is not None:
+            hours = int(duration_match.group(1)) if duration_match.group(1) is not None else 0
+            minutes = int(duration_match.group(2)) if duration_match.group(2) is not None else 0
+            seconds = int(duration_match.group(2)) if duration_match.group(3) is not None else 0
+            video_duration = 3600 * hours + 60 * minutes + seconds
+            episode_data['video'] = {'duration': video_duration}
     return episode_data

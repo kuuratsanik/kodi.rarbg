@@ -127,6 +127,11 @@ def episode_view(plugin_handle, url):
                                    iconImage=poster)
         ep_item.setInfo('video', episode_data['info'])
         ep_item.setArt({'fanart': __addon__.fanart})
+        if episode_data.get('video') is not None:
+            ep_item.addStreamInfo('video', episode_data['video'])
+            ep_item.addStreamInfo('audio', episode_data['audio'])
+            if episode_data['subtitle']:
+                ep_item.addStreamInfo('subtitle', episode_data['subtitle'])
         ep_item.addContextMenuItems([
             ('Add to "My Shows"',
              'RunScript({0}/libs/commands.py,myshows_add,{1},{2},{3},{4})'.format(
