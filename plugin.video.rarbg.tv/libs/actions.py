@@ -6,6 +6,9 @@
 
 import os
 from base64 import urlsafe_b64encode
+from urllib import quote_plus
+import xbmc
+import xbmcgui
 from simpleplugin import Plugin
 import parser
 
@@ -61,16 +64,14 @@ def episode_list(params):
                          'thumb': os.path.join(_icons, 'previous.png'),
                          'icon': os.path.join(_icons, 'previous.png'),
                          'fanart': _plugin.fanart}
-            if params.get('query') is not None:
-                prev_item['url'] = _plugin.get_url(action='search_episodes',
-                                                   query=params['query'],
-                                                   page=episodes['prev'])
-            elif params.get('imdb') is not None:
+            if params.get('imdb') is not None:
                 prev_item['url'] = _plugin.get_url(action='episode_list',
                                                    imbd=params['imdb'],
                                                    page=episodes['prev'])
             else:
                 prev_item['url'] = _plugin.get_url(action='episode_list', page=episodes['prev'])
+                if params.get('query') is not None:
+                    prev_item['url'] += '&query=' + params['query']
             listing.append(prev_item)
         for episode in episodes:
             if int(episode['seeders']) <= 10:
@@ -93,15 +94,90 @@ def episode_list(params):
                          'thumb': os.path.join(_icons, 'next.png'),
                          'icon': os.path.join(_icons, 'next.png'),
                          'fanart': _plugin.fanart}
-            if params.get('query') is not None:
-                next_item['url'] = _plugin.get_url(action='search_episodes',
-                                                   query=params['query'],
-                                                   page=episodes['next'])
-            elif params.get('imdb') is not None:
+            if params.get('imdb') is not None:
                 next_item['url'] = _plugin.get_url(action='episode_list',
                                                    imbd=params['imdb'],
                                                    page=episodes['next'])
             else:
                 next_item['url'] = _plugin.get_url(action='episode_list', page=episodes['next'])
+                if params.get('query') is not None:
+                    next_item['url'] += '&query=' + params['query']
             listing.append(next_item)
+    else:
+        xbmcgui.Dialog().notification('Error!', 'No episodes to dislpay!', 'error', 3000)
+        _plugin.log('Empty episode list returned.', xbmc.LOGERROR)
+    return listing
+
+
+def search_episodes(params):
+    """
+    Search episodes
+    :param page: str - page #
+    :param query: str - search query
+    :return:
+    """
+    keyboard = xbmc.Keyboard('', 'Enter a search query')
+    keyboard.doModal()
+    query_text = keyboard.getText()
+    if keyboard.isConfirmed():
+        params['query'] = quote_plus(query_text)
+        episode_list(params)
+    else:
+        xbmcgui.Dialog().notification(_plugin.id, 'Search cancelled!', _plugin.icon, 3000)
+        return []
+
+
+@_plugin.cached(60)
+def episode(params):
+    """
+    Show episode info
+    :param params:
+    :return:
+    """
+    listing = []
+    episode_data = parser.load_episode_page(params['url'])
+    if episode_data['filename']:
+        try:
+            if int(episode_data['seeders']) <= 10:
+                episode_data['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode_data['seeders'])
+            elif int(episode_data['seeders']) <= 25:
+                episode_data['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode_data['seeders'])
+        except ValueError:
+            pass
+        poster = episode_data['poster'] if episode_data['poster'] else os.path.join(_icons, 'tv.png')
+        episode = {'label': '{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode_data['filename'],
+                                                                               episode_data['size'],
+                                                                               episode_data['seeders'],
+                                                                               episode_data['leechers']),
+                   'thumb': poster,
+                   'icon': poster,
+                   'fanart': _plugin.fanart,
+                   'info': {'video': episode_data['info']},
+                   'context_menu': [('Add to "My Shows"',
+                                     'RunScript({0}/libs/commands.py,myshows_add,{1},{2},{3},{4})'.format(
+                                         _plugin.path,
+                                         _plugin.config_dir,
+                                         episode_data['info']['title'],
+                                         episode_data['imdb'],
+                                         episode_data['poster']))],
+                   'url': _plugin.get_url('plugin://plugin.video.yatp/',
+                                          action='play',
+                                          torrent=urlsafe_b64encode(episode_data['torrent']),
+                                          title=urlsafe_b64encode(episode_data['info']['title']),
+                                          thumb=urlsafe_b64encode(poster)),
+                   }
+        try:
+            episode['url'] += '&season={0}'.format(episode_data['info']['season'])
+            episode['url'] += '&episode={0}'.format(episode_data['info']['episode'])
+        except KeyError:
+            pass
+        if episode_data.get('video') is not None:
+            episode['stream_info'] = {'video': episode_data['video']}
+            episode['stream_info']['audio'] = episode_data['audio']
+            if episode_data['subtitle']:
+                episode['stream_info']['subtitle'] = episode_data['subtitle']
+        listing.append(episode)
+    else:
+        xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)
+        _plugin.log('Empty episode data returned.', xbmc.LOGERROR)
     return listing

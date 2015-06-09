@@ -10,6 +10,8 @@ from libs import actions
 plugin = Plugin()
 plugin.actions['root'] = actions.root
 plugin.actions['episode_list'] = actions.episode_list
+plugin.actions['search_episodes'] = actions.search_episodes
+plugin.actions['episode'] = actions.episode
 
 if __name__ == '__main__':
     plugin.run(content='tvshows')
