@@ -16,7 +16,7 @@ import xbmc
 def add_to_favorites(config_dir, title, imdb, poster):
     """
     Add a TV Show to favorites
-    :param configdir: str - Addon config folder
+    :param config_dir: str - Addon config folder
     :param title: str - TV show title
     :param imdb: str - IMDB ID (tt1234567)
     :return:

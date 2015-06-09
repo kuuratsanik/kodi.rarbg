@@ -4,24 +4,18 @@
 # Created on: 13.05.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
-import sys
-from base64 import urlsafe_b64decode
-from urlparse import parse_qsl
-from urllib import quote_plus
-# Kodi modules
-import xbmcplugin
-import xbmc
-import xbmcgui
-# Custom modules
-from libs import views
-from libs.addon import Addon
+from simpleplugin import Plugin
+from libs import actions
+
+plugin = Plugin()
+plugin.actions['root'] = actions.root
+plugin.actions['episode_list'] = actions.episode_list
+
+if __name__ == '__main__':
+    plugin.run(content='tvshows')
 
 
-__addon__ = Addon()
-__url__ = sys.argv[0]
-__handle__ = int(sys.argv[1])
-xbmcplugin.setContent(__handle__, 'tvshows')
-
+'''
 
 def plugin_root():
     """
@@ -100,6 +94,4 @@ def router(paramstring):
         plugin_root()
 
 
-if __name__ == '__main__':
-    __addon__.log('sys.argv: {0}'.format(str(sys.argv)))
-    router(sys.argv[2])
+'''

@@ -8,11 +8,11 @@ import re
 # Additional modules
 from bs4 import BeautifulSoup
 # Custom modules
+from simpleplugin import Plugin
 from webclient import anti_captcha
-from addon import Addon, cached
 
 
-__addon__ = Addon()
+_plugin = Plugin()
 
 _LINKS = {'torrents': 'https://www.rarbg.to/torrents.php?',
           'tv_view': 'https://www.rarbg.to/tv/{0}/'}  # All seasons of a TV show
@@ -27,8 +27,14 @@ def _load_page(url, method='get', data=None):
     return anti_captcha(url, method, data)
 
 
-@cached(15)
-def load_episodes(page, search_query, imdb, quality=__addon__.quality):
+def _get_quality():
+    """
+    Return video quality category
+    """
+    return (['18'], ['41'], ['18', '41'])[_plugin.get_setting('quality')]
+
+
+def load_episodes(page, search_query, imdb):
     """
     Load recent episodes page and return a parsed list of episodes
     :return: dict
@@ -37,7 +43,7 @@ def load_episodes(page, search_query, imdb, quality=__addon__.quality):
     if imdb:
         data['imdb'] = imdb
     else:
-        data['category[]'] = quality
+        data['category[]'] = _get_quality()
         if search_query:
             data['search'] = search_query
     return _parse_episodes(_load_page(_LINKS['torrents'], data=data))
@@ -102,7 +108,6 @@ def _parse_episodes(html):
     return episodes
 
 
-@cached(60)
 def load_episode_page(url):
     """
     Load episode page and return parsed data
