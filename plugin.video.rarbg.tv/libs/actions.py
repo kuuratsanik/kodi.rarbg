@@ -14,9 +14,14 @@ import parser
 
 _plugin = Plugin()
 _icons = os.path.join(_plugin.path, 'resources', 'icons')
+_home = {'label': '<< Home',
+         'thumb': os.path.join(_icons, 'home.png'),
+         'icon': os.path.join(_icons, 'home.png'),
+         'fanart': _plugin.fanart,
+         'url': _plugin.get_url()}
 
 
-@_plugin.cached(60)
+# @_plugin.cached(60)
 def root(params):
     """
     Plugin root
@@ -44,19 +49,14 @@ def root(params):
     return listing
 
 
-@_plugin.cached(15)
+# @_plugin.cached(15)
 def episode_list(params):
     """
     The list of recent episodes
     :param params:
     :return:
     """
-    listing = [{'label': '<< Home',
-                'thumb': os.path.join(_icons, 'home.png'),
-                'icon': os.path.join(_icons, 'home.png'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url()
-                }]
+    listing = [_home]
     episodes = parser.load_episodes(params['page'], params.get('query', ''), params.get('imdb', ''))  # Get episodes
     if episodes['episodes']:
         if episodes['prev']:
@@ -80,9 +80,9 @@ def episode_list(params):
                 episode['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode['seeders'])
             thumb = episode['thumb'] if episode['thumb'] else os.path.join(_icons, 'tv.png')
             listing.append({'label': '{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode['title'],
-                                                                                     episode['size'],
-                                                                                     episode['seeders'],
-                                                                                     episode['leechers']),
+                                                                                        episode['size'],
+                                                                                        episode['seeders'],
+                                                                                        episode['leechers']),
                             'thumb': thumb,
                             'icon': thumb,
                             'fanart': _plugin.fanart,
@@ -112,8 +112,7 @@ def episode_list(params):
 def search_episodes(params):
     """
     Search episodes
-    :param page: str - page #
-    :param query: str - search query
+    :param params:
     :return:
     """
     keyboard = xbmc.Keyboard('', 'Enter a search query')
@@ -127,7 +126,7 @@ def search_episodes(params):
         return []
 
 
-@_plugin.cached(60)
+# @_plugin.cached(60)
 def episode(params):
     """
     Show episode info
@@ -180,4 +179,28 @@ def episode(params):
     else:
         xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)
         _plugin.log('Empty episode data returned.', xbmc.LOGERROR)
+    return listing
+
+
+def my_shows(params):
+    """
+    "My Shows" - the list of favorite TV shows.
+    :param params:
+    :return:
+    """
+    listing = [_home]
+    with _plugin.get_storage('myshows.pcl') as storage:
+        myshows = storage.get('myshows', [])
+        for index, show in enumerate(myshows):
+            listing.append({'label': show[0],
+                            'thumb': show[2],
+                            'icon': show[2],
+                            'fanart': _plugin.fanart,
+                            'url': _plugin.get_url(action='episode_list', page='1', imdb=show[1]),
+                            'context_menu': [('Remove from "My Shows"',
+                                              'RunScript({0}/libs/commands.py,myshows_remove,{1},{2})'.format(
+                                                  _plugin.path,
+                                                  _plugin.config_dir,
+                                                  index))],
+                            })
     return listing

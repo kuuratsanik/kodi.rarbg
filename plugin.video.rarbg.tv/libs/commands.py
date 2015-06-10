@@ -8,10 +8,13 @@
 
 import sys
 import os
-from cPickle import load, dump, PickleError
 #
 import xbmcgui
 import xbmc
+from simpleplugin import Storage
+
+_icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
+
 
 def add_to_favorites(config_dir, title, imdb, poster):
     """
@@ -21,30 +24,14 @@ def add_to_favorites(config_dir, title, imdb, poster):
     :param imdb: str - IMDB ID (tt1234567)
     :return:
     """
-    storage = {}
-    filename = os.path.join(config_dir, 'storage.pcl')
-    if os.path.exists(filename):
-        mode = 'r+b'
-    else:
-        mode = 'w+b'
-    with open(filename, mode) as file_:
-        try:
-            storage = load(file_)
-        except (PickleError, EOFError):
-            pass
-        try:
-            my_shows = storage['myshows']
-        except KeyError:
-            my_shows = []
+    with Storage(config_dir, 'myshows.pcl') as storage:
+        my_shows = storage.get('myshows', [])
         if imdb not in [item[1] for item in my_shows]:
             my_shows.append((title, imdb, poster))
             storage['myshows'] = my_shows
-            file_.seek(0)
-            dump(storage, file_)
-            file_.truncate()
-            xbmcgui.Dialog().notification('Note!', 'The show added to "My Shows"', 'info', 3000)
+            xbmcgui.Dialog().notification('Rarbg', 'The show successfully added to "My Shows"', _icon, 3000)
         else:
-            xbmcgui.Dialog().notification('Error!', 'The show already in "My Shows".', 'error', 3000)
+            xbmcgui.Dialog().notification('Rarbg', 'The show already in "My Shows"!', 'error', 3000)
 
 
 def remove_from_favorites(config_dir, index):
@@ -54,14 +41,9 @@ def remove_from_favorites(config_dir, index):
     :param index: str - digital index of the item to be removed
     :return:
     """
-    filename = os.path.join(config_dir, 'storage.pcl')
-    with open(filename, 'r+b') as file_:
-        storage = load(file_)
+    with Storage(config_dir, 'myshows.pcl') as storage:
         del storage['myshows'][int(index)]
-        file_.seek(0)
-        dump(storage, file_)
-        file_.truncate()
-    xbmcgui.Dialog().notification('Note!', 'The show removed from "My Shows"', 'info', 3000)
+    xbmcgui.Dialog().notification('Rarbg', 'The show removed from "My Shows"', _icon, 3000)
     xbmc.executebuiltin('Container.Refresh')
 
 
