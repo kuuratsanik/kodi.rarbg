@@ -177,6 +177,7 @@ def episode(params):
                                           torrent=urlsafe_b64encode(episode_data['torrent']),
                                           title=urlsafe_b64encode(episode_data['info']['title']),
                                           thumb=urlsafe_b64encode(poster)),
+                   'is_folder': False,
                    }
         try:
             episode['url'] += '&season={0}'.format(episode_data['info']['season'])
