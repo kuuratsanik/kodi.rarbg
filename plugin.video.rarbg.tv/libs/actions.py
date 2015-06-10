@@ -37,7 +37,7 @@ def root(params):
                 'thumb': os.path.join(_icons, 'search.png'),
                 'icon': os.path.join(_icons, 'search.png'),
                 'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='search_episode', page='1'),
+                'url': _plugin.get_url(action='search_episodes', page='1'),
                 },
                {'label': '[My Shows]',
                 'thumb': os.path.join(_icons, 'bookmarks.png'),
@@ -74,6 +74,8 @@ def episode_list(params):
             listing.append(prev_item)
         for episode in episodes['episodes']:
             if int(episode['seeders']) <= 10:
+                if _plugin.get_setting('ignore_weak'):
+                    continue
                 episode['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode['seeders'])
             elif int(episode['seeders']) <= 25:
                 episode['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode['seeders'])
@@ -118,11 +120,13 @@ def search_episodes(params):
     keyboard.doModal()
     query_text = keyboard.getText()
     if keyboard.isConfirmed():
-        params['query'] = quote_plus(query_text)
-        episode_list(params)
+        query = quote_plus(query_text)
+        _plugin.log('Search query: {0}'.format(query))
+        params['query'] = query
+        return episode_list(params)
     else:
         xbmcgui.Dialog().notification(_plugin.id, 'Search cancelled!', _plugin.icon, 3000)
-        return []
+        return [_home]
 
 
 @_plugin.cached(60)

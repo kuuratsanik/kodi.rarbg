@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
     <category label="General">
-        <setting id="quality" type="enum" values="SD only|HD only|SD and HD"
-                 label="Quality" default="2" />
+      <setting id="quality" type="enum" values="SD only|HD only|SD and HD"
+               label="Quality" default="2" />
+      <setting id="ignore_weak" type="bool"
+               label="Ignore weak torrents (&lt;10 seeds)" default="false" />
     </category>
 </settings>
