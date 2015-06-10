@@ -183,11 +183,13 @@ def episode(params):
             episode['url'] += '&episode={0}'.format(episode_data['info']['episode'])
         except KeyError:
             pass
+        episode['stream_info'] = {}
         if episode_data.get('video') is not None:
-            episode['stream_info'] = {'video': episode_data['video']}
+            episode['stream_info']['video'] = episode_data['video']
+        if episode_data.get('audio') is not None:
             episode['stream_info']['audio'] = episode_data['audio']
-            if episode_data['subtitle']:
-                episode['stream_info']['subtitle'] = episode_data['subtitle']
+        if episode_data.get('subtitle') is not None:
+            episode['stream_info']['subtitle'] = episode_data['subtitle']
         listing.append(episode)
     else:
         xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)

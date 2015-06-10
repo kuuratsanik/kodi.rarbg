@@ -195,16 +195,13 @@ def _parse_episode_page(html):
             audio_language = ''
         audio_channels = int(re.search(r'Channel\(s\).+?\: (\d)', mediainfo_tag.text).group(1))
         if re.search('Text', mediainfo_tag.text) is not None:
-            subs_language = languages[-1][:2].lower()
-        else:
-            subs_language = ''
+            episode_data['subtitle'] = {'language': languages[-1][:2].lower()}
         episode_data['video'] = {'codec': video_format,
                                  'aspect': video_aspect,
                                  'width': video_width,
                                  'height': video_height,
                                  'duration': video_duration}
         episode_data['audio'] = {'codec': audio_format, 'language': audio_language, 'channels': audio_channels}
-        episode_data['subtitle'] = {'language': subs_language}
     else:
         duration_tag = soup.find(text=re.compile(r'\[Duration\]\:'))
         if duration_tag is not None:
