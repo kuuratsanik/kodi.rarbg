@@ -5,7 +5,7 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
 import os
-from base64 import urlsafe_b64encode
+from base64 import urlsafe_b64encode, urlsafe_b64decode
 from urllib import quote_plus
 import xbmc
 import xbmcgui
@@ -21,7 +21,6 @@ _home = {'label': '<< Home',
          'url': _plugin.get_url()}
 
 
-# @_plugin.cached(60)
 def root(params):
     """
     Plugin root
@@ -49,7 +48,7 @@ def root(params):
     return listing
 
 
-# @_plugin.cached(15)
+@_plugin.cached(15)
 def episode_list(params):
     """
     The list of recent episodes
@@ -73,7 +72,7 @@ def episode_list(params):
                 if params.get('query') is not None:
                     prev_item['url'] += '&query=' + params['query']
             listing.append(prev_item)
-        for episode in episodes:
+        for episode in episodes['episodes']:
             if int(episode['seeders']) <= 10:
                 episode['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode['seeders'])
             elif int(episode['seeders']) <= 25:
@@ -87,7 +86,7 @@ def episode_list(params):
                             'icon': thumb,
                             'fanart': _plugin.fanart,
                             'info': {'video': episode['info']},
-                            'url': _plugin.get_url(action=episode, url=urlsafe_b64encode(episode['link'])),
+                            'url': _plugin.get_url(action='episode', url=urlsafe_b64encode(episode['link'])),
                             })
         if episodes['next']:
             next_item = {'label': 'Next > {0}'.format(episodes['next']),
@@ -126,7 +125,7 @@ def search_episodes(params):
         return []
 
 
-# @_plugin.cached(60)
+@_plugin.cached(60)
 def episode(params):
     """
     Show episode info
@@ -134,7 +133,7 @@ def episode(params):
     :return:
     """
     listing = []
-    episode_data = parser.load_episode_page(params['url'])
+    episode_data = parser.load_episode_page(urlsafe_b64decode(params['url']))
     if episode_data['filename']:
         try:
             if int(episode_data['seeders']) <= 10:
