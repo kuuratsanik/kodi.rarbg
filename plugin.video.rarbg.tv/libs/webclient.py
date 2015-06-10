@@ -11,10 +11,10 @@ import requests
 #
 from xbmc import LOGDEBUG, LOGERROR
 #
-from addon import Addon, Storage
+from simpleplugin import Plugin
 from dialog import Dialog
 
-__addon__ = Addon()
+_plugin = Plugin()
 
 
 def load_page(url, method='get', data=None):
@@ -26,14 +26,14 @@ def load_page(url, method='get', data=None):
     :param data: dict - data to be sent to a server
     :return:
     """
-    __addon__.log('URL: {0}'.format(url))
+    _plugin.log('URL: {0}'.format(url))
     headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
                 'Accept-Charset': 'UTF-8',
                 'Accept': 'text/html',
                 'Accept-Language': 'en-US, en',
                 'Accept-Encoding': 'gzip, deflate'}
     page = ''
-    with Storage(__addon__.config_dir, 'cookies.pcl') as cookie_jar:
+    with _plugin.get_storage('cookies.pcl') as cookie_jar:
         cookies = cookie_jar.get(urlparse.urlparse(url).hostname)
         if method == 'get':
             response = requests.get(url, params=data, headers=headers, verify=False, cookies=cookies)
@@ -43,7 +43,7 @@ def load_page(url, method='get', data=None):
             raise RuntimeError('Invalid load_page method!')
         cookie_jar[urlparse.urlparse(url).hostname] = response.cookies.get_dict()
         page = response.text
-        __addon__.log(page, LOGDEBUG)
+        _plugin.log(page, LOGDEBUG)
     return page
 
 
@@ -58,10 +58,10 @@ def anti_captcha(*args, **kwargs):
     """
     page = load_page(*args, **kwargs)
     if re.search(r'Prove that you are a human by solving the captcha below', page) is not None:
-        __addon__.log('The site returned captcha!', LOGERROR)
+        _plugin.log('The site returned captcha!', LOGERROR)
         while True:
             captcha_match = re.search(r'<img src="(/captcha2/(.+?)\.png)" />', page)
-            __addon__.log('Captcha: {0}'.format(captcha_match.group(1)))
+            _plugin.log('Captcha: {0}'.format(captcha_match.group(1)))
             dialog = Dialog('http://www.rarbg.to' + captcha_match.group(1))
             dialog.doModal()
             if dialog.confirmed:
@@ -70,15 +70,15 @@ def anti_captcha(*args, **kwargs):
                              'submitted_bot_captcha': '1'}
                 page = load_page('http://www.rarbg.to/bot_check.php', method='post', data=post_data)
                 if re.search(r'You have been successfully verified as a human', page) is not None:
-                    __addon__.log('Captcha solved successfully!')
+                    _plugin.log('Captcha solved successfully!')
                     page = load_page(*args, **kwargs)
                     break
                 else:
-                    __addon__.log('Unable to solve the captcha!', LOGERROR)
+                    _plugin.log('Unable to solve the captcha!', LOGERROR)
                     page = load_page(*args, **kwargs)
                     continue
             else:
-                __addon__.log('Solving captcha is cancelled.')
+                _plugin.log('Solving captcha is cancelled.')
                 page = ''
                 break
     return page

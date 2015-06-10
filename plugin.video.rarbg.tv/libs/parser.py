@@ -8,11 +8,11 @@ import re
 # Additional modules
 from bs4 import BeautifulSoup
 # Custom modules
+from simpleplugin import Plugin
 from webclient import anti_captcha
-from addon import Addon, cached
 
 
-__addon__ = Addon()
+_plugin = Plugin()
 
 _LINKS = {'torrents': 'https://www.rarbg.to/torrents.php?',
           'tv_view': 'https://www.rarbg.to/tv/{0}/'}  # All seasons of a TV show
@@ -27,8 +27,14 @@ def _load_page(url, method='get', data=None):
     return anti_captcha(url, method, data)
 
 
-@cached(15)
-def load_episodes(page, search_query, imdb, quality=__addon__.quality):
+def _get_quality():
+    """
+    Return video quality category
+    """
+    return (['18'], ['41'], ['18', '41'])[_plugin.get_setting('quality')]
+
+
+def load_episodes(page, search_query, imdb):
     """
     Load recent episodes page and return a parsed list of episodes
     :return: dict
@@ -37,7 +43,7 @@ def load_episodes(page, search_query, imdb, quality=__addon__.quality):
     if imdb:
         data['imdb'] = imdb
     else:
-        data['category[]'] = quality
+        data['category[]'] = _get_quality()
         if search_query:
             data['search'] = search_query
     return _parse_episodes(_load_page(_LINKS['torrents'], data=data))
@@ -102,7 +108,6 @@ def _parse_episodes(html):
     return episodes
 
 
-@cached(60)
 def load_episode_page(url):
     """
     Load episode page and return parsed data
@@ -174,7 +179,7 @@ def _parse_episode_page(html):
     if mediainfo_tag is not None:
         formats = re.findall(u'Codec ID.+?\: (.+)', mediainfo_tag.text)
         video_format = {'V_MPEG4/ISO/AVC': 'h264', 'avc1': 'h264', 'XVID': 'xvid'}.get(formats[0], '')
-        audio_format = {'A_AC3': 'ac3', 'A_DTS': 'dts', '55': 'mp3', '40': 'aac'}.get(formats[1], '')
+        audio_format = {'A_AC3': 'ac3', 'A_DTS': 'dts', '55': 'mp3', '40': 'aac', 'A_AAC': 'aac'}.get(formats[1], '')
         video_width = int(re.search(r'Width.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
         video_height = int(re.search(r'Height.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
         video_aspect = float(video_width) / video_height
@@ -203,7 +208,11 @@ def _parse_episode_page(html):
     else:
         duration_tag = soup.find(text=re.compile(r'\[Duration\]\:'))
         if duration_tag is not None:
-            duration_match = re.search(r'\[Duration\]\: (?:(\d+)h )?(\d+)mn(?: (\d+)s)?', duration_tag.text)
+            try:
+                duration_string = duration_tag.text
+            except AttributeError:
+                duration_string = duration_tag
+            duration_match = re.search(r'\[Duration\]\: (?:(\d+)h )?(\d+)mn(?: (\d+)s)?', duration_string)
             hours = int(duration_match.group(1)) if duration_match.group(1) is not None else 0
             minutes = int(duration_match.group(2)) if duration_match.group(2) is not None else 0
             seconds = int(duration_match.group(2)) if duration_match.group(3) is not None else 0
