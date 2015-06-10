@@ -208,7 +208,11 @@ def _parse_episode_page(html):
     else:
         duration_tag = soup.find(text=re.compile(r'\[Duration\]\:'))
         if duration_tag is not None:
-            duration_match = re.search(r'\[Duration\]\: (?:(\d+)h )?(\d+)mn(?: (\d+)s)?', duration_tag.text)
+            try:
+                duration_string = duration_tag.text
+            except AttributeError:
+                duration_string = duration_tag
+            duration_match = re.search(r'\[Duration\]\: (?:(\d+)h )?(\d+)mn(?: (\d+)s)?', duration_string)
             hours = int(duration_match.group(1)) if duration_match.group(1) is not None else 0
             minutes = int(duration_match.group(2)) if duration_match.group(2) is not None else 0
             seconds = int(duration_match.group(2)) if duration_match.group(3) is not None else 0

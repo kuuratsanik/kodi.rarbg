@@ -157,7 +157,17 @@ def episode(params):
                                          _plugin.config_dir,
                                          episode_data['info']['title'],
                                          episode_data['imdb'],
-                                         episode_data['poster']))],
+                                         episode_data['poster'])),
+                                    ('Create .strm file...',
+                                     'RunScript({0}/libs/commands.py,create_strm,{1},{2})'.format(
+                                         _plugin.path,
+                                         episode_data['filename'],
+                                         episode_data['torrent'])),
+                                    ('Download torrent...',
+                                     'RunScript({0}/libs/commands.py,download,{1})'.format(
+                                         _plugin.path,
+                                         episode_data['torrent'])),
+                                    ],
                    'url': _plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
                                           torrent=urlsafe_b64encode(episode_data['torrent']),
