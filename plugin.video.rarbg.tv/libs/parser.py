@@ -179,7 +179,7 @@ def _parse_episode_page(html):
     if mediainfo_tag is not None:
         formats = re.findall(u'Codec ID.+?\: (.+)', mediainfo_tag.text)
         video_format = {'V_MPEG4/ISO/AVC': 'h264', 'avc1': 'h264', 'XVID': 'xvid'}.get(formats[0], '')
-        audio_format = {'A_AC3': 'ac3', 'A_DTS': 'dts', '55': 'mp3', '40': 'aac'}.get(formats[1], '')
+        audio_format = {'A_AC3': 'ac3', 'A_DTS': 'dts', '55': 'mp3', '40': 'aac', 'A_AAC': 'aac'}.get(formats[1], '')
         video_width = int(re.search(r'Width.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
         video_height = int(re.search(r'Height.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
         video_aspect = float(video_width) / video_height
