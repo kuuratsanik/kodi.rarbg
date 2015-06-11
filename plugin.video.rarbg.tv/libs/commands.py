@@ -12,6 +12,7 @@ from base64 import urlsafe_b64encode
 #
 import xbmcgui
 import xbmc
+import xbmcvfs
 from simpleplugin import Storage
 
 _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
@@ -75,6 +76,18 @@ def download(torrent):
             urlsafe_b64encode(torrent),
             urlsafe_b64encode(folder)))
 
+
+def clear_cache():
+    """
+    Clear page cache
+    :return:
+    """
+    if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
+        xbmcvfs.delete('special://profile/addon_data/plugin.video.rarbg.tv/cache.pcl')
+        if not xbmcvfs.exists('special://profile/addon_data/plugin.video.rarbg.tv/cache.pcl'):
+            xbmcgui.Dialog().notification('Rarbg', 'Plugin cache cleared successfully.', _icon, 3000)
+
+
 if __name__ == '__main__':
     if sys.argv[1] == 'myshows_add':
         add_to_favorites(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
@@ -84,3 +97,5 @@ if __name__ == '__main__':
         create_strm(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'download':
         download(sys.argv[2])
+    elif sys.argv[1] == 'clear_cache':
+        clear_cache()
