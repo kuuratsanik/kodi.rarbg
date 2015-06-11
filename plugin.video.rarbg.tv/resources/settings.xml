@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
-    <category label="General">
-      <setting id="quality" type="enum" values="SD only|HD only|SD and HD"
-               label="Quality" default="2" />
-      <setting id="ignore_weak" type="bool"
-               label="Ignore weak torrents (&lt;10 seeds)" default="false" />
-    </category>
+  <category label="General">
+    <setting id="quality" type="enum" values="SD only|HD only|SD and HD"
+             label="Quality" default="2" />
+    <setting id="ignore_weak" type="bool"
+             label="Hide torrents with &lt;10 seeds" default="false" />
+    <setting type="action"
+             label="Clear cache" action="RunScript($CWD/libs/commands.py,clear_cache)" />
+  </category>
 </settings>

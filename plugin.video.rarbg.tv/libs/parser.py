@@ -177,7 +177,7 @@ def _parse_episode_page(html):
         episode_data['info']['rating'] = float(rating)
     mediainfo_tag = soup.find('div', {'id': 'mediainfo_container'})
     if mediainfo_tag is not None:
-        formats = re.findall(u'Codec ID.+?\: (.+)', mediainfo_tag.text)
+        formats = re.findall('Codec ID .+?\: (.+)', mediainfo_tag.text)
         video_format = {'V_MPEG4/ISO/AVC': 'h264', 'avc1': 'h264', 'XVID': 'xvid'}.get(formats[0], '')
         audio_format = {'A_AC3': 'ac3', 'A_DTS': 'dts', '55': 'mp3', '40': 'aac', 'A_AAC': 'aac'}.get(formats[1], '')
         video_width = int(re.search(r'Width.+?\: (\d ?\d+)', mediainfo_tag.text).group(1).replace(' ', ''))
