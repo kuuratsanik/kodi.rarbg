@@ -157,6 +157,8 @@ def _parse_episode_page(html):
         leechers = peers_match.group(2)
     else:
         seeders = leechers = '-'
+    year_tag = soup.find(text='Year:')
+    year = re.search(r'(\d{4})', year_tag.next.text).group(1) if year_tag is not None else None
     episode_data = {'filename': filename,
                     'torrent': torrent,
                     'magnet': magnet,
@@ -175,6 +177,8 @@ def _parse_episode_page(html):
         episode_data['info']['episode'] = int(episode)
     if rating is not None:
         episode_data['info']['rating'] = float(rating)
+    if year is not None:
+        episode_data['info']['year'] = int(year)
     mediainfo_tag = soup.find('div', {'id': 'mediainfo_container'})
     if mediainfo_tag is not None:
         formats = re.findall('Codec ID .+?\: (.+)', mediainfo_tag.text)
