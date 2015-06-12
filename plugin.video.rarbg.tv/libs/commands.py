@@ -49,7 +49,7 @@ def remove_from_favorites(config_dir, index):
     xbmc.executebuiltin('Container.Refresh')
 
 
-def create_strm(filename, torrent):
+def create_strm(filename, torrent, poster, title, season, episode):
     """
     Create a .strm file for torrent
     :param filename:
@@ -59,8 +59,16 @@ def create_strm(filename, torrent):
     dialog = xbmcgui.Dialog()
     folder = dialog.browse(0, 'Select a folder to save .strm', 'video')
     if folder:
+        url = 'plugin://plugin.video.yatp/?action=play&torrent={0}&thumb={1}&title={2}'.format(
+            urlsafe_b64encode(torrent),
+            urlsafe_b64encode(poster),
+            urlsafe_b64encode(title))
+        if season:
+            url += '&season=' + season
+        if episode:
+            url += '&episode' + episode
         with open(os.path.join(folder, filename + '.strm'), 'w') as file_:
-            file_.write('plugin://plugin.video.yatp/?action=play&torrent={0}'.format(urlsafe_b64encode(torrent)))
+            file_.write(url)
         dialog.notification('Rarbg', '.strm file created successfully', _icon, 3000)
 
 
@@ -94,7 +102,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == 'myshows_remove':
         remove_from_favorites(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'create_strm':
-        create_strm(sys.argv[2], sys.argv[3])
+        create_strm(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
     elif sys.argv[1] == 'download':
         download(sys.argv[2])
     elif sys.argv[1] == 'clear_cache':
