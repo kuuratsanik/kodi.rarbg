@@ -74,21 +74,21 @@ def _parse_episodes(html):
         else:
             thumb = ''
         extra_info_tag = row.find('span', {'style': 'color:DarkSlateGray'})
+        genre = rating = None
         if extra_info_tag is not None:
             extra_info = extra_info_tag.text.split(' IMDB: ')
             genre = extra_info[0]
             try:
                 rating = re.search(r'(\d\.\d)/10', extra_info[1]).group(1)
             except IndexError:
-                rating = None
-        else:
-            genre = rating = ''
+                pass
         size = row.contents[-5].text
         seeders = row.contents[-4].text
         leechers = row.contents[-3].text
         episode_data = {'title': title, 'link': link, 'thumb': thumb, 'imdb': imdb, 'size': size, 'seeders': seeders,
-                        'leechers': leechers,
-                        'info': {'genre': genre}}
+                        'leechers': leechers, 'info': {}}
+        if genre is not None:
+            episode_data['info']['genre'] = genre
         if rating is not None:
             episode_data['info']['rating'] = float(rating)
         listing.append(episode_data)

@@ -12,13 +12,13 @@ import xbmcgui
 from simpleplugin import Plugin
 import parser
 
-_plugin = Plugin()
-_icons = os.path.join(_plugin.path, 'resources', 'icons')
+plugin = Plugin()
+_icons = os.path.join(plugin.path, 'resources', 'icons')
 _home = {'label': '<< Home',
          'thumb': os.path.join(_icons, 'home.png'),
          'icon': os.path.join(_icons, 'home.png'),
-         'fanart': _plugin.fanart,
-         'url': _plugin.get_url()}
+         'fanart': plugin.fanart,
+         'url': plugin.get_url()}
 
 
 def root(params):
@@ -30,25 +30,25 @@ def root(params):
     listing = [{'label': '[Recent Episodes]',
                 'thumb': os.path.join(_icons, 'tv.png'),
                 'icon': os.path.join(_icons, 'tv.png'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='episode_list', page='1'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='episode_list', page='1'),
                 },
                {'label': '[Search episodes...]',
                 'thumb': os.path.join(_icons, 'search.png'),
                 'icon': os.path.join(_icons, 'search.png'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='search_episodes', page='1'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='search_episodes', page='1'),
                 },
                {'label': '[My Shows]',
                 'thumb': os.path.join(_icons, 'bookmarks.png'),
                 'icon': os.path.join(_icons, 'bookmarks.png'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='my_shows'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='my_shows'),
                 }]
     return listing
 
 
-@_plugin.cached(15)
+@plugin.cached(15)
 def episode_list(params):
     """
     The list of recent episodes
@@ -62,19 +62,19 @@ def episode_list(params):
             prev_item = {'label': '{0} < Previous'.format(episodes['prev']),
                          'thumb': os.path.join(_icons, 'previous.png'),
                          'icon': os.path.join(_icons, 'previous.png'),
-                         'fanart': _plugin.fanart}
+                         'fanart': plugin.fanart}
             if params.get('imdb') is not None:
-                prev_item['url'] = _plugin.get_url(action='episode_list',
+                prev_item['url'] = plugin.get_url(action='episode_list',
                                                    imbd=params['imdb'],
                                                    page=episodes['prev'])
             else:
-                prev_item['url'] = _plugin.get_url(action='episode_list', page=episodes['prev'])
+                prev_item['url'] = plugin.get_url(action='episode_list', page=episodes['prev'])
                 if params.get('query') is not None:
                     prev_item['url'] += '&query=' + params['query']
             listing.append(prev_item)
         for episode in episodes['episodes']:
             if int(episode['seeders']) <= 10:
-                if _plugin.get_setting('ignore_weak'):
+                if plugin.get_setting('ignore_weak'):
                     continue
                 episode['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode['seeders'])
             elif int(episode['seeders']) <= 25:
@@ -86,27 +86,27 @@ def episode_list(params):
                                                                                         episode['leechers']),
                             'thumb': thumb,
                             'icon': thumb,
-                            'fanart': _plugin.fanart,
+                            'fanart': plugin.fanart,
                             'info': {'video': episode['info']},
-                            'url': _plugin.get_url(action='episode', url=urlsafe_b64encode(episode['link'])),
+                            'url': plugin.get_url(action='episode', url=urlsafe_b64encode(episode['link'])),
                             })
         if episodes['next']:
             next_item = {'label': 'Next > {0}'.format(episodes['next']),
                          'thumb': os.path.join(_icons, 'next.png'),
                          'icon': os.path.join(_icons, 'next.png'),
-                         'fanart': _plugin.fanart}
+                         'fanart': plugin.fanart}
             if params.get('imdb') is not None:
-                next_item['url'] = _plugin.get_url(action='episode_list',
+                next_item['url'] = plugin.get_url(action='episode_list',
                                                    imbd=params['imdb'],
                                                    page=episodes['next'])
             else:
-                next_item['url'] = _plugin.get_url(action='episode_list', page=episodes['next'])
+                next_item['url'] = plugin.get_url(action='episode_list', page=episodes['next'])
                 if params.get('query') is not None:
                     next_item['url'] += '&query=' + params['query']
             listing.append(next_item)
     else:
         xbmcgui.Dialog().notification('Error!', 'No episodes to dislpay!', 'error', 3000)
-        _plugin.log('Empty episode list returned.', xbmc.LOGERROR)
+        plugin.log('Empty episode list returned.', xbmc.LOGERROR)
     return listing
 
 
@@ -121,15 +121,15 @@ def search_episodes(params):
     query_text = keyboard.getText()
     if keyboard.isConfirmed():
         query = quote_plus(query_text)
-        _plugin.log('Search query: {0}'.format(query))
+        plugin.log('Search query: {0}'.format(query))
         params['query'] = query
         return episode_list(params)
     else:
-        xbmcgui.Dialog().notification(_plugin.id, 'Search cancelled!', _plugin.icon, 3000)
+        xbmcgui.Dialog().notification(plugin.id, 'Search cancelled!', plugin.icon, 3000)
         return [_home]
 
 
-@_plugin.cached(60)
+@plugin.cached(60)
 def episode(params):
     """
     Show episode info
@@ -153,30 +153,21 @@ def episode(params):
                                                                                episode_data['leechers']),
                    'thumb': poster,
                    'icon': poster,
-                   'fanart': _plugin.fanart,
+                   'fanart': plugin.fanart,
                    'info': {'video': episode_data['info']},
                    'context_menu': [('Add to "My Shows"',
                                      'RunScript({0}/libs/commands.py,myshows_add,{1},{2},{3},{4})'.format(
-                                         _plugin.path,
-                                         _plugin.config_dir,
+                                         plugin.path,
+                                         plugin.config_dir,
                                          episode_data['info']['title'],
                                          episode_data['imdb'],
                                          episode_data['poster'])),
-                                    # ('Create .strm file...',
-                                    #  'RunScript({0}/libs/commands.py,create_strm,{1},{2},{3},{4},{5},{6})'.format(
-                                    #      _plugin.path,
-                                    #      episode_data['filename'],
-                                    #      episode_data['torrent'],
-                                    #      poster,
-                                    #      episode_data['info']['title'],
-                                    #      episode_data['info'].get('season', ''),
-                                    #      episode_data['info'].get('episode', ''))),
-                                    # ('Download torrent...',
-                                    #  'RunScript({0}/libs/commands.py,download,{1})'.format(
-                                    #      _plugin.path,
-                                    #      episode_data['torrent'])),
+                                    ('Download torrent...',
+                                     'RunScript({0}/libs/commands.py,download,{1})'.format(
+                                         plugin.path,
+                                         episode_data['torrent'])),
                                     ],
-                   'url': _plugin.get_url('plugin://plugin.video.yatp/',
+                   'url': plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
                                           torrent=urlsafe_b64encode(episode_data['torrent']),
                                           title=urlsafe_b64encode(episode_data['info']['title']),
@@ -198,7 +189,7 @@ def episode(params):
         listing.append(episode)
     else:
         xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)
-        _plugin.log('Empty episode data returned.', xbmc.LOGERROR)
+        plugin.log('Empty episode data returned.', xbmc.LOGERROR)
     return listing
 
 
@@ -209,18 +200,26 @@ def my_shows(params):
     :return:
     """
     listing = [_home]
-    with _plugin.get_storage('myshows.pcl') as storage:
+    with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', [])
         for index, show in enumerate(myshows):
             listing.append({'label': show[0],
                             'thumb': show[2],
                             'icon': show[2],
-                            'fanart': _plugin.fanart,
-                            'url': _plugin.get_url(action='episode_list', page='1', imdb=show[1]),
+                            'fanart': plugin.fanart,
+                            'url': plugin.get_url(action='episode_list', page='1', imdb=show[1]),
                             'context_menu': [('Remove from "My Shows"',
                                               'RunScript({0}/libs/commands.py,myshows_remove,{1},{2})'.format(
-                                                  _plugin.path,
-                                                  _plugin.config_dir,
+                                                  plugin.path,
+                                                  plugin.config_dir,
                                                   index))],
                             })
     return listing
+
+
+# Map actions
+plugin.actions['root'] = root
+plugin.actions['episode_list'] = episode_list
+plugin.actions['search_episodes'] = search_episodes
+plugin.actions['episode'] = episode
+plugin.actions['my_shows'] = my_shows
