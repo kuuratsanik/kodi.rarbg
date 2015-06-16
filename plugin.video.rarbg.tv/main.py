@@ -3,6 +3,10 @@
 # Author: Roman V.M.
 # Created on: 13.05.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
+# todo: implement rarbg API
+# todo: implement basic thetvdb API
+# todo: implement search history
+# todo: implement extended thetvdb API
 
 from libs.actions import plugin
 
