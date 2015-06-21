@@ -64,7 +64,7 @@ def _set_info(list_item, torrent):
     :param torrent:
     :return:
     """
-    video = {}
+    video = {'title': torrent['title']}
     if torrent['show_info'] is not None:
         video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
         video['plot'] = torrent['show_info']['plot']
@@ -76,8 +76,7 @@ def _set_info(list_item, torrent):
             list_item['art']['banner'] = torrent['show_info']['banner']
     else:
         list_item['thumb'] = os.path.join(_icons, 'tv.png')
-    if torrent['episode_info'] is not None and torrent['episode_info'].get('title') is not None:
-            video['title'] = torrent['title']
+    if torrent['episode_info'] is not None and torrent['episode_info'].get('epnum') is not None:
             video['season'] = int(torrent['episode_info']['seasonnum'])
             video['episode'] = int(torrent['episode_info']['epnum'])
             video['aired'] = torrent['episode_info']['airdate']
@@ -144,7 +143,7 @@ def _list_torrents(torrents, myshows=False):
     :param torrents: list
     :return:
     """
-    listing = []
+    listing = [_home]
     for index, torrent in enumerate(torrents):
         plugin.log(str(torrent))
         if torrent['seeders'] <= 10:
