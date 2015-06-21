@@ -29,7 +29,7 @@ def add_to_favorites(config_dir, title, thumb, imdb):
     """
     with Storage(config_dir, 'myshows.pcl') as storage:
         my_shows = storage.get('myshows', [])
-        if imdb not in [item[1] for item in my_shows]:
+        if imdb not in [item[2] for item in my_shows]:
             my_shows.append((title, thumb, imdb))
             storage['myshows'] = my_shows
             xbmcgui.Dialog().notification('Rarbg', 'The show successfully added to "My Shows"', _icon, 3000)

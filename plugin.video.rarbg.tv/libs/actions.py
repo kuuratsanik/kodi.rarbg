@@ -57,14 +57,80 @@ def _get_category():
     return ('18;41', '18', '41',)[plugin.get_setting('quality')]
 
 
-def _list_torrents(torrents):
+def _set_info(list_item, torrent):
+    """
+    Set additional info
+
+    :param torrent:
+    :return:
+    """
+    video = {}
+    if torrent['show_info'] is not None:
+        video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
+        video['plot'] = torrent['show_info']['plot']
+        video['year'] = int(torrent['show_info']['premiered'][:4])
+        video['season'] = 0  # Needed for Kodi to treat the item as an episode
+        list_item['thumb'] = torrent['show_info']['banner']
+        if torrent['show_info']['banner'] is not None:
+            list_item['art'] = {}
+            list_item['art']['banner'] = torrent['show_info']['banner']
+    else:
+        list_item['thumb'] = os.path.join(_icons, 'tv.png')
+    if torrent['episode_info'] is not None and torrent['episode_info'].get('title') is not None:
+            video['title'] = torrent['title']
+            video['season'] = int(torrent['episode_info']['seasonnum'])
+            video['episode'] = int(torrent['episode_info']['epnum'])
+            video['aired'] = torrent['episode_info']['airdate']
+    else:
+        se_match = re.search(r'\.[Ss](\d+)[Ee]?(\d+)?', torrent['title'])
+        if se_match is None:
+            se_match = re.search(r'\.(\d+)[Xx](\d+)?', torrent['title'])
+        if se_match is not None:
+            video['season'] = int(se_match.group(1))
+            try:
+                video['episode'] = int(se_match.group(2))
+            except TypeError:
+                pass
+    list_item['info'] = {}
+    list_item['info']['video'] = video
+
+
+def _set_stream_info(list_item, torrent):
+    """
+    Set additional video stream info.
+    :param list_item:
+    :param torrent:
+    :return:
+    """
+    list_item['stream_info'] = {'video': {}}
+    resolution_match = re.search(r'(720|1080)[pi]', torrent['title'].lower())
+    if resolution_match is not None and resolution_match.group(1) == '720':
+        list_item['stream_info']['video']['width'] = 1280
+        list_item['stream_info']['video']['height'] = 720
+    elif resolution_match is not None and resolution_match.group(1) == '1080':
+        list_item['stream_info']['video']['width'] = 1920
+        list_item['stream_info']['video']['height'] = 1080
+    else:
+        list_item['stream_info']['video']['width'] = 720
+        list_item['stream_info']['video']['height'] = 480
+    codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'].lower())
+    if codec_match is not None:
+        if codec_match.group(0).endswith('264'):
+            list_item['stream_info']['video']['codec'] = 'h264'
+        elif codec_match.group(0) == 'mpeg2':
+            list_item['stream_info']['video']['codec'] = 'mpeg2video'
+        else:
+            list_item['stream_info']['video']['codec'] = codec_match.group(0)
+
+
+def _list_torrents(torrents, myshows=False):
     """
     Show the list of torrents
     :param torrents: list
     :return:
     """
     listing = []
-    for torrent in torrents:
+    for index, torrent in enumerate(torrents):
         plugin.log(str(torrent))
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
@@ -78,72 +144,30 @@ def _list_torrents(torrents):
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
                      'fanart': plugin.fanart,
-                     'info': {},
-                     'stream_info': {'video': {}},
                      'is_folder': False,
+                     'context_menu': [('Download torrent...',
+                                       'RunScript({0}/libs/commands.py,download,{1})'.format(
+                                           plugin.path,
+                                           torrent['download']))]
                      }
-        video = {}
-        if torrent['show_info'] is not None:
-            video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
-            video['plot'] = torrent['show_info']['plot']
-            video['year'] = int(torrent['show_info']['premiered'][:4])
-            video['season'] = 0
-            list_item['thumb'] = torrent['show_info']['banner']
-            if torrent['show_info']['banner'] is not None:
-                list_item['art'] = {}
-                list_item['art']['banner'] = torrent['show_info']['banner']
-            list_item['context_menu'] = [('Add to "My shows"',
-                u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
-                plugin_path=plugin.path,
-                config_dir=plugin.config_dir,
-                title=torrent['show_info']['tvshowtitle'],
-                thumb=torrent['show_info']['banner'],
-                imdb=torrent['episode_info']['imdb'])
-                                         )]
-        else:
-            list_item['thumb'] = os.path.join(_icons, 'tv.png')
-        if torrent['episode_info'] is not None and torrent['episode_info'].get('title') is not None:
-                # video['title'] = torrent['episode_info']['title'] - Screws a list in Aeon-Shednox
-                video['season'] = int(torrent['episode_info']['seasonnum'])
-                video['episode'] = int(torrent['episode_info']['epnum'])
-                video['aired'] = torrent['episode_info']['airdate']
-        else:
-            se_match = re.search(r'\.[Ss](\d+)[Ee]?(\d+)?', torrent['title'])
-            if se_match is None:
-                se_match = re.search(r'\.(\d+)[Xx](\d+)?', torrent['title'])
-            if se_match is not None:
-                video['season'] = int(se_match.group(1))
-                try:
-                    video['episode'] = int(se_match.group(2))
-                except TypeError:
-                    pass
-        list_item['info']['video'] = video
+        _set_info(list_item, torrent)
+        _set_stream_info(list_item, torrent)
         list_item['url'] = plugin.get_url(plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
                                           torrent=base64.urlsafe_b64encode(torrent['download'].encode('utf-8')),
-                                          title=base64.urlsafe_b64encode(video.get('tvshowtitle',
-                                                                                   torrent['title']).encode('utf-8')),
+                                          title=base64.urlsafe_b64encode(list_item['info']['video'].get('tvshowtitle',
+                                                                                                '').encode('utf-8')),
                                           thumb=base64.urlsafe_b64encode(list_item['thumb'].encode('utf-8')),
-                                          season=video.get('season', ''),
-                                          episode=video.get('episode', '')))
-        resolution_match = re.search(r'(720|1080)[pi]', torrent['title'].lower())
-        if resolution_match is not None and resolution_match.group(1) == '720':
-            list_item['stream_info']['video']['width'] = 1280
-            list_item['stream_info']['video']['height'] = 720
-        elif resolution_match is not None and resolution_match.group(1) == '1080':
-            list_item['stream_info']['video']['width'] = 1920
-            list_item['stream_info']['video']['height'] = 1080
-        else:
-            list_item['stream_info']['video']['width'] = 720
-            list_item['stream_info']['video']['height'] = 480
-        codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'].lower())
-        if codec_match is not None:
-            if codec_match.group(0).endswith('264'):
-                list_item['stream_info']['video']['codec'] = 'h264'
-            elif codec_match.group(0) == 'mpeg2':
-                list_item['stream_info']['video']['codec'] = 'mpeg2video'
-            else:
-                list_item['stream_info']['video']['codec'] = codec_match.group(0)
+                                          season=list_item['info']['video'].get('season', ''),
+                                          episode=list_item['info']['video'].get('episode', '')))
+        if not myshows and torrent['show_info']:
+            list_item['context_menu'].append(('Add to "My shows"...',
+                u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
+                    plugin_path=plugin.path,
+                    config_dir=plugin.config_dir,
+                    title=torrent['show_info']['tvshowtitle'],
+                    thumb=torrent['show_info']['banner'],
+                    imdb=torrent['episode_info']['imdb'])))
         listing.append(list_item)
     return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
 
@@ -186,7 +210,8 @@ def episodes(params):
     """
     return _list_torrents(_get_torrents(params['mode'],
                                         search_imdb=params.get('search_imdb', ''),
-                                        category=_get_category()))
+                                        category=_get_category()),
+                          myshows=params.get('myshows', False))
 
 
 def search_torrents(params):
@@ -219,17 +244,26 @@ def my_shows(params):
     with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', ())
     with plugin.get_storage('tvshows.pcl') as tvshows:
-        for show in myshows:
+        for index, show in enumerate(myshows):
             listing.append({'label': show[0],
                             'thumb': show[1],
                             'fanart': plugin.fanart,
                             'art': {'banner': show[1]},
-                            'url': plugin.get_url(action='episodes', mode='search', search_imdb=show[2]),
+                            'url': plugin.get_url(action='episodes',
+                                                  mode='search',
+                                                  search_imdb=show[2],
+                                                  myshows='true'),
                             'info': {'video': {'tvshowtitle': tvshows[show[2]]['tvshowtitle'],
                                                'title': tvshows[show[2]]['tvshowtitle'],
                                                'plot': tvshows[show[2]]['plot'],
                                                'premiered': tvshows[show[2]]['premiered'],
-                                               'year': int(tvshows[show[2]]['premiered'][:4])}}
+                                               'year': int(tvshows[show[2]]['premiered'][:4])}},
+                            'context_menu': [('Remove from "My Shows"...',
+                                              'RunScript({plugin_path}/libs/commands.py,{config_dir},{index}'.format(
+                                                  plugin_path=plugin.path,
+                                                  config_dir=plugin.config_dir,
+                                                  index=index
+                                              ))]
                             })
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
 
