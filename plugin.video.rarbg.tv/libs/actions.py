@@ -123,6 +123,21 @@ def _set_stream_info(list_item, torrent):
             list_item['stream_info']['video']['codec'] = codec_match.group(0)
 
 
+def _enter_search_query():
+    """
+    Enter a search query on Kodi on-screen keyboard.
+    :return:
+    """
+    keyboard = xbmc.Keyboard('', 'Enter search text')
+    keyboard.doModal()
+    text = keyboard.getText()
+    if keyboard.isConfirmed() and text:
+        query = urllib.quote_plus(text)
+    else:
+        query = ''
+    return query
+
+
 def _list_torrents(torrents, myshows=False):
     """
     Show the list of torrents
@@ -188,7 +203,7 @@ def root(params):
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='my_shows'),
                },
-               {'label': '[Search Rarbg torrents...]',
+               {'label': '[Search Rarbg TV torrents...]',
                 'thumb': plugin.icon,
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='search_torrents')
@@ -220,18 +235,15 @@ def search_torrents(params):
     :param params:
     :return:
     """
-    keyboard = xbmc.Keyboard('', 'Enter search text')
-    keyboard.doModal()
-    text = keyboard.getText()
-    if keyboard.isConfirmed() and text:
+    results = []
+    query = _enter_search_query()
+    if query:
         results = _get_torrents(mode='search',
-                                search_sthring=urllib.quote_plus(text),
+                                search_sthring=query,
                                 category=_get_category())
-        if results:
-            return _list_torrents(results)
-        else:
+        if not results:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    return plugin.create_listing([_home], view_mode=_set_view_mode())
+    return _list_torrents(results)
 
 
 def my_shows(params):
@@ -274,11 +286,9 @@ def search_thetvdb(params):
     :param params:
     :return:
     """
-    keyboard = xbmc.Keyboard('', 'Enter the name of a TV show')
-    keyboard.doModal()
-    text = keyboard.getText()
-    if keyboard.isConfirmed() and text:
-        tvshows = thetvdb.get_series(urllib.quote_plus(text))
+    query = _enter_search_query()
+    if query:
+        tvshows = thetvdb.get_series(query)
         if tvshows:
             index = xbmcgui.Dialog().select('Select a TV show', [show['tvshowtitle'] for show in tvshows])
             if index >= 0:
@@ -286,7 +296,6 @@ def search_thetvdb(params):
         else:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
     return plugin.create_listing([_home], view_mode=_set_view_mode())
-
 
 #Map actions
 plugin.actions['root'] = root
