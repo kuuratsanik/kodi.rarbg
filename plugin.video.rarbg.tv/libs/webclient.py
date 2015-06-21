@@ -22,7 +22,7 @@ def load_page(url, method='get', data=None, headers=None):
     :param headers: dict - custom headers to replace/add to default ones
     :return: unicode or dict - response contents or a dictionary of json-decoded data
     """
-    _plugin.log('URL: {0}'.format(url))
+    _plugin.log('URL: {0}, params: {1}'.format(url, str(data)))
     request_headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
                        'Accept-Charset': 'UTF-8',
                        'Accept': 'text/html,application/json,application/xml',

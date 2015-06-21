@@ -4,9 +4,11 @@
 # Created on: 13.05.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 # todo: implement search history
-# todo: implement favorite shows
 # todo: implement extended thetvdb API
 
-from libs.actions import plugin
+from simpleplugin import Plugin
+from libs import actions
 
+plugin = Plugin()
+plugin.map_actions(actions)
 plugin.run()
