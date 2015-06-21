@@ -6,9 +6,6 @@
 # todo: implement search history
 # todo: implement extended thetvdb API
 
-from simpleplugin import Plugin
-from libs import actions
+from libs.actions import plugin
 
-plugin = Plugin()
-plugin.map_actions(actions)
 plugin.run()

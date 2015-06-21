@@ -14,20 +14,20 @@ from simpleplugin import Plugin
 import torrent_info
 import thetvdb
 
-_plugin = Plugin()
-_icons = os.path.join(_plugin.path, 'resources', 'icons')
+plugin = Plugin()
+_icons = os.path.join(plugin.path, 'resources', 'icons')
 _home = {'label': '<< Home',
          'thumb': os.path.join(_icons, 'home.png'),
          'icon': os.path.join(_icons, 'home.png'),
-         'fanart': _plugin.fanart,
-         'url': _plugin.get_url()}
+         'fanart': plugin.fanart,
+         'url': plugin.get_url()}
 
 
-@_plugin.cached(15)
+@plugin.cached(15)
 def _get_torrents(mode, category='', search_sthring='', search_imdb=''):
-    rarbg_params = {'mode': mode, 'limit': _plugin.get_setting('itemcount')}
-    if _plugin.get_setting('ignore_weak'):
-        rarbg_params['min_seeders'] = _plugin.get_setting('min_seeders', False)
+    rarbg_params = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
+    if plugin.get_setting('ignore_weak'):
+        rarbg_params['min_seeders'] = plugin.get_setting('min_seeders', False)
     if category:
         rarbg_params['category'] = category
     if search_sthring:
@@ -54,7 +54,7 @@ def _get_category():
     Get Rarbe torrents category
     :return:
     """
-    return ('18;41', '18', '41',)[_plugin.get_setting('quality')]
+    return ('18;41', '18', '41',)[plugin.get_setting('quality')]
 
 
 def _list_torrents(torrents):
@@ -65,7 +65,7 @@ def _list_torrents(torrents):
     """
     listing = []
     for torrent in torrents:
-        _plugin.log(str(torrent))
+        plugin.log(str(torrent))
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
         elif torrent['seeders'] <= 25:
@@ -77,7 +77,7 @@ def _list_torrents(torrents):
                                 size=torrent['size'] / 1048576,
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
-                     'fanart': _plugin.fanart,
+                     'fanart': plugin.fanart,
                      'info': {},
                      'stream_info': {'video': {}},
                      'is_folder': False,
@@ -94,8 +94,8 @@ def _list_torrents(torrents):
                 list_item['art']['banner'] = torrent['show_info']['banner']
             list_item['context_menu'] = [('Add to "My shows"',
                 u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
-                plugin_path=_plugin.path,
-                config_dir=_plugin.config_dir,
+                plugin_path=plugin.path,
+                config_dir=plugin.config_dir,
                 title=torrent['show_info']['tvshowtitle'],
                 thumb=torrent['show_info']['banner'],
                 imdb=torrent['episode_info']['imdb'])
@@ -118,7 +118,7 @@ def _list_torrents(torrents):
                 except TypeError:
                     pass
         list_item['info']['video'] = video
-        list_item['url'] = _plugin.get_url(_plugin.get_url('plugin://plugin.video.yatp/',
+        list_item['url'] = plugin.get_url(plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
                                           torrent=base64.urlsafe_b64encode(torrent['download'].encode('utf-8')),
                                           title=base64.urlsafe_b64encode(video.get('tvshowtitle',
@@ -145,7 +145,7 @@ def _list_torrents(torrents):
             else:
                 list_item['stream_info']['video']['codec'] = codec_match.group(0)
         listing.append(list_item)
-    return _plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
+    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
 
 
 def root(params):
@@ -156,23 +156,23 @@ def root(params):
     """
     listing = [{'label': '[Recent Episodes]',
                 'thumb': os.path.join(_icons, 'tv.png'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='episodes', mode='list'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='episodes', mode='list'),
                 },
                {'label': '[My shows]',
                 'thumb': os.path.join(_icons, 'bookmarks.png'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='my_shows'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='my_shows'),
                },
                {'label': '[Search Rarbg torrents...]',
-                'thumb': _plugin.icon,
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='search_torrents')
+                'thumb': plugin.icon,
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='search_torrents')
                },
                {'label': '[Search using TheTVDB...]',
                 'thumb': os.path.join(_icons, 'thetvdb.jpg'),
-                'fanart': _plugin.fanart,
-                'url': _plugin.get_url(action='search_thetvdb')
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='search_thetvdb')
                 }
                ]
     return listing
@@ -206,7 +206,7 @@ def search_torrents(params):
             return _list_torrents(results)
         else:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    return _plugin.create_listing([_home], view_mode=_set_view_mode())
+    return plugin.create_listing([_home], view_mode=_set_view_mode())
 
 
 def my_shows(params):
@@ -216,22 +216,22 @@ def my_shows(params):
     :return:
     """
     listing = [_home]
-    with _plugin.get_storage('myshows.pcl') as storage:
+    with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', ())
-    with _plugin.get_storage('tvshows.pcl') as tvshows:
+    with plugin.get_storage('tvshows.pcl') as tvshows:
         for show in myshows:
             listing.append({'label': show[0],
                             'thumb': show[1],
-                            'fanart': _plugin.fanart,
+                            'fanart': plugin.fanart,
                             'art': {'banner': show[1]},
-                            'url': _plugin.get_url(action='episodes', mode='search', search_imdb=show[2]),
+                            'url': plugin.get_url(action='episodes', mode='search', search_imdb=show[2]),
                             'info': {'video': {'tvshowtitle': tvshows[show[2]]['tvshowtitle'],
                                                'title': tvshows[show[2]]['tvshowtitle'],
                                                'plot': tvshows[show[2]]['plot'],
                                                'premiered': tvshows[show[2]]['premiered'],
                                                'year': int(tvshows[show[2]]['premiered'][:4])}}
                             })
-    return _plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
+    return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
 
 
 def search_thetvdb(params):
@@ -251,4 +251,12 @@ def search_thetvdb(params):
                 return episodes({'mode': 'search', 'search_imdb': tvshows[index]['imdb']})
         else:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    return _plugin.create_listing([_home], view_mode=_set_view_mode())
+    return plugin.create_listing([_home], view_mode=_set_view_mode())
+
+
+#Map actions
+plugin.actions['root'] = root
+plugin.actions['episodes'] = episodes
+plugin.actions['search_torrents'] = search_torrents
+plugin.actions['my_shows'] = my_shows
+plugin.actions['search_thetvdb'] = search_thetvdb
