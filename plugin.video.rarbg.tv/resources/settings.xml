@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
   <category label="General">
-    <setting id="quality" type="enum" values="SD only|HD only|SD and HD"
-             label="Quality" default="2" />
+    <setting id="quality" type="enum" values="SD and HD|SD only|HD only"
+             label="Quality" default="0" />
+    <setting id="itemcount" type="labelenum" values="25|50|100"
+        label="The number of recent episodes" default = "50"/>
     <setting id="ignore_weak" type="bool"
-             label="Hide torrents with &lt;10 seeds" default="false" />
+             label="Hide torrents with few seeds" default="false" />
+    <setting id="min_seeders" type="number"
+             label="Minimal seeds number" default="10" enable="eq(-1,true)" />
     <setting type="action"
              label="Clear cache" action="RunScript($CWD/libs/commands.py,clear_cache)" />
   </category>

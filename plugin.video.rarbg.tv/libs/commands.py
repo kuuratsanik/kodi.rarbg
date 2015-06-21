@@ -18,18 +18,19 @@ from simpleplugin import Storage
 _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
 
 
-def add_to_favorites(config_dir, title, imdb, poster):
+def add_to_favorites(config_dir, title, thumb, imdb):
     """
     Add a TV Show to favorites
     :param config_dir: str - Addon config folder
     :param title: str - TV show title
     :param imdb: str - IMDB ID (tt1234567)
+    :param thumb: str - item's thumbnail image
     :return:
     """
     with Storage(config_dir, 'myshows.pcl') as storage:
         my_shows = storage.get('myshows', [])
-        if imdb not in [item[1] for item in my_shows]:
-            my_shows.append((title, imdb, poster))
+        if imdb not in [item[2] for item in my_shows]:
+            my_shows.append((title, thumb, imdb))
             storage['myshows'] = my_shows
             xbmcgui.Dialog().notification('Rarbg', 'The show successfully added to "My Shows"', _icon, 3000)
         else:

@@ -5,12 +5,14 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 
 import os
-from base64 import urlsafe_b64encode, urlsafe_b64decode
-from urllib import quote_plus
+import base64
+import re
+import urllib
 import xbmc
 import xbmcgui
 from simpleplugin import Plugin
-import parser
+import torrent_info
+import thetvdb
 
 plugin = Plugin()
 _icons = os.path.join(plugin.path, 'resources', 'icons')
@@ -21,6 +23,169 @@ _home = {'label': '<< Home',
          'url': plugin.get_url()}
 
 
+@plugin.cached(15)
+def _get_torrents(mode, category='', search_sthring='', search_imdb=''):
+    rarbg_params = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
+    if plugin.get_setting('ignore_weak'):
+        rarbg_params['min_seeders'] = plugin.get_setting('min_seeders', False)
+    if category:
+        rarbg_params['category'] = category
+    if search_sthring:
+        rarbg_params['search_string'] = search_sthring
+    if search_imdb:
+        rarbg_params['search_imdb'] = search_imdb
+    return torrent_info.get_torrents(rarbg_params)
+
+
+def _set_view_mode():
+    """
+    Set view mode
+    :return:
+    """
+    if xbmc.getSkinDir() == 'skin.confluence':
+        view_mode = 503
+    else:
+        view_mode = 50
+    return view_mode
+
+
+def _get_category():
+    """
+    Get Rarbe torrents category
+    :return:
+    """
+    return ('18;41', '18', '41',)[plugin.get_setting('quality')]
+
+
+def _set_info(list_item, torrent):
+    """
+    Set additional info
+
+    :param torrent:
+    :return:
+    """
+    video = {'title': torrent['title']}
+    if torrent['show_info'] is not None:
+        video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
+        video['plot'] = torrent['show_info']['plot']
+        video['year'] = int(torrent['show_info']['premiered'][:4])
+        video['season'] = 0  # Needed for Kodi to treat the item as an episode
+        list_item['thumb'] = torrent['show_info']['banner']
+        if torrent['show_info']['banner'] is not None:
+            list_item['art'] = {}
+            list_item['art']['banner'] = torrent['show_info']['banner']
+    else:
+        list_item['thumb'] = os.path.join(_icons, 'tv.png')
+    if torrent['episode_info'] is not None and torrent['episode_info'].get('epnum') is not None:
+            video['season'] = int(torrent['episode_info']['seasonnum'])
+            video['episode'] = int(torrent['episode_info']['epnum'])
+            video['aired'] = torrent['episode_info']['airdate']
+    else:
+        se_match = re.search(r'\.[Ss](\d+)[Ee]?(\d+)?', torrent['title'])
+        if se_match is None:
+            se_match = re.search(r'\.(\d+)[Xx](\d+)?', torrent['title'])
+        if se_match is not None:
+            video['season'] = int(se_match.group(1))
+            try:
+                video['episode'] = int(se_match.group(2))
+            except TypeError:
+                pass
+    list_item['info'] = {}
+    list_item['info']['video'] = video
+
+
+def _set_stream_info(list_item, torrent):
+    """
+    Set additional video stream info.
+    :param list_item:
+    :param torrent:
+    :return:
+    """
+    list_item['stream_info'] = {'video': {}}
+    resolution_match = re.search(r'(720|1080)[pi]', torrent['title'].lower())
+    if resolution_match is not None and resolution_match.group(1) == '720':
+        list_item['stream_info']['video']['width'] = 1280
+        list_item['stream_info']['video']['height'] = 720
+    elif resolution_match is not None and resolution_match.group(1) == '1080':
+        list_item['stream_info']['video']['width'] = 1920
+        list_item['stream_info']['video']['height'] = 1080
+    else:
+        list_item['stream_info']['video']['width'] = 720
+        list_item['stream_info']['video']['height'] = 480
+    codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'].lower())
+    if codec_match is not None:
+        if codec_match.group(0).endswith('264'):
+            list_item['stream_info']['video']['codec'] = 'h264'
+        elif codec_match.group(0) == 'mpeg2':
+            list_item['stream_info']['video']['codec'] = 'mpeg2video'
+        else:
+            list_item['stream_info']['video']['codec'] = codec_match.group(0)
+
+
+def _enter_search_query():
+    """
+    Enter a search query on Kodi on-screen keyboard.
+    :return:
+    """
+    keyboard = xbmc.Keyboard('', 'Enter search text')
+    keyboard.doModal()
+    text = keyboard.getText()
+    if keyboard.isConfirmed() and text:
+        query = urllib.quote_plus(text)
+    else:
+        query = ''
+    return query
+
+
+def _list_torrents(torrents, myshows=False):
+    """
+    Show the list of torrents
+    :param torrents: list
+    :return:
+    """
+    listing = [_home]
+    for index, torrent in enumerate(torrents):
+        plugin.log(str(torrent))
+        if torrent['seeders'] <= 10:
+            seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
+        elif torrent['seeders'] <= 25:
+            seeders = '[COLOR=yellow]{0}[/COLOR]'.format(torrent['seeders'])
+        else:
+            seeders = str(torrent['seeders'])
+        list_item = {'label': '{title} [COLOR=gray]({size}MB|S:{seeders}/L:{leechers})[/COLOR]'.format(
+                                title=torrent['title'],
+                                size=torrent['size'] / 1048576,
+                                seeders=seeders,
+                                leechers=torrent['leechers']),
+                     'fanart': plugin.fanart,
+                     'is_folder': False,
+                     'context_menu': [('Download torrent...',
+                                       'RunScript({0}/libs/commands.py,download,{1})'.format(
+                                           plugin.path,
+                                           torrent['download']))]
+                     }
+        _set_info(list_item, torrent)
+        _set_stream_info(list_item, torrent)
+        list_item['url'] = plugin.get_url(plugin.get_url('plugin://plugin.video.yatp/',
+                                          action='play',
+                                          torrent=base64.urlsafe_b64encode(torrent['download'].encode('utf-8')),
+                                          title=base64.urlsafe_b64encode(list_item['info']['video'].get('tvshowtitle',
+                                                                                                '').encode('utf-8')),
+                                          thumb=base64.urlsafe_b64encode(list_item['thumb']),
+                                          season=list_item['info']['video'].get('season', ''),
+                                          episode=list_item['info']['video'].get('episode', '')))
+        if not myshows and torrent['show_info']:
+            list_item['context_menu'].append(('Add to "My shows"...',
+                u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
+                    plugin_path=plugin.path,
+                    config_dir=plugin.config_dir,
+                    title=torrent['show_info']['tvshowtitle'],
+                    thumb=torrent['show_info']['banner'],
+                    imdb=torrent['episode_info']['imdb'])))
+        listing.append(list_item)
+    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
+
+
 def root(params):
     """
     Plugin root
@@ -29,197 +194,111 @@ def root(params):
     """
     listing = [{'label': '[Recent Episodes]',
                 'thumb': os.path.join(_icons, 'tv.png'),
-                'icon': os.path.join(_icons, 'tv.png'),
                 'fanart': plugin.fanart,
-                'url': plugin.get_url(action='episode_list', page='1'),
+                'url': plugin.get_url(action='episodes', mode='list'),
                 },
-               {'label': '[Search episodes...]',
-                'thumb': os.path.join(_icons, 'search.png'),
-                'icon': os.path.join(_icons, 'search.png'),
-                'fanart': plugin.fanart,
-                'url': plugin.get_url(action='search_episodes', page='1'),
-                },
-               {'label': '[My Shows]',
+               {'label': '[My shows]',
                 'thumb': os.path.join(_icons, 'bookmarks.png'),
-                'icon': os.path.join(_icons, 'bookmarks.png'),
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='my_shows'),
-                }]
+               },
+               {'label': '[Search Rarbg TV torrents...]',
+                'thumb': plugin.icon,
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='search_torrents')
+               },
+               {'label': '[Search using TheTVDB...]',
+                'thumb': os.path.join(_icons, 'thetvdb.jpg'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='search_thetvdb')
+                }
+               ]
     return listing
 
 
-@plugin.cached(15)
-def episode_list(params):
+def episodes(params):
     """
-    The list of recent episodes
+    Show the list of recent episodes
     :param params:
     :return:
     """
-    listing = [_home]
-    episodes = parser.load_episodes(params['page'], params.get('query', ''), params.get('imdb', ''))  # Get episodes
-    if episodes['episodes']:
-        if episodes['prev']:
-            prev_item = {'label': '{0} < Previous'.format(episodes['prev']),
-                         'thumb': os.path.join(_icons, 'previous.png'),
-                         'icon': os.path.join(_icons, 'previous.png'),
-                         'fanart': plugin.fanart}
-            if params.get('imdb') is not None:
-                prev_item['url'] = plugin.get_url(action='episode_list',
-                                                   imbd=params['imdb'],
-                                                   page=episodes['prev'])
-            else:
-                prev_item['url'] = plugin.get_url(action='episode_list', page=episodes['prev'])
-                if params.get('query') is not None:
-                    prev_item['url'] += '&query=' + params['query']
-            listing.append(prev_item)
-        for episode in episodes['episodes']:
-            if int(episode['seeders']) <= 10:
-                if plugin.get_setting('ignore_weak'):
-                    continue
-                episode['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode['seeders'])
-            elif int(episode['seeders']) <= 25:
-                episode['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode['seeders'])
-            thumb = episode['thumb'] if episode['thumb'] else os.path.join(_icons, 'tv.png')
-            listing.append({'label': '{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode['title'],
-                                                                                        episode['size'],
-                                                                                        episode['seeders'],
-                                                                                        episode['leechers']),
-                            'thumb': thumb,
-                            'icon': thumb,
-                            'fanart': plugin.fanart,
-                            'info': {'video': episode['info']},
-                            'url': plugin.get_url(action='episode', url=urlsafe_b64encode(episode['link'])),
-                            })
-        if episodes['next']:
-            next_item = {'label': 'Next > {0}'.format(episodes['next']),
-                         'thumb': os.path.join(_icons, 'next.png'),
-                         'icon': os.path.join(_icons, 'next.png'),
-                         'fanart': plugin.fanart}
-            if params.get('imdb') is not None:
-                next_item['url'] = plugin.get_url(action='episode_list',
-                                                   imbd=params['imdb'],
-                                                   page=episodes['next'])
-            else:
-                next_item['url'] = plugin.get_url(action='episode_list', page=episodes['next'])
-                if params.get('query') is not None:
-                    next_item['url'] += '&query=' + params['query']
-            listing.append(next_item)
-    else:
-        xbmcgui.Dialog().notification('Error!', 'No episodes to dislpay!', 'error', 3000)
-        plugin.log('Empty episode list returned.', xbmc.LOGERROR)
-    return listing
+    return _list_torrents(_get_torrents(params['mode'],
+                                        search_imdb=params.get('search_imdb', ''),
+                                        category=_get_category()),
+                          myshows=params.get('myshows', False))
 
 
-def search_episodes(params):
+def search_torrents(params):
     """
-    Search episodes
+    Search torrents and show the list of results
     :param params:
     :return:
     """
-    keyboard = xbmc.Keyboard('', 'Enter a search query')
-    keyboard.doModal()
-    query_text = keyboard.getText()
-    if keyboard.isConfirmed():
-        query = quote_plus(query_text)
-        plugin.log('Search query: {0}'.format(query))
-        params['query'] = query
-        return episode_list(params)
-    else:
-        xbmcgui.Dialog().notification(plugin.id, 'Search cancelled!', plugin.icon, 3000)
-        return [_home]
-
-
-@plugin.cached(60)
-def episode(params):
-    """
-    Show episode info
-    :param params:
-    :return:
-    """
-    listing = []
-    episode_data = parser.load_episode_page(urlsafe_b64decode(params['url']))
-    if episode_data['filename']:
-        try:
-            if int(episode_data['seeders']) <= 10:
-                episode_data['seeders'] = '[COLOR=red]{0}[/COLOR]'.format(episode_data['seeders'])
-            elif int(episode_data['seeders']) <= 25:
-                episode_data['seeders'] = '[COLOR=yellow]{0}[/COLOR]'.format(episode_data['seeders'])
-        except ValueError:
-            pass
-        poster = episode_data['poster'] if episode_data['poster'] else os.path.join(_icons, 'tv.png')
-        episode = {'label': '{0} [COLOR=gray]({1}|S:{2}/L:{3})[/COLOR]'.format(episode_data['filename'],
-                                                                               episode_data['size'],
-                                                                               episode_data['seeders'],
-                                                                               episode_data['leechers']),
-                   'thumb': poster,
-                   'icon': poster,
-                   'fanart': plugin.fanart,
-                   'info': {'video': episode_data['info']},
-                   'context_menu': [('Add to "My Shows"',
-                                     'RunScript({0}/libs/commands.py,myshows_add,{1},{2},{3},{4})'.format(
-                                         plugin.path,
-                                         plugin.config_dir,
-                                         episode_data['info']['title'],
-                                         episode_data['imdb'],
-                                         episode_data['poster'])),
-                                    ('Download torrent...',
-                                     'RunScript({0}/libs/commands.py,download,{1})'.format(
-                                         plugin.path,
-                                         episode_data['torrent'])),
-                                    ],
-                   'url': plugin.get_url('plugin://plugin.video.yatp/',
-                                          action='play',
-                                          torrent=urlsafe_b64encode(episode_data['torrent']),
-                                          title=urlsafe_b64encode(episode_data['info']['title']),
-                                          thumb=urlsafe_b64encode(poster)),
-                   'is_folder': False,
-                   }
-        try:
-            episode['url'] += '&season={0}'.format(episode_data['info']['season'])
-            episode['url'] += '&episode={0}'.format(episode_data['info']['episode'])
-        except KeyError:
-            pass
-        episode['stream_info'] = {}
-        if episode_data.get('video') is not None:
-            episode['stream_info']['video'] = episode_data['video']
-        if episode_data.get('audio') is not None:
-            episode['stream_info']['audio'] = episode_data['audio']
-        if episode_data.get('subtitle') is not None:
-            episode['stream_info']['subtitle'] = episode_data['subtitle']
-        listing.append(episode)
-    else:
-        xbmcgui.Dialog().notification('Error!', 'No episode data to dislpay!', 'error', 3000)
-        plugin.log('Empty episode data returned.', xbmc.LOGERROR)
-    return listing
+    results = []
+    query = _enter_search_query()
+    if query:
+        results = _get_torrents(mode='search',
+                                search_sthring=query,
+                                category=_get_category())
+        if not results:
+            xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
+    return _list_torrents(results)
 
 
 def my_shows(params):
     """
-    "My Shows" - the list of favorite TV shows.
+    'My Shows' list
     :param params:
     :return:
     """
     listing = [_home]
     with plugin.get_storage('myshows.pcl') as storage:
-        myshows = storage.get('myshows', [])
+        myshows = storage.get('myshows', ())
+    with plugin.get_storage('tvshows.pcl') as tvshows:
         for index, show in enumerate(myshows):
             listing.append({'label': show[0],
-                            'thumb': show[2],
-                            'icon': show[2],
+                            'thumb': show[1],
                             'fanart': plugin.fanart,
-                            'url': plugin.get_url(action='episode_list', page='1', imdb=show[1]),
-                            'context_menu': [('Remove from "My Shows"',
-                                              'RunScript({0}/libs/commands.py,myshows_remove,{1},{2})'.format(
-                                                  plugin.path,
-                                                  plugin.config_dir,
-                                                  index))],
+                            'art': {'banner': show[1]},
+                            'url': plugin.get_url(action='episodes',
+                                                  mode='search',
+                                                  search_imdb=show[2],
+                                                  myshows='true'),
+                            'info': {'video': {'tvshowtitle': tvshows[show[2]]['tvshowtitle'],
+                                               'title': tvshows[show[2]]['tvshowtitle'],
+                                               'plot': tvshows[show[2]]['plot'],
+                                               'premiered': tvshows[show[2]]['premiered'],
+                                               'year': int(tvshows[show[2]]['premiered'][:4])}},
+                            'context_menu': [('Remove from "My Shows"...',
+                                              'RunScript({plugin_path}/libs/commands.py,{config_dir},{index}'.format(
+                                                  plugin_path=plugin.path,
+                                                  config_dir=plugin.config_dir,
+                                                  index=index
+                                              ))]
                             })
-    return listing
+    return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
 
 
-# Map actions
+def search_thetvdb(params):
+    """
+    Serch a show on TheTVDB
+    :param params:
+    :return:
+    """
+    query = _enter_search_query()
+    if query:
+        tvshows = thetvdb.get_series(query)
+        if tvshows:
+            index = xbmcgui.Dialog().select('Select a TV show', [show['tvshowtitle'] for show in tvshows])
+            if index >= 0:
+                return episodes({'mode': 'search', 'search_imdb': tvshows[index]['imdb']})
+        else:
+            xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
+    return plugin.create_listing([_home], view_mode=_set_view_mode())
+
+#Map actions
 plugin.actions['root'] = root
-plugin.actions['episode_list'] = episode_list
-plugin.actions['search_episodes'] = search_episodes
-plugin.actions['episode'] = episode
+plugin.actions['episodes'] = episodes
+plugin.actions['search_torrents'] = search_torrents
 plugin.actions['my_shows'] = my_shows
+plugin.actions['search_thetvdb'] = search_thetvdb
