@@ -20,7 +20,8 @@ _home = {'label': '<< Home',
          'thumb': os.path.join(_icons, 'home.png'),
          'icon': os.path.join(_icons, 'home.png'),
          'fanart': plugin.fanart,
-         'url': plugin.get_url()}
+         'url': plugin.get_url(),
+         'info': {'video': {'title': '<< Home'}}}
 
 
 @plugin.cached(15)
@@ -64,7 +65,7 @@ def _set_info(list_item, torrent):
     :param torrent:
     :return:
     """
-    video = {'title': torrent['title']}
+    video = {'title': list_item['label']}
     if torrent['show_info'] is not None:
         video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
         video['plot'] = torrent['show_info']['plot']
@@ -145,7 +146,6 @@ def _list_torrents(torrents, myshows=False):
     """
     listing = [_home]
     for index, torrent in enumerate(torrents):
-        plugin.log(str(torrent))
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
         elif torrent['seeders'] <= 25:
