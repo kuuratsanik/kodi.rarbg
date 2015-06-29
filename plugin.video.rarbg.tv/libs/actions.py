@@ -3,6 +3,7 @@
 # Author: Roman V.M.
 # Created on: 09.06.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
+"""Plugin actions"""
 
 import os
 import base64
@@ -26,6 +27,15 @@ _home = {'label': '<< Home',
 
 @plugin.cached(15)
 def _get_torrents(mode, category='', search_sthring='', search_imdb=''):
+    """
+    Get torrents from Rarbg.to
+
+    :param mode:
+    :param category:
+    :param search_sthring:
+    :param search_imdb:
+    :return:
+    """
     rarbg_params = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
     if plugin.get_setting('ignore_weak'):
         rarbg_params['min_seeders'] = plugin.get_setting('min_seeders', False)
@@ -41,6 +51,7 @@ def _get_torrents(mode, category='', search_sthring='', search_imdb=''):
 def _set_view_mode():
     """
     Set view mode
+
     :return:
     """
     if xbmc.getSkinDir() == 'skin.confluence':
@@ -52,7 +63,8 @@ def _set_view_mode():
 
 def _get_category():
     """
-    Get Rarbe torrents category
+    Get Rarbg torrents category
+
     :return:
     """
     return ('18;41', '18', '41',)[plugin.get_setting('quality')]
@@ -98,6 +110,7 @@ def _set_info(list_item, torrent):
 def _set_stream_info(list_item, torrent):
     """
     Set additional video stream info.
+
     :param list_item:
     :param torrent:
     :return:
@@ -126,6 +139,7 @@ def _set_stream_info(list_item, torrent):
 def _enter_search_query():
     """
     Enter a search query on Kodi on-screen keyboard.
+
     :return:
     """
     keyboard = xbmc.Keyboard('', 'Enter search text')
@@ -141,6 +155,7 @@ def _enter_search_query():
 def _list_torrents(torrents, myshows=False):
     """
     Show the list of torrents
+
     :param torrents: list
     :return:
     """
@@ -189,6 +204,7 @@ def _list_torrents(torrents, myshows=False):
 def root(params):
     """
     Plugin root
+
     :param params:
     :return:
     """
@@ -219,6 +235,7 @@ def root(params):
 def episodes(params):
     """
     Show the list of recent episodes
+
     :param params:
     :return:
     """
@@ -231,6 +248,7 @@ def episodes(params):
 def search_torrents(params):
     """
     Search torrents and show the list of results
+
     :param params:
     :return:
     """
@@ -248,6 +266,7 @@ def search_torrents(params):
 def my_shows(params):
     """
     'My Shows' list
+
     :param params:
     :return:
     """
@@ -282,6 +301,7 @@ def my_shows(params):
 def search_thetvdb(params):
     """
     Serch a show on TheTVDB
+
     :param params:
     :return:
     """

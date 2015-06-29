@@ -3,6 +3,7 @@
 # Author: Roman V.M.
 # Created on: 18.06.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
+"""Add extended info to torrents"""
 
 from simpleplugin import Plugin
 import rarbg
@@ -14,6 +15,7 @@ _plugin = Plugin()
 def _add_thetvdb_data_(torrents):
     """
     Add basic TV show data from TheTVDB
+
     :param torrents:
     :return:
     """
@@ -35,6 +37,7 @@ def _add_thetvdb_data_(torrents):
 def get_torrents(params):
     """
     Get recent torrents with TheTVDB data
+
     :return:
     """
     return _add_thetvdb_data_(rarbg.get_torrents(params))

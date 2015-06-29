@@ -4,6 +4,7 @@
 # Created on: 15.05.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 # Rarbg API docs: http://torrentapi.org/apidocs_v2.txt
+"""Get torrent info from Rarbg API"""
 
 """
 Examples of torrent data:
@@ -40,6 +41,7 @@ _API = 'http://torrentapi.org/pubapi_v2.php'
 def _get_token():
     """
     Get a token to access Rarbg API
+
     The token will expire in 15 min
     :return:
     """

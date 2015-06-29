@@ -3,6 +3,7 @@
 # Author: Roman V.M.
 # Created on: 17.06.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
+"""Get info from TheTVDB"""
 
 import xml.etree.ElementTree as etree
 from webclient import load_page
@@ -15,6 +16,7 @@ _GRAPHICS = 'http://thetvdb.com/banners/'
 def get_series_by_imdbid(imdbid):
     """
     Get basic TV show info from TheTVDB
+
     :param imdbid:
     :return:
     """
@@ -32,6 +34,7 @@ def get_series_by_imdbid(imdbid):
 def get_series(seriesname):
     """
     Search TV series on TheTVDB
+
     :param series_name:
     :return:
     """
