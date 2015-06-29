@@ -166,14 +166,14 @@ def _list_torrents(torrents, myshows=False):
                      }
         _set_info(list_item, torrent)
         _set_stream_info(list_item, torrent)
-        list_item['url'] = plugin.get_url(plugin.get_url('plugin://plugin.video.yatp/',
+        list_item['url'] = plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
                                           torrent=base64.urlsafe_b64encode(torrent['download'].encode('utf-8')),
                                           title=base64.urlsafe_b64encode(list_item['info']['video'].get('tvshowtitle',
                                                                                                 '').encode('utf-8')),
                                           thumb=base64.urlsafe_b64encode(list_item['thumb']),
                                           season=list_item['info']['video'].get('season', ''),
-                                          episode=list_item['info']['video'].get('episode', '')))
+                                          episode=list_item['info']['video'].get('episode', ''))
         if not myshows and torrent['show_info']:
             list_item['context_menu'].append(('Add to "My shows"...',
                 u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
