@@ -276,7 +276,7 @@ def my_shows(params):
     """
     listing = [_home]
     with plugin.get_storage('myshows.pcl') as storage:
-        myshows = storage.get('myshows', ())
+        myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
         for index, show in enumerate(myshows):
             listing.append({'label': show[0],
