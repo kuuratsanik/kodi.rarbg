@@ -173,7 +173,6 @@ def _list_torrents(torrents, myshows=False):
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
                      'fanart': plugin.fanart,
-                     'is_folder': False,
                      'context_menu': [('Download torrent...',
                                        'RunScript({0}/libs/commands.py,download,{1})'.format(
                                            plugin.path,
@@ -181,7 +180,8 @@ def _list_torrents(torrents, myshows=False):
                      }
         _set_info(list_item, torrent)
         _set_stream_info(list_item, torrent)
-        list_item['url'] = plugin.get_url('plugin://plugin.video.yatp/',
+        if plugin.get_setting('stream_engine') == 'YATP':
+            list_item['url'] = plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
                                           torrent=base64.urlsafe_b64encode(torrent['download'].encode('utf-8')),
                                           title=base64.urlsafe_b64encode(list_item['info']['video'].get('tvshowtitle',
@@ -189,6 +189,10 @@ def _list_torrents(torrents, myshows=False):
                                           thumb=base64.urlsafe_b64encode(list_item['thumb']),
                                           season=list_item['info']['video'].get('season', ''),
                                           episode=list_item['info']['video'].get('episode', ''))
+            list_item['is_folder'] = False
+        else:
+            list_item['url'] = plugin.get_url('plugin://plugin.video.pulsar/play', uri=torrent['download'])
+            list_item['is_playable'] = True
         if not myshows and torrent['show_info']:
             list_item['context_menu'].append(('Add to "My shows"...',
                 u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
