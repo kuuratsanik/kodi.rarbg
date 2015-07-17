@@ -108,3 +108,5 @@ if __name__ == '__main__':
         download(sys.argv[2])
     elif sys.argv[1] == 'clear_cache':
         clear_cache()
+    else:
+        raise RuntimeError('Unknown command!')
