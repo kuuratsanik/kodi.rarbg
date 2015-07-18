@@ -292,8 +292,8 @@ def my_shows(params):
                                                'plot': tvshows[show[2]]['plot'],
                                                'premiered': tvshows[show[2]]['premiered'],
                                                'year': int(tvshows[show[2]]['premiered'][:4])}},
-                'context_menu': [('Remove from "My Shows"...',
-                                  'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index}'.format(
+                            'context_menu': [('Remove from "My Shows"...',
+                                              'RunScript({plugin_path}/libs/commands.py,{config_dir},{index}'.format(
                                                   plugin_path=plugin.path,
                                                   config_dir=plugin.config_dir,
                                                   index=index

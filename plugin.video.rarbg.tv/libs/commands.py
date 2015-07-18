@@ -21,7 +21,6 @@ _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
 def add_to_favorites(config_dir, title, thumb, imdb):
     """
     Add a TV Show to favorites
-
     :param config_dir: str - Addon config folder
     :param title: str - TV show title
     :param imdb: str - IMDB ID (tt1234567)
@@ -41,7 +40,6 @@ def add_to_favorites(config_dir, title, thumb, imdb):
 def remove_from_favorites(config_dir, index):
     """
     Remove a TV show from "My Shows"
-
     :param config_dir: str - Addon config folder
     :param index: str - digital index of the item to be removed
     :return:
@@ -55,7 +53,6 @@ def remove_from_favorites(config_dir, index):
 def create_strm(filename, torrent, poster, title, season, episode):
     """
     Create a .strm file for torrent
-
     :param filename:
     :param torrent:
     :return:
@@ -79,7 +76,6 @@ def create_strm(filename, torrent, poster, title, season, episode):
 def download(torrent):
     """
     Download torrent
-
     :param torrent:
     :return:
     """
@@ -93,7 +89,6 @@ def download(torrent):
 def clear_cache():
     """
     Clear page cache
-
     :return:
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
@@ -113,5 +108,3 @@ if __name__ == '__main__':
         download(sys.argv[2])
     elif sys.argv[1] == 'clear_cache':
         clear_cache()
-    else:
-        raise RuntimeError('Unknown command!')
