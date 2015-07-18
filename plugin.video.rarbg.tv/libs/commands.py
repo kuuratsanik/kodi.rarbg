@@ -44,6 +44,7 @@ def remove_from_favorites(config_dir, index):
     :param index: str - digital index of the item to be removed
     :return:
     """
+    print '********** plugin.video.rarbg.tv: Removing a show from My Shows: {}'.format(index)
     with Storage(config_dir, 'myshows.pcl') as storage:
         del storage['myshows'][int(index)]
     xbmcgui.Dialog().notification('Rarbg', 'The show removed from "My Shows"', _icon, 3000)

@@ -282,11 +282,11 @@ def my_shows(params):
                                                'premiered': tvshows[show[2]]['premiered'],
                                                'year': int(tvshows[show[2]]['premiered'][:4])}},
                             'context_menu': [('Remove from "My Shows"...',
-                              'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index}'.format(
-                              plugin_path=plugin.path,
-                              config_dir=plugin.config_dir,
-                              index=index
-                              ))]
+                            'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index})'.format(
+                            plugin_path=plugin.path,
+                            config_dir=plugin.config_dir,
+                            index=index
+                            ))]
                             })
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
 
