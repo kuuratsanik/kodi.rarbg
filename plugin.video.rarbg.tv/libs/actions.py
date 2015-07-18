@@ -6,7 +6,6 @@
 """Plugin actions"""
 
 import os
-import base64
 import re
 import urllib
 import xbmc
@@ -173,34 +172,24 @@ def _list_torrents(torrents, myshows=False):
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
                      'fanart': plugin.fanart,
-                     'context_menu': [('Download torrent...',
-                                       'RunScript({0}/libs/commands.py,download,{1})'.format(
-                                           plugin.path,
-                                           torrent['download']))]
+                     'is_playable': True,
                      }
         _set_info(list_item, torrent)
         _set_stream_info(list_item, torrent)
         if plugin.get_setting('stream_engine') == 'YATP':
             list_item['url'] = plugin.get_url('plugin://plugin.video.yatp/',
                                           action='play',
-                                          torrent=base64.urlsafe_b64encode(torrent['download'].encode('utf-8')),
-                                          title=base64.urlsafe_b64encode(list_item['info']['video'].get('tvshowtitle',
-                                                                                                '').encode('utf-8')),
-                                          thumb=base64.urlsafe_b64encode(list_item['thumb']),
-                                          season=list_item['info']['video'].get('season', ''),
-                                          episode=list_item['info']['video'].get('episode', ''))
-            list_item['is_folder'] = False
+                                          torrent=torrent['download'])
         else:
             list_item['url'] = plugin.get_url('plugin://plugin.video.pulsar/play', uri=torrent['download'])
-            list_item['is_playable'] = True
         if not myshows and torrent['show_info']:
-            list_item['context_menu'].append(('Add to "My shows"...',
+            list_item['context_menu'] = [('Add to "My shows"...',
                 u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
                     plugin_path=plugin.path,
                     config_dir=plugin.config_dir,
                     title=torrent['show_info']['tvshowtitle'],
                     thumb=torrent['show_info']['banner'],
-                    imdb=torrent['episode_info']['imdb'])))
+                    imdb=torrent['episode_info']['imdb']))]
         listing.append(list_item)
     return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
 
@@ -293,11 +282,11 @@ def my_shows(params):
                                                'premiered': tvshows[show[2]]['premiered'],
                                                'year': int(tvshows[show[2]]['premiered'][:4])}},
                             'context_menu': [('Remove from "My Shows"...',
-                                              'RunScript({plugin_path}/libs/commands.py,{config_dir},{index}'.format(
-                                                  plugin_path=plugin.path,
-                                                  config_dir=plugin.config_dir,
-                                                  index=index
-                                              ))]
+                              'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index}'.format(
+                              plugin_path=plugin.path,
+                              config_dir=plugin.config_dir,
+                              index=index
+                              ))]
                             })
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
 
