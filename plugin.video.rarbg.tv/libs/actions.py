@@ -172,7 +172,7 @@ def _list_torrents(torrents, myshows=False):
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
                      'fanart': plugin.fanart,
-                     'is_playable': True,
+                     'is_playable': True
                      }
         _set_info(list_item, torrent)
         _set_stream_info(list_item, torrent)
