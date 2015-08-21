@@ -41,5 +41,5 @@ def load_page(url, method='get', data=None, headers=None):
         contents = response.json()
     else:
         contents = response.text
-    _plugin.log(response.text, LOGDEBUG)
+    _plugin.log(response.text.encode('utf-8'), LOGDEBUG)
     return contents
