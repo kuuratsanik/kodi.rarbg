@@ -172,16 +172,11 @@ def _list_torrents(torrents, myshows=False):
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
                      'fanart': plugin.fanart,
-                     'is_playable': True
+                     'is_playable': True,
+                     'url': plugin.get_url(action='play', torrent=torrent['download'])
                      }
         _set_info(list_item, torrent)
         _set_stream_info(list_item, torrent)
-        if plugin.get_setting('stream_engine') == 'YATP':
-            list_item['url'] = plugin.get_url('plugin://plugin.video.yatp/',
-                                          action='play',
-                                          torrent=torrent['download'])
-        else:
-            list_item['url'] = plugin.get_url('plugin://plugin.video.pulsar/play', uri=torrent['download'])
         if not myshows and torrent['show_info']:
             list_item['context_menu'] = [('Add to "My shows"...',
                 u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
@@ -309,9 +304,23 @@ def search_thetvdb(params):
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
     return plugin.create_listing([_home], view_mode=_set_view_mode())
 
+
+def play(params):
+    """
+    Play torrent via YATP of Pulsar
+
+    :param params:
+    :return:
+    """
+    if plugin.get_setting('stream_engine') == 'YATP':
+        return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
+    else:
+        return plugin.get_url('plugin://plugin.video.pulsar/play', uri=params['torrent'])
+
 #Map actions
 plugin.actions['root'] = root
 plugin.actions['episodes'] = episodes
 plugin.actions['search_torrents'] = search_torrents
 plugin.actions['my_shows'] = my_shows
 plugin.actions['search_thetvdb'] = search_thetvdb
+plugin.actions['play'] = play
