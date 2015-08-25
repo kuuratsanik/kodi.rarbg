@@ -173,18 +173,20 @@ def _list_torrents(torrents, myshows=False):
                                 leechers=torrent['leechers']),
                      'fanart': plugin.fanart,
                      'is_playable': True,
-                     'url': plugin.get_url(action='play', torrent=torrent['download'])
+                     'url': plugin.get_url(action='play', torrent=torrent['download']),
+                     'context_menu': [('Mark as watched/unwatched', 'Action(ToggleWatched)')]
                      }
         _set_info(list_item, torrent)
         _set_stream_info(list_item, torrent)
         if not myshows and torrent['show_info']:
-            list_item['context_menu'] = [('Add to "My shows"...',
+            list_item['context_menu'].append(
+                ('Add to "My shows"...',
                 u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
                     plugin_path=plugin.path,
                     config_dir=plugin.config_dir,
                     title=torrent['show_info']['tvshowtitle'],
                     thumb=torrent['show_info']['banner'],
-                    imdb=torrent['episode_info']['imdb']))]
+                    imdb=torrent['episode_info']['imdb'])))
         listing.append(list_item)
     return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
 
