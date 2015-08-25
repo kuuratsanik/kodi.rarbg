@@ -92,3 +92,5 @@ venv/
 
 # Pickle files
 *.pcl
+
+publish.*
