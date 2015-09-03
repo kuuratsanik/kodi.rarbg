@@ -6,7 +6,7 @@
 """Add extended info to torrents"""
 
 import re
-from collections import OrderedDict
+from ordereddict import OrderedDict
 from simpleplugin import Plugin
 import rarbg
 import thetvdb
