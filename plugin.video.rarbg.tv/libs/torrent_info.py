@@ -10,6 +10,7 @@ from ordereddict import OrderedDict
 from simpleplugin import Plugin
 import rarbg
 import thetvdb
+import fanarttv
 
 _plugin = Plugin()
 
@@ -40,6 +41,13 @@ def _add_thetvdb_data_(torrents):
                         show_info = tvshows[imdb]
                     except KeyError:
                         show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
+                        art = fanarttv.get_art(torrent['episode_info']['tvdb'])
+                        if art.get('clearlogo'):
+                            show_info['clearlogo'] = art['clearlogo'][0]['url']
+                        if art.get('clearart'):
+                            show_info['clearart'] = art['clearart'][0]['url']
+                        if art.get('tvthumb'):
+                            show_info['landscape'] = art['tvthumb'][0]['url']
                         tvshows[imdb] = show_info
                     torrent['show_info'] = show_info
                     if torrent['episode_info'].get('epnum'):

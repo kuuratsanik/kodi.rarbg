@@ -37,7 +37,7 @@ def load_page(url, method='get', data=None, headers=None):
         response = requests.post(url, data=data, headers=request_headers, verify=False)
     else:
         raise RuntimeError('Invalid load_page method!')
-    if response.headers['content-type'] == 'application/json':
+    if 'application/json' in response.headers['Content-Type']:
         contents = response.json()
     else:
         contents = response.text

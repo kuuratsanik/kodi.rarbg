@@ -95,6 +95,12 @@ def _set_info(list_item, torrent, myshows):
         list_item['art'] = {'poster': torrent['show_info']['poster']}
         if torrent['show_info']['banner'] is not None:
             list_item['art']['banner'] = torrent['show_info']['banner']
+        if torrent['show_info'].get('clearlogo'):
+            list_item['art']['clearlogo'] = torrent['show_info']['clearlogo']
+        if torrent['show_info'].get('clearart'):
+            list_item['art']['clearart'] = torrent['show_info']['clearart']
+        if torrent['show_info'].get('landscape'):
+            list_item['art']['landscape'] = torrent['show_info']['landscape']
         list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
     else:
         list_item['thumb'] = list_item['icon'] = os.path.join(_icons, 'tv.png')
