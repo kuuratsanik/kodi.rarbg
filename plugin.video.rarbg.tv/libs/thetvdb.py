@@ -22,16 +22,22 @@ def get_series(thetvdb_id):
     :param thetvdb_id: str
     :return:
     """
-    root = etree.fromstring(load_page(_GET_SERIES.format(id=thetvdb_id)).encode('utf-8', 'replace'))
+    page = load_page(_GET_SERIES.format(id=thetvdb_id)).encode('utf-8', 'replace')
+    if 'Not Found' in page:
+        return None
+    root = etree.fromstring(page)
     series = root.find('Series')
     if series is not None:
+        poster = series.find('poster').text if series.find('poster') is not None else None
+        banner = series.find('banner').text if series.find('banner') is not None else None
+        fanart = series.find('fanart').text if series.find('fanart') is not None else None
         return {'tvshowtitle': series.find('SeriesName').text,
                 'plot': series.find('Overview').text,
                 'genre': series.find('Genre').text,
                 'premiered': series.find('FirstAired').text,
-                'poster': _GRAPHICS + series.find('poster').text if series.find('poster') is not None else None,
-                'banner': _GRAPHICS + series.find('banner').text if series.find('banner') is not None else None,
-                'fanart': _GRAPHICS + series.find('fanart').text if series.find('fanart') is not None else None}
+                'poster': _GRAPHICS + poster if poster else None,
+                'banner': _GRAPHICS + banner if banner else None,
+                'fanart': _GRAPHICS + fanart if fanart else None}
     else:
         return None
 
@@ -45,15 +51,18 @@ def get_episode(thetvdb_id, season, episode):
     :param episode: str
     :return:
     """
-    root = etree.fromstring(load_page(_GET_EPISODE.format(id=thetvdb_id,
-                                                          season=season.lstrip('0'),
-                                                          episode=episode.lstrip('0'))))
+    page = load_page(_GET_EPISODE.format(id=thetvdb_id, season=season.lstrip('0'),
+                                         episode=episode.lstrip('0'))).encode('utf-8', 'replace')
+    if 'Not Found' in page:
+        return None
+    root = etree.fromstring(page)
     ep_info = root.find('Episode')
     if ep_info is not None:
-        return {'eipsode_name': ep_info.find('EpisodeName').text,
+        thumb = ep_info.find('filename').text if ep_info.find('filename') is not None else None
+        return {'episode_name': ep_info.find('EpisodeName').text,
                 'plot': ep_info.find('Overview').text if ep_info.find('Overview') is not None else '',
                 'premiered': ep_info.find('FirstAired').text if ep_info.find('FirstAired') is not None else None,
-                'thumb': ep_info.find('filename').text if ep_info.find('filename') is not None else None}
+                'thumb': _GRAPHICS + thumb if thumb else None}
     else:
         return None
 

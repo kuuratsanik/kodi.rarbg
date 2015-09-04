@@ -10,6 +10,7 @@ import re
 import urllib
 import xbmc
 import xbmcgui
+import xbmcplugin
 from simpleplugin import Plugin
 import torrent_info
 import thetvdb
@@ -19,6 +20,7 @@ _icons = os.path.join(plugin.path, 'resources', 'icons')
 _home = {'label': '<< Home',
          'thumb': os.path.join(_icons, 'home.png'),
          'icon': os.path.join(_icons, 'home.png'),
+         'art': {'poster': os.path.join(_icons, 'home.png')},
          'fanart': plugin.fanart,
          'url': plugin.get_url(),
          'info': {'video': {'title': '<< Home'}}}
@@ -69,28 +71,35 @@ def _get_category():
     return ('18;41', '18', '41',)[plugin.get_setting('quality')]
 
 
-def _set_info(list_item, torrent):
+def _set_info(list_item, torrent, myshows):
     """
     Set additional info
 
     :param torrent:
     :return:
     """
-    video = {'title': list_item['label']}
+    video = {'title': torrent['episode_info']['episode_name'] if myshows else list_item['label']}
     if torrent['show_info'] is not None:
         video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
-        video['plot'] = torrent['show_info']['plot']
+        if myshows and torrent['episode_info'].get('plot'):
+            video['plot'] = torrent['episode_info']['plot']
+        else:
+            video['plot'] = torrent['show_info']['plot']
+        video['genre'] = torrent['show_info']['genre']
         video['year'] = int(torrent['show_info']['premiered'][:4])
         video['season'] = 0  # Needed for Kodi to treat the item as an episode
-        list_item['thumb'] = torrent['show_info']['poster']
-        list_item['art'] = {}
+        if myshows and torrent['episode_info'].get('thumb'):
+            list_item['thumb'] = list_item['icon'] = torrent['episode_info']['thumb']
+        else:
+            list_item['thumb'] = list_item['icon'] = torrent['show_info']['poster']
+        list_item['art'] = {'poster': torrent['show_info']['poster']}
         if torrent['show_info']['banner'] is not None:
             list_item['art']['banner'] = torrent['show_info']['banner']
         list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
     else:
-        list_item['thumb'] = os.path.join(_icons, 'tv.png')
+        list_item['thumb'] = list_item['icon'] = os.path.join(_icons, 'tv.png')
         list_item['fanart'] = plugin.fanart
-    if torrent['episode_info'] is not None and torrent['episode_info'].get('epnum') is not None:
+    if torrent['episode_info'].get('epnum') is not None:
             video['season'] = int(torrent['episode_info']['seasonnum'])
             video['episode'] = int(torrent['episode_info']['epnum'])
             video['aired'] = torrent['episode_info']['airdate']
@@ -177,7 +186,7 @@ def _list_torrents(torrents, myshows=False):
                      'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'context_menu': [('Mark as watched/unwatched', 'Action(ToggleWatched)')]
                      }
-        _set_info(list_item, torrent)
+        _set_info(list_item, torrent, myshows)
         _set_stream_info(list_item, torrent)
         if not myshows and torrent['show_info']:
             list_item['context_menu'].append(
@@ -189,7 +198,8 @@ def _list_torrents(torrents, myshows=False):
                     thumb=torrent['show_info']['poster'],
                     imdb=torrent['episode_info']['imdb'])))
         listing.append(list_item)
-    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
+    sort_methods = (xbmcplugin.SORT_METHOD_EPISODE,) if myshows else None
+    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode(), sort_methods=sort_methods)
 
 
 def root(params):
@@ -269,7 +279,8 @@ def my_shows(params):
             listing.append({'label': show[0],
                             'thumb': tvshows[show[2]]['poster'],
                             'fanart': tvshows[show[2]]['fanart'],
-                            'art': {'banner': show[1]},
+                            'art': {'banner': tvshows[show[2]]['banner'],
+                                    'poster': tvshows[show[2]]['poster']},
                             'url': plugin.get_url(action='episodes',
                                                   mode='search',
                                                   search_imdb=show[2],
@@ -286,7 +297,8 @@ def my_shows(params):
                             index=index
                             ))]
                             })
-    return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows')
+    return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows',
+                                 sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
 
 def search_thetvdb(params):
@@ -320,7 +332,8 @@ def play(params):
     else:
         return plugin.get_url('plugin://plugin.video.pulsar/play', uri=params['torrent'])
 
-#Map actions
+
+# Map actions
 plugin.actions['root'] = root
 plugin.actions['episodes'] = episodes
 plugin.actions['search_torrents'] = search_torrents
