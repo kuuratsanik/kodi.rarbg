@@ -44,8 +44,12 @@ def _add_thetvdb_data_(torrents):
                         art = fanarttv.get_art(torrent['episode_info']['tvdb'])
                         if art.get('clearlogo'):
                             show_info['clearlogo'] = art['clearlogo'][0]['url']
+                        elif art.get('hdtvlogo'):
+                            show_info['clearlogo'] = art['hdtvlogo'][0]['url']
                         if art.get('clearart'):
                             show_info['clearart'] = art['clearart'][0]['url']
+                        elif art.get('hdclearart'):
+                            show_info['clearart'] = art['hdclearart'][0]['url']
                         if art.get('tvthumb'):
                             show_info['landscape'] = art['tvthumb'][0]['url']
                         tvshows[imdb] = show_info

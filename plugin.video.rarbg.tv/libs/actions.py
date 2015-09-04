@@ -204,6 +204,7 @@ def _list_torrents(torrents, myshows=False):
                     title=torrent['show_info']['tvshowtitle'],
                     thumb=torrent['show_info']['poster'],
                     imdb=torrent['episode_info']['imdb'])))
+        # plugin.log(str(list_item))
         listing.append(list_item)
     sort_methods = (xbmcplugin.SORT_METHOD_EPISODE,) if myshows else None
     return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode(), sort_methods=sort_methods)
@@ -287,7 +288,10 @@ def my_shows(params):
                             'thumb': tvshows[show[2]]['poster'],
                             'fanart': tvshows[show[2]]['fanart'],
                             'art': {'banner': tvshows[show[2]]['banner'],
-                                    'poster': tvshows[show[2]]['poster']},
+                                    'poster': tvshows[show[2]]['poster'],
+                                    'landscape': tvshows[show[2]].get('landscape'),
+                                    'clearart': tvshows[show[2]].get('clearart'),
+                                    'clearlogo': tvshows[show[2]].get('clearlogo')},
                             'url': plugin.get_url(action='episodes',
                                                   mode='search',
                                                   search_imdb=show[2],
