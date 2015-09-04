@@ -58,14 +58,14 @@ class TheTVDBTestCase(unittest.TestCase):
         with codecs.open(os.path.join(_test_data, 'get_series.xml'), mode='rb', encoding='utf-8') as file_:
             xml = file_.read()
         mock_load_page.return_value = xml
-        results = thetvdb.get_series(None)
+        results = thetvdb.search_series(None)
         self.assertNotEqual(results, [])
         self.assertEqual(len(results), 10)
 
     def test_get_series_without_data(self, mock_load_page):
         xml = '<?xml version="1.0" encoding="UTF-8" ?><Data></Data>'
         mock_load_page.return_value = xml
-        self.assertEqual(thetvdb.get_series(None), [])
+        self.assertEqual(thetvdb.search_series(None), [])
 
 
 if __name__ == '__main__':

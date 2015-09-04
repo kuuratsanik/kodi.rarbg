@@ -82,12 +82,14 @@ def _set_info(list_item, torrent):
         video['plot'] = torrent['show_info']['plot']
         video['year'] = int(torrent['show_info']['premiered'][:4])
         video['season'] = 0  # Needed for Kodi to treat the item as an episode
-        list_item['thumb'] = torrent['show_info']['banner']
+        list_item['thumb'] = torrent['show_info']['poster']
+        list_item['art'] = {}
         if torrent['show_info']['banner'] is not None:
-            list_item['art'] = {}
             list_item['art']['banner'] = torrent['show_info']['banner']
+        list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
     else:
         list_item['thumb'] = os.path.join(_icons, 'tv.png')
+        list_item['fanart'] = plugin.fanart
     if torrent['episode_info'] is not None and torrent['episode_info'].get('epnum') is not None:
             video['season'] = int(torrent['episode_info']['seasonnum'])
             video['episode'] = int(torrent['episode_info']['epnum'])
@@ -171,7 +173,6 @@ def _list_torrents(torrents, myshows=False):
                                 size=torrent['size'] / 1048576,
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
-                     'fanart': plugin.fanart,
                      'is_playable': True,
                      'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'context_menu': [('Mark as watched/unwatched', 'Action(ToggleWatched)')]
@@ -181,11 +182,11 @@ def _list_torrents(torrents, myshows=False):
         if not myshows and torrent['show_info']:
             list_item['context_menu'].append(
                 ('Add to "My shows"...',
-                u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
+    u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
                     plugin_path=plugin.path,
                     config_dir=plugin.config_dir,
                     title=torrent['show_info']['tvshowtitle'],
-                    thumb=torrent['show_info']['banner'],
+                    thumb=torrent['show_info']['poster'],
                     imdb=torrent['episode_info']['imdb'])))
         listing.append(list_item)
     return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
@@ -266,8 +267,8 @@ def my_shows(params):
     with plugin.get_storage('tvshows.pcl') as tvshows:
         for index, show in enumerate(myshows):
             listing.append({'label': show[0],
-                            'thumb': show[1],
-                            'fanart': plugin.fanart,
+                            'thumb': tvshows[show[2]]['poster'],
+                            'fanart': tvshows[show[2]]['fanart'],
                             'art': {'banner': show[1]},
                             'url': plugin.get_url(action='episodes',
                                                   mode='search',
@@ -297,7 +298,7 @@ def search_thetvdb(params):
     """
     query = _enter_search_query()
     if query:
-        tvshows = thetvdb.get_series(query)
+        tvshows = thetvdb.search_series(query)
         if tvshows:
             index = xbmcgui.Dialog().select('Select a TV show', [show['tvshowtitle'] for show in tvshows])
             if index >= 0:

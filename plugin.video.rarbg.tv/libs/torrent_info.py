@@ -31,11 +31,13 @@ def _add_thetvdb_data_(torrents):
                 ep_name = torrent['title'].lower()
             if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
                 if torrent['episode_info'] is not None:
+                    if torrent['episode_info']['tvdb'] is None:
+                        continue
                     imdb = torrent['episode_info']['imdb']
                     try:
                         show_info = tvshows[imdb]
                     except KeyError:
-                        show_info = thetvdb.get_series_by_imdbid(imdb)
+                        show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
                         tvshows[imdb] = show_info
                 else:
                     show_info = None
