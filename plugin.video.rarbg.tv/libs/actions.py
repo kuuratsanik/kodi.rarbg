@@ -78,7 +78,11 @@ def _set_info(list_item, torrent, myshows):
     @param torrent:
     @return:
     """
-    video = {'title': torrent['episode_info']['episode_name'] if myshows else list_item['label']}
+    if myshows and torrent['episode_info'].get('episode_name'):
+        title = torrent['episode_info']['episode_name']
+    else:
+        title = list_item['label']
+    video = {'title': title}
     if torrent['show_info'] is not None:
         video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
         if myshows and torrent['episode_info'].get('plot'):
