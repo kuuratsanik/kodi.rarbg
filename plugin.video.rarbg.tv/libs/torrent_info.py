@@ -23,26 +23,42 @@ def _add_thetvdb_data_(torrents):
     """
     results = OrderedDict()
     with _plugin.get_storage('tvshows.pcl') as tvshows:
-        for torrent in torrents:
-            ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
-            if ep_name_match is not None:
-                ep_name = ep_name_match.group(1)
-            else:
-                ep_name = torrent['title'].lower()
-            if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
-                if torrent['episode_info'] is not None:
-                    if torrent['episode_info']['tvdb'] is None:
-                        continue
+        with _plugin.get_storage('episodes.pcl') as episodes:
+            for torrent in torrents:
+                if (torrent.get('episode_info') is None or
+                            torrent['episode_info'].get('tvdb') is None or
+                            torrent['episode_info']['tvdb'] is None):
+                    continue
+                ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
+                if ep_name_match is not None:
+                    ep_name = ep_name_match.group(1)
+                else:
+                    ep_name = torrent['title'].lower()
+                if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
                     imdb = torrent['episode_info']['imdb']
                     try:
                         show_info = tvshows[imdb]
                     except KeyError:
                         show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
                         tvshows[imdb] = show_info
-                else:
-                    show_info = None
-                torrent['show_info'] = show_info
-                results[ep_name] = torrent
+                    torrent['show_info'] = show_info
+                    if torrent['episode_info'].get('epnum'):
+                        try:
+                            episode_info = episodes[imdb +
+                                                    torrent['episode_info']['seasonnum'] +
+                                                    torrent['episode_info']['epnum']]
+                        except KeyError:
+                            episode_info = thetvdb.get_episode(torrent['episode_info']['tvdb'],
+                                                               torrent['episode_info']['seasonnum'],
+                                                               torrent['episode_info']['epnum'])
+                            episodes[imdb + torrent['episode_info']['seasonnum'] +
+                                     torrent['episode_info']['epnum']] = episode_info
+                        _plugin.log(str(episode_info))
+                        if episode_info is not None:
+                            torrent['episode_info']['episode_name'] = episode_info['episode_name']
+                            torrent['episode_info']['plot'] = episode_info['plot']
+                            torrent['episode_info']['thumb'] = episode_info['thumb']
+                    results[ep_name] = torrent
     return results.values()
 
 
