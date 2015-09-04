@@ -19,8 +19,8 @@ def get_series(thetvdb_id):
     """
     Get series info by TheTVDB ID
 
-    :param thetvdb_id: str
-    :return:
+    @param thetvdb_id: str
+    @return:
     """
     page = load_page(_GET_SERIES.format(id=thetvdb_id)).encode('utf-8', 'replace')
     if 'Not Found' in page:
@@ -46,10 +46,10 @@ def get_episode(thetvdb_id, season, episode):
     """
     Get episode info
 
-    :param thetvdb_id: str
-    :param season: str
-    :param episode: str
-    :return:
+    @param thetvdb_id: str
+    @param season: str
+    @param episode: str
+    @return:
     """
     page = load_page(_GET_EPISODE.format(id=thetvdb_id, season=season.lstrip('0'),
                                          episode=episode.lstrip('0'))).encode('utf-8', 'replace')
@@ -71,8 +71,8 @@ def get_series_by_imdbid(imdbid):
     """
     Get basic TV show info from TheTVDB
 
-    :param imdbid:
-    :return:
+    @param imdbid:
+    @return:
     """
     root = etree.fromstring(load_page(_GET_BY_ID, data={'imdbid' : imdbid}).encode('utf-8'))
     series = root.find('Series')
@@ -89,8 +89,8 @@ def search_series(seriesname):
     """
     Search TV series on TheTVDB
 
-    :param series_name:
-    :return:
+    @param series_name:
+    @return:
     """
     root = etree.fromstring(load_page(_SEARCH_SERIES, data={'seriesname' : seriesname}).encode('utf-8'))
     series = root.findall('Series')

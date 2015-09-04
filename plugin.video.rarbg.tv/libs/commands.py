@@ -21,11 +21,12 @@ _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
 def add_to_favorites(config_dir, title, thumb, imdb):
     """
     Add a TV Show to favorites
-    :param config_dir: str - Addon config folder
-    :param title: str - TV show title
-    :param imdb: str - IMDB ID (tt1234567)
-    :param thumb: str - item's thumbnail image
-    :return:
+
+    @param config_dir: str - Addon config folder
+    @param title: str - TV show title
+    @param imdb: str - IMDB ID (tt1234567)
+    @param thumb: str - item's thumbnail image
+    @return:
     """
     with Storage(config_dir, 'myshows.pcl') as storage:
         my_shows = storage.get('myshows', [])
@@ -40,9 +41,10 @@ def add_to_favorites(config_dir, title, thumb, imdb):
 def remove_from_favorites(config_dir, index):
     """
     Remove a TV show from "My Shows"
-    :param config_dir: str - Addon config folder
-    :param index: str - digital index of the item to be removed
-    :return:
+
+    @param config_dir: str - Addon config folder
+    @param index: str - digital index of the item to be removed
+    @return:
     """
     print '********** plugin.video.rarbg.tv: Removing a show from My Shows: {}'.format(index)
     with Storage(config_dir, 'myshows.pcl') as storage:
@@ -54,9 +56,10 @@ def remove_from_favorites(config_dir, index):
 def create_strm(filename, torrent, poster, title, season, episode):
     """
     Create a .strm file for torrent
-    :param filename:
-    :param torrent:
-    :return:
+
+    @param filename:
+    @param torrent:
+    @return:
     """
     dialog = xbmcgui.Dialog()
     folder = dialog.browse(0, 'Select a folder to save .strm', 'video')
@@ -77,8 +80,9 @@ def create_strm(filename, torrent, poster, title, season, episode):
 def download(torrent):
     """
     Download torrent
-    :param torrent:
-    :return:
+
+    @param torrent:
+    @return:
     """
     folder = xbmcgui.Dialog().browse(0, 'Select a folder to download the torrent', 'video')
     if folder:
@@ -90,7 +94,8 @@ def download(torrent):
 def clear_cache():
     """
     Clear page cache
-    :return:
+
+    @return:
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
         xbmcvfs.delete('special://profile/addon_data/plugin.video.rarbg.tv/cache.pcl')

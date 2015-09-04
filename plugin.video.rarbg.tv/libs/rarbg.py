@@ -53,8 +53,8 @@ def get_torrents(params):
     """
     Get the list of recent TV episode torrents with extended data
 
-    :param params: dict - Rarbg API query params
-    :return: list - the list of torrents
+    @param params: dict - Rarbg API query params
+    @return: list - the list of torrents
     """
     params['token'] = _get_token()
     params['format'] = 'json_extended'
