@@ -78,7 +78,12 @@ def _set_info(list_item, torrent, myshows):
     :param torrent:
     :return:
     """
-    video = {'title': torrent['episode_info']['episode_name'] if myshows else list_item['label']}
+    # Add textual information
+    if myshows and torrent['episode_info'].get('episode_name'):
+        title = torrent['episode_info']['episode_name']
+    else:
+        title = list_item['label']
+    video = {'title': title}
     if torrent['show_info'] is not None:
         video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
         if myshows and torrent['episode_info'].get('plot'):
@@ -88,8 +93,10 @@ def _set_info(list_item, torrent, myshows):
         video['genre'] = torrent['show_info']['genre']
         video['year'] = int(torrent['show_info']['premiered'][:4])
         video['season'] = 0  # Needed for Kodi to treat the item as an episode
+        # Add graphics
         if myshows and torrent['episode_info'].get('thumb'):
-            list_item['thumb'] = list_item['icon'] = torrent['episode_info']['thumb']
+            list_item['thumb'] = torrent['episode_info']['thumb']
+            list_item['icon'] = torrent['show_info']['poster']
         else:
             list_item['thumb'] = list_item['icon'] = torrent['show_info']['poster']
         list_item['art'] = {'poster': torrent['show_info']['poster']}
@@ -183,11 +190,11 @@ def _list_torrents(torrents, myshows=False):
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
                      'is_playable': True,
-                     'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'context_menu': [('Mark as watched/unwatched', 'Action(ToggleWatched)')]
                      }
         _set_info(list_item, torrent, myshows)
         _set_stream_info(list_item, torrent)
+        list_item['url'] = plugin.get_url(action='play', torrent=torrent['download'])
         if not myshows and torrent['show_info']:
             list_item['context_menu'].append(
                 ('Add to "My shows"...',
@@ -278,6 +285,7 @@ def my_shows(params):
         for index, show in enumerate(myshows):
             listing.append({'label': show[0],
                             'thumb': tvshows[show[2]]['poster'],
+                            'icon': tvshows[show[2]]['poster'],
                             'fanart': tvshows[show[2]]['fanart'],
                             'art': {'banner': tvshows[show[2]]['banner'],
                                     'poster': tvshows[show[2]]['poster']},
@@ -288,6 +296,7 @@ def my_shows(params):
                             'info': {'video': {'tvshowtitle': tvshows[show[2]]['tvshowtitle'],
                                                'title': tvshows[show[2]]['tvshowtitle'],
                                                'plot': tvshows[show[2]]['plot'],
+                                               'genre': tvshows[show[2]]['genre'],
                                                'premiered': tvshows[show[2]]['premiered'],
                                                'year': int(tvshows[show[2]]['premiered'][:4])}},
                             'context_menu': [('Remove from "My Shows"...',

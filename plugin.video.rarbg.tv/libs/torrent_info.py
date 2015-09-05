@@ -28,7 +28,7 @@ def _add_thetvdb_data_(torrents):
                 if (torrent.get('episode_info') is None or
                             torrent['episode_info'].get('tvdb') is None or
                             torrent['episode_info']['tvdb'] is None):
-                    continue
+                    continue  # Skip a show missing from TheTVDB
                 ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
                 if ep_name_match is not None:
                     ep_name = ep_name_match.group(1)
