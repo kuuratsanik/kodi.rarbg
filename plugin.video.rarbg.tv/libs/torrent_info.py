@@ -53,12 +53,10 @@ def _add_thetvdb_data_(torrents):
                                                                torrent['episode_info']['epnum'])
                             episodes[imdb + torrent['episode_info']['seasonnum'] +
                                      torrent['episode_info']['epnum']] = episode_info
-                        _plugin.log(str(episode_info))
                         if episode_info is not None:
-                            torrent['episode_info']['episode_name'] = episode_info['episode_name']
-                            torrent['episode_info']['plot'] = episode_info['plot']
-                            torrent['episode_info']['director'] = episode_info['director']
-                            torrent['episode_info']['thumb'] = episode_info['thumb']
+                            torrent['tvdb_episode_info'] = episode_info
+                        else:
+                            torrent['tvdb_episode_info'] = {}
                     results[ep_name] = torrent
     return results.values()
 
