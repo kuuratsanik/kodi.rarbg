@@ -57,6 +57,7 @@ def _add_thetvdb_data_(torrents):
                         if episode_info is not None:
                             torrent['episode_info']['episode_name'] = episode_info['episode_name']
                             torrent['episode_info']['plot'] = episode_info['plot']
+                            torrent['episode_info']['director'] = episode_info['director']
                             torrent['episode_info']['thumb'] = episode_info['thumb']
                     results[ep_name] = torrent
     return results.values()

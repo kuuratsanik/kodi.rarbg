@@ -62,7 +62,8 @@ def get_episode(thetvdb_id, season, episode):
         return {'episode_name': ep_info.find('EpisodeName').text,
                 'plot': ep_info.find('Overview').text if ep_info.find('Overview') is not None else '',
                 'premiered': ep_info.find('FirstAired').text if ep_info.find('FirstAired') is not None else None,
-                'thumb': _GRAPHICS + thumb if thumb else None}
+                'thumb': _GRAPHICS + thumb if thumb else None,
+                'director': ep_info.find('Director').text if ep_info.find('Director') is not None else None}
     else:
         return None
 
