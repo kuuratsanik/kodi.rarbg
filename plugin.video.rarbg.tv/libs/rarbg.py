@@ -43,7 +43,7 @@ def _get_token():
     Get a token to access Rarbg API
 
     The token will expire in 15 min
-    :return:
+    @return:
     """
     data = {'get_token': 'get_token'}
     return load_page(_API, data=data, headers={'content-type': 'application/json'})['token']
@@ -53,8 +53,8 @@ def get_torrents(params):
     """
     Get the list of recent TV episode torrents with extended data
 
-    :param params: dict - Rarbg API query params
-    :return: list - the list of torrents
+    @param params: dict - Rarbg API query params
+    @return: list - the list of torrents
     """
     params['token'] = _get_token()
     params['format'] = 'json_extended'

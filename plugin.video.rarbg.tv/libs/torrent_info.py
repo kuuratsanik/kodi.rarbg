@@ -18,8 +18,8 @@ def _add_thetvdb_data_(torrents):
     """
     Add basic TV show data from TheTVDB
 
-    :param torrents:
-    :return:
+    @param torrents:
+    @return:
     """
     results = OrderedDict()
     with _plugin.get_storage('tvshows.pcl') as tvshows:
@@ -65,6 +65,6 @@ def get_torrents(params):
     """
     Get recent torrents with TheTVDB data
 
-    :return:
+    @return:
     """
     return _add_thetvdb_data_(rarbg.get_torrents(params))
