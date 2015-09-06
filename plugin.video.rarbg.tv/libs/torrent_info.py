@@ -35,7 +35,7 @@ def _add_thetvdb_data_(torrents):
                 ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
                 if ep_name_match is not None:
                     ep_name = ep_name_match.group(1)
-                    if '720' in torrent['title'] or '1080' in torrent['title']:
+                    if '.720' in torrent['title'] or '.1080' in torrent['title']:
                         ep_name += 'hd'
                 else:
                     ep_name = torrent['title'].lower()
