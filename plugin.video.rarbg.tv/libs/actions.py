@@ -79,8 +79,8 @@ def _set_info(list_item, torrent, myshows=False):
     @return:
     """
     # Add textual information
-    video = {'genre': torrent['show_info'].get('Genre', ''),
-             'cast': torrent['show_info'].get('Actors', ''),
+    video = {'genre': torrent['show_info'].get('Genre', '').lstrip('|').rstrip('|'),
+             'cast': torrent['show_info'].get('Actors', '').lstrip('|').rstrip('|').split('|'),
              'director': torrent['tvdb_episode_info'].get('Director', '',),
              'mpaa': torrent['show_info'].get('ContentRating', ''),
              'plot': torrent['tvdb_episode_info'].get('Overview', '') if myshows else torrent['show_info'].get(
