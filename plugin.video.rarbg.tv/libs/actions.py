@@ -193,12 +193,9 @@ def _list_torrents(torrents, myshows=False):
     u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
                     plugin_path=plugin.path,
                     config_dir=plugin.config_dir,
-                    title=torrent['show_info']['tvshowtitle'],
-                    thumb=torrent['show_info']['poster'],
                     imdb=torrent['episode_info']['imdb'])))
         listing.append(list_item)
-    sort_methods = (xbmcplugin.SORT_METHOD_EPISODE,) if myshows else None
-    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode(), sort_methods=sort_methods)
+    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
 
 
 def root(params):
@@ -275,10 +272,10 @@ def my_shows(params):
         myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
         for index, show in enumerate(myshows):
-            list_item = {'label': show[0],
+            list_item = {'label': tvshows[show]['SeriesName'],
                          'url': plugin.get_url(action='episodes',
                                                mode='search',
-                                               search_imdb=show[2],
+                                               search_imdb=show,
                                                myshows='true'),
                          'context_menu': [('Remove from "My Shows"...',
                             'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index})'.format(
@@ -286,7 +283,7 @@ def my_shows(params):
                              config_dir=plugin.config_dir,
                              index=index
                          ))]}
-            _set_info(list_item, {'show_info': tvshows[show[2]], 'tvdb_episode_info': {}})
+            _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             listing.append(list_item)
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows',
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
