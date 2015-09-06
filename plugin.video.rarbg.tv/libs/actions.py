@@ -71,7 +71,7 @@ def _get_category():
     return ('18;41', '18', '41',)[plugin.get_setting('quality')]
 
 
-def _set_info(list_item, torrent, myshows):
+def _set_info(list_item, torrent, myshows=False):
     """
     Set additional info
 
@@ -79,50 +79,41 @@ def _set_info(list_item, torrent, myshows):
     @return:
     """
     # Add textual information
-    if myshows and torrent['episode_info'].get('episode_name'):
-        title = torrent['episode_info']['episode_name']
+    video = {'genre': torrent['show_info'].get('Genre', ''),
+             'cast': torrent['show_info'].get('Actors', ''),
+             'director': torrent['tvdb_episode_info'].get('Director', '',),
+             'mpaa': torrent['show_info'].get('ContentRating', ''),
+             'plot': torrent['tvdb_episode_info'].get('Overview', '') if myshows else torrent['show_info'].get(
+                 'Overview', ''),
+             'plotoutline': torrent['tvdb_episode_info'].get('Overview', '') if myshows else torrent['show_info'].get(
+                 'Overview', ''),
+             'tvshowtitle': torrent['show_info'].get('SeriesName', ''),
+             'premiered': torrent['tvdb_episode_info'].get('FirstAired', ''),
+             'credits': torrent['tvdb_episode_info'].get('Writer', '')
+             }
+    if myshows and torrent['episode_info'].get('EpisodeName'):
+        title = torrent['episode_info']['EpisodeName']
     else:
         title = list_item['label']
-    video = {'title': title,
-             'director': torrent['episode_info'].get('director', '')}
-    if torrent['show_info'] is not None:
-        video['tvshowtitle'] = torrent['show_info']['tvshowtitle']
-        if myshows and torrent['episode_info'].get('plot'):
-            video['plot'] = torrent['episode_info']['plot']
-        else:
-            video['plot'] = torrent['show_info']['plot']
-        video['genre'] = torrent['show_info']['genre']
-        video['year'] = int(torrent['show_info']['premiered'][:4])
-        video['season'] = 0  # Needed for Kodi to treat the item as an episode
-        # Add graphics
-        if myshows and torrent['episode_info'].get('thumb'):
-            list_item['thumb'] = torrent['episode_info']['thumb']
-            list_item['icon'] = torrent['show_info']['poster']
-        else:
-            list_item['thumb'] = list_item['icon'] = torrent['show_info']['poster']
-        list_item['art'] = {'poster': torrent['show_info']['poster']}
-        if torrent['show_info']['banner'] is not None:
-            list_item['art']['banner'] = torrent['show_info']['banner']
-        list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
-    else:
-        list_item['thumb'] = list_item['icon'] = os.path.join(_icons, 'tv.png')
-        list_item['fanart'] = plugin.fanart
-    if torrent['episode_info'].get('epnum') is not None:
-            video['season'] = int(torrent['episode_info']['seasonnum'])
-            video['episode'] = int(torrent['episode_info']['epnum'])
-            video['aired'] = torrent['episode_info']['airdate']
-    else:
-        se_match = re.search(r'\.[Ss](\d+)[Ee]?(\d+)?', torrent['title'])
-        if se_match is None:
-            se_match = re.search(r'\.(\d+)[Xx](\d+)?', torrent['title'])
-        if se_match is not None:
-            video['season'] = int(se_match.group(1))
-            try:
-                video['episode'] = int(se_match.group(2))
-            except TypeError:
-                pass
+    video['title'] = title
+    if torrent['show_info'].get('FirstAired'):
+        video['year'] = int(torrent['show_info']['FirstAired'][:4])
+    if torrent['tvdb_episode_info'].get('Rating'):
+        video['rating'] = float(torrent['tvdb_episode_info']['Rating'])
+    if torrent['tvdb_episode_info']:
+        video['season'] = int(torrent['tvdb_episode_info']['SeasonNumber'])
+        video['episode'] = int(torrent['tvdb_episode_info']['EpisodeNumber'])
     list_item['info'] = {}
     list_item['info']['video'] = video
+    # Add graphics
+    if myshows and torrent['tvdb_episode_info'].get('filename'):
+        list_item['thumb'] = torrent['tvdb_episode_info']['filename']
+        list_item['icon'] = torrent['show_info']['poster']
+    else:
+        list_item['thumb'] = list_item['icon'] = torrent['show_info']['poster']
+    list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
+    list_item['art'] = {'poster': torrent['show_info'].get('poster', ''),
+                        'banner': torrent['show_info'].get('banner', '')}
 
 
 def _set_stream_info(list_item, torrent):
@@ -284,29 +275,19 @@ def my_shows(params):
         myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
         for index, show in enumerate(myshows):
-            listing.append({'label': show[0],
-                            'thumb': tvshows[show[2]]['poster'],
-                            'icon': tvshows[show[2]]['poster'],
-                            'fanart': tvshows[show[2]]['fanart'],
-                            'art': {'banner': tvshows[show[2]]['banner'],
-                                    'poster': tvshows[show[2]]['poster']},
-                            'url': plugin.get_url(action='episodes',
-                                                  mode='search',
-                                                  search_imdb=show[2],
-                                                  myshows='true'),
-                            'info': {'video': {'tvshowtitle': tvshows[show[2]]['tvshowtitle'],
-                                               'title': tvshows[show[2]]['tvshowtitle'],
-                                               'plot': tvshows[show[2]]['plot'],
-                                               'genre': tvshows[show[2]]['genre'],
-                                               'premiered': tvshows[show[2]]['premiered'],
-                                               'year': int(tvshows[show[2]]['premiered'][:4])}},
-                            'context_menu': [('Remove from "My Shows"...',
+            list_item = {'label': show[0],
+                         'url': plugin.get_url(action='episodes',
+                                               mode='search',
+                                               search_imdb=show[2],
+                                               myshows='true'),
+                         'context_menu': [('Remove from "My Shows"...',
                             'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index})'.format(
-                            plugin_path=plugin.path,
-                            config_dir=plugin.config_dir,
-                            index=index
-                            ))]
-                            })
+                             plugin_path=plugin.path,
+                             config_dir=plugin.config_dir,
+                             index=index
+                         ))]}
+            _set_info(list_item, {'show_info': tvshows[show[2]], 'tvdb_episode_info': {}})
+            listing.append(list_item)
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows',
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
