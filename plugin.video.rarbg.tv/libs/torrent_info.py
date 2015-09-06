@@ -16,8 +16,10 @@ _plugin = Plugin()
 
 def _add_thetvdb_data_(torrents):
     """
-    Add basic TV show data from TheTVDB
+    Add TV show data from TheTVDB
 
+    This function also deduplicates Rarbg results by picking an item
+    with max seeders
     @param torrents:
     @return:
     """
@@ -26,12 +28,15 @@ def _add_thetvdb_data_(torrents):
         with _plugin.get_storage('episodes.pcl') as episodes:
             for torrent in torrents:
                 if (torrent.get('episode_info') is None or
-                            torrent['episode_info'].get('tvdb') is None or
-                            torrent['episode_info']['tvdb'] is None):
-                    continue  # Skip a show missing from TheTVDB
+                    torrent['episode_info'].get('epnum') is None or
+                    torrent['episode_info'].get('imdb') is None or
+                        torrent['episode_info']['tvdb'] is None):
+                    continue  # Skip an item if it's not an episode or missing from TheTVDB
                 ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
                 if ep_name_match is not None:
                     ep_name = ep_name_match.group(1)
+                    if '720' in torrent['title'] or '1080' in torrent['title']:
+                        ep_name += 'hd'
                 else:
                     ep_name = torrent['title'].lower()
                 if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
@@ -42,21 +47,17 @@ def _add_thetvdb_data_(torrents):
                         show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
                         tvshows[imdb] = show_info
                     torrent['show_info'] = show_info
-                    if torrent['episode_info'].get('epnum'):
-                        try:
-                            episode_info = episodes[imdb +
-                                                    torrent['episode_info']['seasonnum'] +
-                                                    torrent['episode_info']['epnum']]
-                        except KeyError:
-                            episode_info = thetvdb.get_episode(torrent['episode_info']['tvdb'],
-                                                               torrent['episode_info']['seasonnum'],
-                                                               torrent['episode_info']['epnum'])
-                            episodes[imdb + torrent['episode_info']['seasonnum'] +
-                                     torrent['episode_info']['epnum']] = episode_info
-                        if episode_info is not None:
-                            torrent['tvdb_episode_info'] = episode_info
-                        else:
-                            torrent['tvdb_episode_info'] = {}
+                    try:
+                        episode_info = episodes[imdb +
+                                                torrent['episode_info']['seasonnum'] +
+                                                torrent['episode_info']['epnum']]
+                    except KeyError:
+                        episode_info = thetvdb.get_episode(torrent['episode_info']['tvdb'],
+                                                           torrent['episode_info']['seasonnum'],
+                                                           torrent['episode_info']['epnum'])
+                        episodes[imdb + torrent['episode_info']['seasonnum'] +
+                                 torrent['episode_info']['epnum']] = episode_info
+                    torrent['tvdb_episode_info'] = episode_info
                     results[ep_name] = torrent
     return results.values()
 
