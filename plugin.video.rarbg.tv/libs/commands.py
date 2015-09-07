@@ -21,6 +21,7 @@ _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
 def add_to_favorites(config_dir, imdb):
     """
     Add a TV Show to favorites
+
     @param config_dir: str - Addon config folder
     @param title: str - TV show title
     @param imdb: str - IMDB ID (tt1234567)
@@ -40,6 +41,7 @@ def add_to_favorites(config_dir, imdb):
 def remove_from_favorites(config_dir, index):
     """
     Remove a TV show from "My Shows"
+
     @param config_dir: str - Addon config folder
     @param index: str - digital index of the item to be removed
     @return:
@@ -54,6 +56,7 @@ def remove_from_favorites(config_dir, index):
 def create_strm(filename, torrent, poster, title, season, episode):
     """
     Create a .strm file for torrent
+
     @param filename:
     @param torrent:
     @return:
@@ -77,6 +80,7 @@ def create_strm(filename, torrent, poster, title, season, episode):
 def download(torrent):
     """
     Download torrent
+
     @param torrent:
     @return:
     """
@@ -85,6 +89,21 @@ def download(torrent):
         xbmc.executebuiltin('RunPlugin(plugin://plugin.video.yatp/?action=download&torrent={0}&save_path={1})'.format(
             urlsafe_b64encode(torrent),
             urlsafe_b64encode(folder)))
+
+
+def torrent_info(title, size, seeders, leechers):
+    """
+    Show torrent info
+
+    @param title:
+    @param size:
+    @param seeders:
+    @param leechers:
+    @return:
+    """
+    xbmcgui.Dialog().ok('Torrent info',
+                        'Name: ' + title,
+                        'Size: {0}MB; seeders: {1}; leechers {2}'.format(size, seeders, leechers))
 
 
 def clear_cache():
@@ -100,7 +119,7 @@ def clear_cache():
 
 if __name__ == '__main__':
     if sys.argv[1] == 'myshows_add':
-        add_to_favorites(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+        add_to_favorites(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'myshows_remove':
         remove_from_favorites(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'create_strm':
@@ -109,5 +128,7 @@ if __name__ == '__main__':
         download(sys.argv[2])
     elif sys.argv[1] == 'clear_cache':
         clear_cache()
+    elif sys.argv[1] == 'torrent_info':
+        torrent_info(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
     else:
         raise RuntimeError('Unknown command!')
