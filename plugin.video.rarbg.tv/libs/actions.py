@@ -73,44 +73,58 @@ def _get_category():
 
 def _set_info(list_item, torrent, myshows=False):
     """
-    Set additional info
+    Set info for list_item
 
     @param torrent:
     @return:
     """
-    # Add textual information
     video = {'genre': torrent['show_info'].get('Genre', '').lstrip('|').rstrip('|'),
              'cast': torrent['show_info'].get('Actors', '').lstrip('|').rstrip('|').split('|'),
-             'director': torrent['tvdb_episode_info'].get('Director', '',),
              'mpaa': torrent['show_info'].get('ContentRating', ''),
-             'plot': torrent['tvdb_episode_info'].get('Overview', '') if myshows else torrent['show_info'].get(
-                 'Overview', ''),
-             'plotoutline': torrent['tvdb_episode_info'].get('Overview', '') if myshows else torrent['show_info'].get(
-                 'Overview', ''),
              'tvshowtitle': torrent['show_info'].get('SeriesName', ''),
-             'premiered': torrent['tvdb_episode_info'].get('FirstAired', ''),
-             'credits': torrent['tvdb_episode_info'].get('Writer', '')
-             }
-    if myshows and torrent['episode_info'].get('EpisodeName'):
-        title = torrent['episode_info']['EpisodeName']
+             'plot': torrent['show_info'].get('Overview', ''),
+             'plotoutline': torrent['show_info'].get('Overview', ''),
+             'studio': torrent['show_info'].get('Network', '')}
+    title = list_item['label']
+    if torrent['tvdb_episode_info'] == {}:
+        title = torrent['show_info'].get('SeriesName', '')
+        video['premiered'] = torrent['show_info'].get('FirstAired', '')
     else:
-        title = list_item['label']
+        video['season'] = int(torrent['episode_info']['seasonnum'])
+        video['episode'] = int(torrent['episode_info']['epnum'])
+        if torrent['tvdb_episode_info']:
+            video['director'] = torrent['tvdb_episode_info'].get('Director', '',)
+            video['premiered'] = torrent['tvdb_episode_info'].get('FirstAired', '')
+            video['credits'] = torrent['tvdb_episode_info'].get('Writer', '')
+            video['premiered'] = (torrent['tvdb_episode_info'].get('FirstAired', '') or
+                                  torrent['episode_info'].get('airdate', ''))
+            if torrent['tvdb_episode_info'].get('Rating'):
+                video['rating'] = float(torrent['tvdb_episode_info']['Rating'])
+            if myshows:
+                video['plot'] = video['plotoutline'] = torrent['tvdb_episode_info'].get('Overview', '')
+                list_item['label'] = title = (torrent['tvdb_episode_info'].get('EpisodeName') or
+                                              torrent['episode_info']['title'])
     video['title'] = title
     if torrent['show_info'].get('FirstAired'):
         video['year'] = int(torrent['show_info']['FirstAired'][:4])
-    if torrent['tvdb_episode_info'].get('Rating'):
-        video['rating'] = float(torrent['tvdb_episode_info']['Rating'])
-    if torrent['tvdb_episode_info']:
-        video['season'] = int(torrent['tvdb_episode_info']['SeasonNumber'])
-        video['episode'] = int(torrent['tvdb_episode_info']['EpisodeNumber'])
     list_item['info'] = {}
     list_item['info']['video'] = video
-    # Add graphics
-    if myshows and torrent['tvdb_episode_info'].get('filename'):
-        list_item['thumb'] = torrent['tvdb_episode_info']['filename']
-        list_item['icon'] = torrent['show_info']['poster']
+
+
+def _set_art(list_item, torrent, myshows=False):
+    """
+    Set graphics for list_item
+
+    @param list_item:
+    @param torrent:
+    @param myshows:
+    @return:
+    """
+    if torrent['tvdb_episode_info'] and myshows:
+        list_item['thumb'] = torrent['tvdb_episode_info'].get('filename', '') or torrent['show_info'].get('poster', '')
+        list_item['icon'] = torrent['show_info'].get('poster', '')
     else:
-        list_item['thumb'] = list_item['icon'] = torrent['show_info']['poster']
+        list_item['thumb'] = list_item['icon'] = torrent['show_info'].get('poster', '')
     list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
     list_item['art'] = {'poster': torrent['show_info'].get('poster', ''),
                         'banner': torrent['show_info'].get('banner', '')}
@@ -169,7 +183,7 @@ def _list_torrents(torrents, myshows=False):
     @return:
     """
     listing = [_home]
-    for index, torrent in enumerate(torrents):
+    for torrent in torrents:
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
         elif torrent['seeders'] <= 25:
@@ -181,16 +195,17 @@ def _list_torrents(torrents, myshows=False):
                                 size=torrent['size'] / 1048576,
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
+                     'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'is_playable': True,
                      'context_menu': [('Mark as watched/unwatched', 'Action(ToggleWatched)')]
                      }
         _set_info(list_item, torrent, myshows)
+        _set_art(list_item, torrent, myshows)
         _set_stream_info(list_item, torrent)
-        list_item['url'] = plugin.get_url(action='play', torrent=torrent['download'])
         if not myshows and torrent['show_info']:
             list_item['context_menu'].append(
                 ('Add to "My shows"...',
-    u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{title},{thumb},{imdb})'.format(
+    u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{imdb})'.format(
                     plugin_path=plugin.path,
                     config_dir=plugin.config_dir,
                     imdb=torrent['episode_info']['imdb'])))
@@ -205,26 +220,26 @@ def root(params):
     @param params:
     @return:
     """
-    listing = [{'label': '[Recent Episodes]',
-                'thumb': os.path.join(_icons, 'tv.png'),
-                'fanart': plugin.fanart,
-                'url': plugin.get_url(action='episodes', mode='list'),
-                },
-               {'label': '[My shows]',
+    listing = [{'label': '[My shows]',
                 'thumb': os.path.join(_icons, 'bookmarks.png'),
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='my_shows'),
                },
+               {'label': '[Recent Episodes]',
+                'thumb': os.path.join(_icons, 'tv.png'),
+                'fanart': plugin.fanart,
+                'url': plugin.get_url(action='episodes', mode='list'),
+                },
                {'label': '[Search Rarbg TV torrents...]',
                 'thumb': plugin.icon,
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='search_torrents')
                },
-               {'label': '[Search using TheTVDB...]',
-                'thumb': os.path.join(_icons, 'thetvdb.jpg'),
-                'fanart': plugin.fanart,
-                'url': plugin.get_url(action='search_thetvdb')
-                }
+               # {'label': '[Search using TheTVDB...]',
+               #  'thumb': os.path.join(_icons, 'thetvdb.jpg'),
+               #  'fanart': plugin.fanart,
+               #  'url': plugin.get_url(action='search_thetvdb')
+               #  }
                ]
     return listing
 
@@ -284,6 +299,7 @@ def my_shows(params):
                              index=index
                          ))]}
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
+            _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             listing.append(list_item)
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows',
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))

@@ -100,7 +100,7 @@ def clear_cache():
 
 if __name__ == '__main__':
     if sys.argv[1] == 'myshows_add':
-        add_to_favorites(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+        add_to_favorites(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'myshows_remove':
         remove_from_favorites(sys.argv[2], sys.argv[3])
     elif sys.argv[1] == 'create_strm':
