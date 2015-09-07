@@ -7,6 +7,9 @@
 """Get torrent info from Rarbg API"""
 
 """
+Link:
+http://torrentapi.org/pubapi_v2.php?mode=list&category=18;41&format=json_extended&token=xxxxxx
+
 Examples of torrent data:
 --------------------
 category: TV HD Episodes
