@@ -121,8 +121,8 @@ def _set_art(list_item, torrent, myshows=False):
     @return:
     """
     if torrent['tvdb_episode_info'] and myshows:
-        list_item['thumb'] = torrent['tvdb_episode_info'].get('filename', '') or torrent['show_info'].get('poster', '')
-        list_item['icon'] = torrent['show_info'].get('poster', '')
+        list_item['thumb'] = list_item['icon'] = (torrent['tvdb_episode_info'].get('filename', '') or
+                                                  torrent['show_info'].get('poster', ''))
     else:
         list_item['thumb'] = list_item['icon'] = torrent['show_info'].get('poster', '')
     list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
