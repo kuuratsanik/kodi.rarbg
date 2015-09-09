@@ -347,7 +347,9 @@ def play(params):
     """
     if plugin.get_setting('stream_engine') == 'YATP':
         return plugin.get_url('plugin://plugin.video.yatp/',
-                              action='play', torrent=params['torrent'], file_index='auto')
+                              action='play',
+                              torrent=params['torrent'],
+                              file_index='auto')
     else:
         return plugin.get_url('plugin://plugin.video.pulsar/play', uri=params['torrent'])
 
