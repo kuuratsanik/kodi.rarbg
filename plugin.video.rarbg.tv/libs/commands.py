@@ -8,7 +8,7 @@
 
 import sys
 import os
-from base64 import urlsafe_b64encode
+from urllib import quote
 #
 import xbmcgui
 import xbmc
@@ -61,20 +61,7 @@ def create_strm(filename, torrent, poster, title, season, episode):
     @param torrent:
     @return:
     """
-    dialog = xbmcgui.Dialog()
-    folder = dialog.browse(0, 'Select a folder to save .strm', 'video')
-    if folder:
-        url = 'plugin://plugin.video.yatp/?action=play&torrent={0}&thumb={1}&title={2}'.format(
-            urlsafe_b64encode(torrent),
-            urlsafe_b64encode(poster),
-            urlsafe_b64encode(title))
-        if season:
-            url += '&season=' + season
-        if episode:
-            url += '&episode' + episode
-        with open(os.path.join(folder, filename + '.strm'), 'w') as file_:
-            file_.write(url)
-        dialog.notification('Rarbg', '.strm file created successfully', _icon, 3000)
+    pass
 
 
 def download(torrent):
@@ -84,11 +71,7 @@ def download(torrent):
     @param torrent:
     @return:
     """
-    folder = xbmcgui.Dialog().browse(0, 'Select a folder to download the torrent', 'video')
-    if folder:
-        xbmc.executebuiltin('RunPlugin(plugin://plugin.video.yatp/?action=download&torrent={0}&save_path={1})'.format(
-            urlsafe_b64encode(torrent),
-            urlsafe_b64encode(folder)))
+    xbmc.executebuiltin('RunPlugin(plugin://plugin.video.yatp/?action=download&torrent={0})'.format(quote(torrent)))
 
 
 def torrent_info(title, size, seeders, leechers):

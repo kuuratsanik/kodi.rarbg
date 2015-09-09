@@ -16,14 +16,15 @@ import torrent_info
 import thetvdb
 
 plugin = Plugin()
-_icons = os.path.join(plugin.path, 'resources', 'icons')
-_home = {'label': '<< Home',
-         'thumb': os.path.join(_icons, 'home.png'),
-         'icon': os.path.join(_icons, 'home.png'),
-         'art': {'poster': os.path.join(_icons, 'home.png')},
+icons = os.path.join(plugin.path, 'resources', 'icons')
+home = {'label': '<< Home',
+         'thumb': os.path.join(icons, 'home.png'),
+         'icon': os.path.join(icons, 'home.png'),
+         'art': {'poster': os.path.join(icons, 'home.png')},
          'fanart': plugin.fanart,
          'url': plugin.get_url(),
          'info': {'video': {'title': '<< Home'}}}
+commands = os.path.join(plugin.path, 'libs', 'commands.py')
 
 
 @plugin.cached(15)
@@ -182,7 +183,7 @@ def _list_torrents(torrents, myshows=False):
     @param torrents: list
     @return:
     """
-    listing = [_home]
+    listing = [home]
     for torrent in torrents:
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
@@ -205,8 +206,8 @@ def _list_torrents(torrents, myshows=False):
         if myshows:
             list_item['context_menu'].append(
                 ('Torrent info',
-                 'RunScript({plugin_path}/libs/commands.py,torrent_info,{title},{size},{seeders},{leechers})'.format(
-                    plugin_path=plugin.path,
+                 'RunScript({commands},torrent_info,{title},{size},{seeders},{leechers})'.format(
+                    commands=commands,
                     title=torrent['title'],
                     size=torrent['size'] / 1048576,
                     seeders=torrent['seeders'],
@@ -214,10 +215,17 @@ def _list_torrents(torrents, myshows=False):
         else:
             list_item['context_menu'].append(
                 ('Add to "My shows"...',
-    u'RunScript({plugin_path}/libs/commands.py,myshows_add,{config_dir},{imdb})'.format(
-                    plugin_path=plugin.path,
+                 'RunScript({commands},myshows_add,{config_dir},{imdb})'.format(
+                    commands=commands,
                     config_dir=plugin.config_dir,
                     imdb=torrent['episode_info']['imdb'])))
+        if plugin.get_setting('stream_engine') == 'YATP':
+            list_item['context_menu'].append(
+                ('Download torrent',
+                 'RunScript({commands},download,{torrent})'.format(
+                    commands=commands,
+                    torrent=torrent['download'])
+                 ))
         listing.append(list_item)
     return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
 
@@ -230,29 +238,23 @@ def root(params):
     @return:
     """
     listing = [{'label': '[My shows]',
-                'thumb': os.path.join(_icons, 'bookmarks.png'),
-                'icon': os.path.join(_icons, 'bookmarks.png'),
+                'thumb': os.path.join(icons, 'bookmarks.png'),
+                'icon': os.path.join(icons, 'bookmarks.png'),
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='my_shows'),
                },
                {'label': '[Recent Episodes]',
-                'thumb': os.path.join(_icons, 'tv.png'),
-                'icon': os.path.join(_icons, 'tv.png'),
+                'thumb': os.path.join(icons, 'tv.png'),
+                'icon': os.path.join(icons, 'tv.png'),
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='episodes', mode='list'),
                 },
                {'label': '[Search TV torrents...]',
-                'thumb': os.path.join(_icons, 'search.png'),
-                'icon': os.path.join(_icons, 'search.png'),
+                'thumb': os.path.join(icons, 'search.png'),
+                'icon': os.path.join(icons, 'search.png'),
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='search_torrents')
-               },
-               # {'label': '[Search using TheTVDB...]',
-               #  'thumb': os.path.join(_icons, 'thetvdb.jpg'),
-               #  'fanart': plugin.fanart,
-               #  'url': plugin.get_url(action='search_thetvdb')
-               #  }
-               ]
+               }]
     return listing
 
 
@@ -294,7 +296,7 @@ def my_shows(params):
     @param params:
     @return:
     """
-    listing = [_home]
+    listing = [home]
     with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
@@ -305,8 +307,8 @@ def my_shows(params):
                                                search_imdb=show,
                                                myshows='true'),
                          'context_menu': [('Remove from "My Shows"...',
-                            'RunScript({plugin_path}/libs/commands.py,myshows_remove,{config_dir},{index})'.format(
-                             plugin_path=plugin.path,
+                            'RunScript({commands},myshows_remove,{config_dir},{index})'.format(
+                             commands=commands,
                              config_dir=plugin.config_dir,
                              index=index
                          ))]}
@@ -333,7 +335,7 @@ def search_thetvdb(params):
                 return episodes({'mode': 'search', 'search_imdb': tvshows[index]['imdb']})
         else:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    return plugin.create_listing([_home], view_mode=_set_view_mode())
+    return plugin.create_listing([home], view_mode=_set_view_mode())
 
 
 def play(params):
