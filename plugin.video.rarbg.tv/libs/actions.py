@@ -286,7 +286,9 @@ def search_torrents(params):
                                 category=_get_category())
         if not results:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    return _list_torrents(results)
+    context = _list_torrents(results)
+    context['cache_to_disk'] = True
+    return context
 
 
 def my_shows(params):
