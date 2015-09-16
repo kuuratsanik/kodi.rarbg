@@ -314,6 +314,8 @@ def my_shows(params):
                              config_dir=plugin.config_dir,
                              index=index
                          ))]}
+            if not tvshows.get(show):
+                tvshows[show] = thetvdb.get_series(thetvdb.get_series_by_imdbid(show)['seriesid'])
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             listing.append(list_item)
