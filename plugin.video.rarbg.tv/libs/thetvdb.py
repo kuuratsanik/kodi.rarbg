@@ -28,7 +28,7 @@ def _parse_items(parent):
         if child.tag in ('poster', 'banner', 'fanart', 'filename') and child.text is not None:
                 data[child.tag] = _GRAPHICS + child.text
         else:
-            data[child.tag] = child.text
+            data[child.tag] = child.text or ''
     return data
 
 

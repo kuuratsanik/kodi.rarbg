@@ -5,13 +5,17 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 """Add extended info to torrents"""
 
+import sys
+import os
 import re
-from ordereddict import OrderedDict
 from simpleplugin import Plugin
 import rarbg
 import thetvdb
 
 _plugin = Plugin()
+
+sys.path.append(os.path.join(_plugin.path, 'site-packages'))
+from ordereddict import OrderedDict
 
 
 def _add_thetvdb_data_(torrents):
