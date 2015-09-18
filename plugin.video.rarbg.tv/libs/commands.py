@@ -16,26 +16,26 @@ import xbmcvfs
 from simpleplugin import Storage
 
 _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
+_config_dir = xbmc.translatePath('special://profile/addon_data/plugin.video.rarbg.tv/').decode('utf-8')
 
-
-def add_to_favorites(config_dir, imdb):
+def add_to_favorites(config_dir, tvdb):
     """
     Add a TV Show to favorites
 
     @param config_dir: str - Addon config folder
     @param title: str - TV show title
-    @param imdb: str - IMDB ID (tt1234567)
+    @param tvdb: str - TheTVDB ID
     @param thumb: str - item's thumbnail image
     @return:
     """
     with Storage(config_dir, 'myshows.pcl') as storage:
-        my_shows = storage.get('myshows', [])
-        if imdb not in my_shows:
-            my_shows.append(imdb)
-            storage['myshows'] = my_shows
+        mshows = storage.get('myshows', [])
+        if tvdb not in mshows:
+            mshows.append(tvdb)
+            storage['myshows'] = mshows
             xbmcgui.Dialog().notification('Rarbg', 'The show successfully added to "My Shows"', _icon, 3000)
         else:
-            xbmcgui.Dialog().notification('Rarbg', 'The show already in "My Shows"!', 'error', 3000)
+            xbmcgui.Dialog().notification('Rarbg', 'The show is already in "My Shows"!', 'error', 3000)
 
 
 def remove_from_favorites(config_dir, index):
@@ -46,7 +46,6 @@ def remove_from_favorites(config_dir, index):
     @param index: str - digital index of the item to be removed
     @return:
     """
-    print '********** plugin.video.rarbg.tv: Removing a show from My Shows: {}'.format(index)
     with Storage(config_dir, 'myshows.pcl') as storage:
         del storage['myshows'][int(index)]
     xbmcgui.Dialog().notification('Rarbg', 'The show removed from "My Shows"', _icon, 3000)
@@ -61,6 +60,7 @@ def create_strm(filename, torrent, poster, title, season, episode):
     @param torrent:
     @return:
     """
+    # todo: finish this
     pass
 
 
@@ -92,12 +92,29 @@ def torrent_info(title, size, seeders, leechers):
 def clear_cache():
     """
     Clear page cache
-    @return:
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
-        xbmcvfs.delete('special://profile/addon_data/plugin.video.rarbg.tv/cache.pcl')
-        if not xbmcvfs.exists('special://profile/addon_data/plugin.video.rarbg.tv/cache.pcl'):
+        cache = os.path.join(_config_dir, 'cache.pcl')
+        xbmcvfs.delete(cache)
+        if not xbmcvfs.exists(cache):
             xbmcgui.Dialog().notification('Rarbg', 'Plugin cache cleared successfully.', _icon, 3000)
+
+
+def clear_data():
+    """
+    Clear all plugin persistent data
+    """
+    if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear all the plugin data?'):
+        folders, files = xbmcvfs.listdir(_config_dir)
+        deleted = True
+        for file_ in files:
+            if file_[-3:] == 'pcl':
+                path = os.path.join(_config_dir, file_)
+                xbmcvfs.delete(path)
+                if xbmcvfs.exists(path):
+                    deleted = False
+        if deleted:
+            xbmcgui.Dialog().notification('Rarbg', 'Plugin data deleted successfully.', _icon, 3000)
 
 
 if __name__ == '__main__':
@@ -113,5 +130,7 @@ if __name__ == '__main__':
         clear_cache()
     elif sys.argv[1] == 'torrent_info':
         torrent_info(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5])
+    elif sys.argv[1] == 'clear_data':
+        clear_data()
     else:
         raise RuntimeError('Unknown command!')

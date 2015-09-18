@@ -28,14 +28,14 @@ commands = os.path.join(plugin.path, 'libs', 'commands.py')
 
 
 @plugin.cached(15)
-def _get_torrents(mode, category='', search_sthring='', search_imdb=''):
+def _get_torrents(mode, category='', search_string='', search_tvdb=''):
     """
     Get torrents from Rarbg.to
 
     @param mode:
     @param category:
-    @param search_sthring:
-    @param search_imdb:
+    @param search_string:
+    @param search_tvdb:
     @return:
     """
     rarbg_params = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
@@ -43,10 +43,10 @@ def _get_torrents(mode, category='', search_sthring='', search_imdb=''):
         rarbg_params['min_seeders'] = plugin.get_setting('min_seeders', False)
     if category:
         rarbg_params['category'] = category
-    if search_sthring:
-        rarbg_params['search_string'] = search_sthring
-    if search_imdb:
-        rarbg_params['search_imdb'] = search_imdb
+    if search_string:
+        rarbg_params['search_string'] = search_string
+    if search_tvdb:
+        rarbg_params['search_tvdb'] = search_tvdb
     return torrent_info.get_torrents(rarbg_params)
 
 
@@ -215,10 +215,10 @@ def _list_torrents(torrents, myshows=False):
         else:
             list_item['context_menu'].append(
                 ('Add to "My shows"...',
-                 'RunScript({commands},myshows_add,{config_dir},{imdb})'.format(
+                 'RunScript({commands},myshows_add,{config_dir},{tvdb})'.format(
                     commands=commands,
                     config_dir=plugin.config_dir,
-                    imdb=torrent['episode_info']['imdb'])))
+                    tvdb=torrent['episode_info']['tvdb'])))
         if plugin.get_setting('stream_engine') == 'YATP':
             list_item['context_menu'].append(
                 ('Download torrent',
@@ -266,7 +266,7 @@ def episodes(params):
     @return:
     """
     return _list_torrents(_get_torrents(params['mode'],
-                                        search_imdb=params.get('search_imdb', ''),
+                                        search_tvdb=params.get('search_tvdb', ''),
                                         category=_get_category()),
                           myshows=params.get('myshows', False))
 
@@ -282,7 +282,7 @@ def search_torrents(params):
     query = _enter_search_query()
     if query:
         results = _get_torrents(mode='search',
-                                search_sthring=query,
+                                search_string=query,
                                 category=_get_category())
         if not results:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
@@ -306,7 +306,7 @@ def my_shows(params):
             list_item = {'label': tvshows[show]['SeriesName'],
                          'url': plugin.get_url(action='episodes',
                                                mode='search',
-                                               search_imdb=show,
+                                               search_tvdb=show,
                                                myshows='true'),
                          'context_menu': [('Remove from "My Shows"...',
                             'RunScript({commands},myshows_remove,{config_dir},{index})'.format(
@@ -315,31 +315,12 @@ def my_shows(params):
                              index=index
                          ))]}
             if not tvshows.get(show):
-                tvshows[show] = thetvdb.get_series(thetvdb.get_series_by_imdbid(show)['seriesid'])
+                tvshows[show] = thetvdb.get_series(show)
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             listing.append(list_item)
     return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows',
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
-
-
-def search_thetvdb(params):
-    """
-    Serch a show on TheTVDB
-
-    @param params:
-    @return:
-    """
-    query = _enter_search_query()
-    if query:
-        tvshows = thetvdb.search_series(query)
-        if tvshows:
-            index = xbmcgui.Dialog().select('Select a TV show', [show['tvshowtitle'] for show in tvshows])
-            if index >= 0:
-                return episodes({'mode': 'search', 'search_imdb': tvshows[index]['imdb']})
-        else:
-            xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    return plugin.create_listing([home], view_mode=_set_view_mode())
 
 
 def play(params):
@@ -360,5 +341,4 @@ plugin.actions['root'] = root
 plugin.actions['episodes'] = episodes
 plugin.actions['search_torrents'] = search_torrents
 plugin.actions['my_shows'] = my_shows
-plugin.actions['search_thetvdb'] = search_thetvdb
 plugin.actions['play'] = play

@@ -13,5 +13,7 @@
              label="Minimal seeds number" default="10" enable="eq(-1,true)" />
     <setting type="action"
              label="Clear cache" action="RunScript($CWD/libs/commands.py,clear_cache)" />
+    <setting type="action"
+             label="Clear all plugin data" action="RunScript($CWD/libs/commands.py,clear_data)" />
   </category>
 </settings>
