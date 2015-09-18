@@ -114,7 +114,7 @@ def clear_data():
                 if xbmcvfs.exists(path):
                     deleted = False
         if deleted:
-            xbmcgui.Dialog().notification('Rarbg', 'Plugin data deleted successfully.', _icon, 3000)
+            xbmcgui.Dialog().notification('Rarbg', 'Plugin data cleared successfully.', _icon, 3000)
 
 
 if __name__ == '__main__':

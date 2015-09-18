@@ -14,6 +14,6 @@
     <setting type="action"
              label="Clear cache" action="RunScript($CWD/libs/commands.py,clear_cache)" />
     <setting type="action"
-             label="Clear all plugin data" action="RunScript($CWD/libs/commands.py,clear_data)" />
+             label="Clear all the plugin data" action="RunScript($CWD/libs/commands.py,clear_data)" />
   </category>
 </settings>
