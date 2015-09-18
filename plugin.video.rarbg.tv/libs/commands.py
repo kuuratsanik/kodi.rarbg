@@ -18,14 +18,13 @@ from simpleplugin import Storage
 _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
 _config_dir = xbmc.translatePath('special://profile/addon_data/plugin.video.rarbg.tv/').decode('utf-8')
 
+
 def add_to_favorites(config_dir, tvdb):
     """
     Add a TV Show to favorites
 
     @param config_dir: str - Addon config folder
-    @param title: str - TV show title
     @param tvdb: str - TheTVDB ID
-    @param thumb: str - item's thumbnail image
     @return:
     """
     with Storage(config_dir, 'myshows.pcl') as storage:
