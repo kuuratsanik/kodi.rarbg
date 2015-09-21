@@ -50,16 +50,24 @@ def _get_torrents(mode, category='', search_string='', search_tvdb=''):
     return torrent_info.get_torrents(rarbg_params)
 
 
-def _set_view_mode():
+def _set_view_mode(content=''):
     """
     Set view mode
 
     @return:
     """
-    if xbmc.getSkinDir() == 'skin.confluence':
-        view_mode = 503
-    else:
-        view_mode = 50
+    view_mode = 50
+    if content:
+        if xbmc.getSkinDir() == 'skin.confluence':
+            if content == 'icons':
+                view_mode = 500
+            else:
+                view_mode = 503
+        elif xbmc.getSkinDir() == 'skin.re-touched':
+            if content == 'episodes':
+                view_mode = 550
+            else:
+                view_mode = 500
     return view_mode
 
 
@@ -227,7 +235,7 @@ def _list_torrents(torrents, myshows=False):
                     torrent=torrent['download'])
                  ))
         listing.append(list_item)
-    return plugin.create_listing(listing, content='episodes', view_mode=_set_view_mode())
+    return listing
 
 
 def root(params):
@@ -255,7 +263,7 @@ def root(params):
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='search_torrents')
                }]
-    return listing
+    return plugin.create_listing(listing, view_mode=_set_view_mode('icons'))
 
 
 def episodes(params):
@@ -265,10 +273,18 @@ def episodes(params):
     @param params:
     @return:
     """
-    return _list_torrents(_get_torrents(params['mode'],
-                                        search_tvdb=params.get('search_tvdb', ''),
-                                        category=_get_category()),
-                          myshows=params.get('myshows', False))
+    myshows = params.get('myshows', False)
+    listing = _list_torrents(_get_torrents(params['mode'],
+                                           search_tvdb=params.get('search_tvdb', ''),
+                                           category=_get_category()),
+                             myshows=myshows)
+    if myshows:
+        content = 'episodes'
+        sort_methods = (xbmcplugin.SORT_METHOD_EPISODE,)
+    else:
+        content = ''
+        sort_methods = ()
+    return plugin.create_listing(listing, content=content, view_mode=_set_view_mode(content), sort_methods=sort_methods)
 
 
 def search_torrents(params):
@@ -286,9 +302,8 @@ def search_torrents(params):
                                 category=_get_category())
         if not results:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
-    context = _list_torrents(results)
-    context['cache_to_disk'] = True
-    return context
+    listing = _list_torrents(results)
+    return plugin.create_listing(listing, cache_to_disk=True)
 
 
 def my_shows(params):
@@ -319,7 +334,8 @@ def my_shows(params):
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
             listing.append(list_item)
-    return plugin.create_listing(listing, view_mode=_set_view_mode(), content='tvshows',
+    content = 'tvshows'
+    return plugin.create_listing(listing, view_mode=_set_view_mode(content), content=content,
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
 
