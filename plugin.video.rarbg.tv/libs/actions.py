@@ -206,7 +206,8 @@ def _list_torrents(torrents, myshows=False):
                                 leechers=torrent['leechers']),
                      'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'is_playable': True,
-                     'context_menu': [('Mark as watched/unwatched', 'Action(ToggleWatched)')]
+                     'context_menu': [('Show info', 'Action(Info)'),
+                                      ('Mark as watched/unwatched', 'Action(ToggleWatched)')]
                      }
         _set_info(list_item, torrent, myshows)
         _set_art(list_item, torrent, myshows)
@@ -221,12 +222,11 @@ def _list_torrents(torrents, myshows=False):
                     seeders=torrent['seeders'],
                     leechers=torrent['leechers'])))
         else:
-            list_item['context_menu'].append(
-                ('Add to "My shows"...',
-                 'RunScript({commands},myshows_add,{config_dir},{tvdb})'.format(
-                    commands=commands,
-                    config_dir=plugin.config_dir,
-                    tvdb=torrent['episode_info']['tvdb'])))
+            list_item['context_menu'].append(('Add to "My shows"...',
+                                              'RunScript({commands},myshows_add,{config_dir},{tvdb})'.format(
+                                                  commands=commands,
+                                                  config_dir=plugin.config_dir,
+                                                  tvdb=torrent['episode_info']['tvdb'])))
         if plugin.get_setting('stream_engine') == 'YATP':
             list_item['context_menu'].append(
                 ('Download torrent',
@@ -323,12 +323,12 @@ def my_shows(params):
                                                mode='search',
                                                search_tvdb=show,
                                                myshows='true'),
-                         'context_menu': [('Remove from "My Shows"...',
-                            'RunScript({commands},myshows_remove,{config_dir},{index})'.format(
-                             commands=commands,
-                             config_dir=plugin.config_dir,
-                             index=index
-                         ))]}
+                         'context_menu': [('Show info', 'Action(Info)'),
+                                          ('Remove from "My Shows"...',
+                                           'RunScript({commands},myshows_remove,{config_dir},{index})'.format(
+                                               commands=commands,
+                                               config_dir=plugin.config_dir,
+                                               index=index))]}
             if not tvshows.get(show):
                 tvshows[show] = thetvdb.get_series(show)
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
