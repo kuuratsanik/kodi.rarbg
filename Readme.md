@@ -8,6 +8,7 @@ or [Pulsar](https://github.com/steeve/plugin.video.pulsar) torrent-streaming plu
 
 The plugin can be installed in Kodi from [my addon repository](https://github.com/romanvm/kodi_repo).
 
-Since I've developed this plugin for my personal use, it is provided "as is".
+I've developed this plugin for my personal use so it is provided "as is" without any support,
+except for obvious bug fixes.
 
 License: [GPL v.3](http://www.gnu.org/licenses/gpl-3.0.en.html)
