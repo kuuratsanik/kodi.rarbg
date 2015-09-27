@@ -18,7 +18,7 @@ sys.path.append(os.path.join(_plugin.path, 'site-packages'))
 from ordereddict import OrderedDict
 
 
-def _add_thetvdb_data_(torrents):
+def _deduplicate_data(torrents):
     """
     Add TV show data from TheTVDB
 
@@ -33,7 +33,7 @@ def _add_thetvdb_data_(torrents):
             for torrent in torrents:
                 if (torrent.get('episode_info') is None or
                             torrent['episode_info'].get('epnum') is None or
-                            torrent['episode_info']['tvdb'] is None):
+                            torrent['episode_info'].get('tvdb') is None):
                     continue  # Skip an item if it's not an episode or missing from TheTVDB
                 ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
                 if ep_name_match is not None:
@@ -71,4 +71,4 @@ def get_torrents(params):
 
     @return:
     """
-    return _add_thetvdb_data_(rarbg.get_torrents(params))
+    return _deduplicate_data(rarbg.get_torrents(params))
