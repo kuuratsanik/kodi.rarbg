@@ -8,6 +8,8 @@
 import sys
 import os
 import re
+import threading
+import time
 from simpleplugin import Plugin
 import rarbg
 import thetvdb
@@ -18,50 +20,126 @@ sys.path.append(os.path.join(_plugin.path, 'site-packages'))
 from ordereddict import OrderedDict
 
 
+class ThreadPool(object):
+    """
+    Thread pool class
+    """
+    daemon_threads = True
+
+    def __init__(self, thread_count=4):
+        self._pool = [None for i in xrange(thread_count)]
+
+    def put(self, func, *args, **kwargs):
+        """
+        Put a function into the thread pool
+
+        If all available threads are busy, the call will block.
+        """
+        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
+        thread.daemon = self.daemon_threads
+        slot = self._get_free_slot()
+        thread.start()
+        self._pool[slot] = thread
+
+    def _get_free_slot(self):
+        while True:
+            slot = -1
+            for i, thread in enumerate(self._pool):
+                if self._pool[i] is None or not thread.is_alive():
+                    slot = i
+                    break
+            if slot >= 0:
+                return slot
+            time.sleep(0.1)
+
+    def is_all_finished(self):
+        """
+        Check if there are no more active threads
+        """
+        for thread in self._pool:
+            if thread is not None and thread.is_alive():
+                return False
+        return True
+
+
+thread_pool = ThreadPool()
+lock = threading.Lock()
+
+
+def _add_show_info(torrent, tvshows):
+    """
+    Add show info from TheTVDB to the torrent
+    """
+    tvdb = torrent['episode_info']['tvdb']
+    try:
+        show_info = tvshows[tvdb]
+    except KeyError:
+        show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
+        with lock:
+            tvshows[tvdb] = show_info
+    with lock:
+        torrent['show_info'] = show_info
+
+
+def _add_episode_info(torrent, episodes):
+    """
+    Add episode info from TheTVDB to the torrent
+    """
+    tvdb = torrent['episode_info']['tvdb']
+    episode_id = '{0}-{1}x{2}'.format(tvdb,
+                                      torrent['episode_info']['seasonnum'],
+                                      torrent['episode_info']['epnum'])
+    try:
+        episode_info = episodes[episode_id]
+    except KeyError:
+        episode_info = thetvdb.get_episode(torrent['episode_info']['tvdb'],
+                                           torrent['episode_info']['seasonnum'],
+                                           torrent['episode_info']['epnum'])
+        with lock:
+            episodes[episode_id] = episode_info
+    with lock:
+        torrent['tvdb_episode_info'] = episode_info
+
+
+def _add_tvdb_info(torrents):
+    """
+    Add TV show and episode data from TheTVDB
+    """
+    tvshows = _plugin.get_storage('tvshows.pcl')
+    episodes = _plugin.get_storage('episodes.pcl')
+    try:
+        for torrent in torrents:
+            thread_pool.put(_add_show_info, torrent, tvshows)
+            thread_pool.put(_add_episode_info, torrent, episodes)
+        while not thread_pool.is_all_finished():
+            time.sleep(0.1)
+    finally:
+        tvshows.flush()
+        episodes.flush()
+
+
 def _deduplicate_data(torrents):
     """
-    Add TV show data from TheTVDB
+    Deduplicate data from rarbg based on max seeders
 
-    This function also deduplicates Rarbg results by picking an item
-    with max seeders
     @param torrents:
     @return:
     """
     results = OrderedDict()
-    with _plugin.get_storage('tvshows.pcl') as tvshows:
-        with _plugin.get_storage('episodes.pcl') as episodes:
-            for torrent in torrents:
-                if (torrent.get('episode_info') is None or
-                            torrent['episode_info'].get('epnum') is None or
-                            torrent['episode_info'].get('tvdb') is None):
-                    continue  # Skip an item if it's not an episode or missing from TheTVDB
-                ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
-                if ep_name_match is not None:
-                    ep_name = ep_name_match.group(1)
-                    if '.720' in torrent['title'] or '.1080' in torrent['title']:
-                        ep_name += 'hd'
-                else:
-                    ep_name = torrent['title'].lower()
-                if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
-                    tvdb = torrent['episode_info']['tvdb']
-                    try:
-                        show_info = tvshows[tvdb]
-                    except KeyError:
-                        show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
-                        tvshows[tvdb] = show_info
-                    torrent['show_info'] = show_info
-                    episode_id = '{0}-{1}x{2}'.format(tvdb,
-                                                      torrent['episode_info']['seasonnum'],
-                                                      torrent['episode_info']['epnum'])
-                    try:
-                        episode_info = episodes[episode_id]
-                    except KeyError:
-                        episode_info = thetvdb.get_episode(torrent['episode_info']['tvdb'],
-                                                           torrent['episode_info']['seasonnum'],
-                                                           torrent['episode_info']['epnum'])
-                        episodes[episode_id] = episode_info
-                    torrent['tvdb_episode_info'] = episode_info
-                    results[ep_name] = torrent
+    for torrent in torrents:
+        if (torrent.get('episode_info') is None or
+                    torrent['episode_info'].get('epnum') is None or
+                    torrent['episode_info'].get('tvdb') is None):
+            continue  # Skip an item if it's not an episode or missing from TheTVDB
+        ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
+        if ep_name_match is not None:
+            ep_name = ep_name_match.group(1)
+            if '.720' in torrent['title'] or '.1080' in torrent['title']:
+                ep_name += 'hd'
+        else:
+            ep_name = torrent['title'].lower()
+        if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
+            results[ep_name] = torrent
     return results.values()
 
 
@@ -71,4 +149,6 @@ def get_torrents(params):
 
     @return:
     """
-    return _deduplicate_data(rarbg.get_torrents(params))
+    torrents = _deduplicate_data(rarbg.get_torrents(params))
+    _add_tvdb_info(torrents)
+    return torrents
