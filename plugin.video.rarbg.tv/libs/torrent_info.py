@@ -10,6 +10,8 @@ import os
 import re
 import threading
 import time
+from traceback import format_exc
+from xbmc import LOGERROR
 from simpleplugin import Plugin
 import rarbg
 import thetvdb
@@ -74,7 +76,7 @@ def _add_show_info(torrent, tvshows):
     try:
         show_info = tvshows[tvdb]
     except KeyError:
-        show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
+        show_info = thetvdb.get_series(tvdb)
         with lock:
             tvshows[tvdb] = show_info
     with lock:
@@ -113,6 +115,9 @@ def _add_tvdb_info(torrents):
             thread_pool.put(_add_episode_info, torrent, episodes)
         while not thread_pool.is_all_finished():
             time.sleep(0.1)
+    except:
+        _plugin.log('Error when processing TV show info:', LOGERROR)
+        _plugin.log(format_exc(), LOGERROR)
     finally:
         tvshows.flush()
         episodes.flush()
