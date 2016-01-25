@@ -21,6 +21,8 @@ _plugin = Plugin()
 sys.path.append(os.path.join(_plugin.path, 'site-packages'))
 from ordereddict import OrderedDict
 
+episode_regex = re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE)
+
 
 class ThreadPool(object):
     """
@@ -132,16 +134,18 @@ def _deduplicate_data(torrents):
     """
     results = OrderedDict()
     for torrent in torrents:
-        if (torrent.get('episode_info') is None or
-                    torrent['episode_info'].get('epnum') is None or
-                    torrent['episode_info'].get('tvdb') is None):
-            continue  # Skip an item if it's not an episode or missing from TheTVDB
-        ep_name_match = re.match(r'(.+?\.s\d+e\d+)\.', torrent['title'].lower())
+        if torrent.get('episode_info') is None or torrent['episode_info'].get('tvdb') is None:
+            continue  # Skip an item if it's missing from TheTVDB
+        ep_name_match = re.match(episode_regex, torrent['title'].lower())
         if ep_name_match is not None:
-            ep_name = ep_name_match.group(1)
+            torrent['episode_info']['seasonnum'] = ep_name_match.group(2)
+            torrent['episode_info']['epnum'] = ep_name_match.group(3)
+            ep_name = ep_name_match.group(1) + ep_name_match.group(2) + ep_name_match.group(3)
             if '.720' in torrent['title'] or '.1080' in torrent['title']:
                 ep_name += 'hd'
         else:
+            if torrent['episode_info'].get('epnum') is None:
+                continue
             ep_name = torrent['title'].lower()
         if ep_name not in results or torrent['seeders'] > results[ep_name]['seeders']:
             results[ep_name] = torrent
