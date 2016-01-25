@@ -29,9 +29,10 @@ class ThreadPool(object):
     Thread pool class
     """
     daemon_threads = True
+    thread_count = 4
 
-    def __init__(self, thread_count=4):
-        self._pool = [None for i in xrange(thread_count)]
+    def __init__(self):
+        self._pool = [None for i in xrange(self.thread_count)]
 
     def put(self, func, *args, **kwargs):
         """
@@ -66,6 +67,7 @@ class ThreadPool(object):
         return True
 
 
+ThreadPool.thread_count = _plugin.thread_count
 thread_pool = ThreadPool()
 lock = threading.Lock()
 
