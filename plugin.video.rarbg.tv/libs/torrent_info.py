@@ -22,8 +22,10 @@ _plugin = Plugin()
 sys.path.append(os.path.join(_plugin.path, 'site-packages'))
 from ordereddict import OrderedDict
 
-episode_regexes = (re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE),
-                   re.compile(r'(.+?)\.(\d+)x(\d+)\.'), re.IGNORECASE)
+episode_regexes = (
+    re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE),
+    re.compile(r'(.+?)\.(\d+)x(\d+)\.', re.IGNORECASE)
+)
 
 
 def parse_torrent_name(name):
@@ -100,7 +102,7 @@ def _add_show_info(torrent, tvshows):
     try:
         show_info = tvshows[imdb]
     except KeyError:
-        show_info = thetvdb.get_series_by_imdbid(imdb)
+        show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
         with lock:
             tvshows[imdb] = show_info
     with lock:
@@ -169,7 +171,7 @@ def _deduplicate_data(torrents):
         else:
             if not torrent['episode_info'].get('seasonnum'):
                 torrent['episode_info']['seasonnum'] = episode_data.season
-            if not torrent['episode_indo'].get('epnum'):
+            if not torrent['episode_info'].get('epnum'):
                 torrent['episode_info']['epnum'] = episode_data.episode
             ep_id = episode_data.name + episode_data.season + episode_data.episode
             if '.720' in torrent['title'] or '.1080' in torrent['title']:
