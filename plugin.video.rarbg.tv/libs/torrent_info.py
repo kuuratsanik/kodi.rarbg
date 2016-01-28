@@ -52,7 +52,7 @@ class ThreadPool(object):
     thread_count = 4
 
     def __init__(self):
-        self._pool = [None for i in xrange(self.thread_count)]
+        self._pool = [None] * self.thread_count
 
     def put(self, func, *args, **kwargs):
         """
@@ -140,7 +140,7 @@ def _add_tvdb_info(torrents):
         while not thread_pool.is_all_finished():
             time.sleep(0.1)
     except:
-        _plugin.log('Error when processing TV show info:', LOGERROR)
+        _plugin.log('Error when processing TV shows info:', LOGERROR)
         _plugin.log(format_exc(), LOGERROR)
     finally:
         tvshows.flush()
