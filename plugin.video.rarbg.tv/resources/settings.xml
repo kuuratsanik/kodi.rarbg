@@ -11,7 +11,7 @@
              label="Hide torrents with few seeds" default="false" />
     <setting id="min_seeders" type="number"
              label="Minimal seeds number" default="10" enable="eq(-1,true)" />
-    <setting id="thread_count" type="number"
+    <setting id="thread_count" type="labelenum" values="1|2|3|4|5|6|7|8|9|10"
              label="# of threads when processing TheTVDB info" default="4" />
     <setting type="action"
              label="Clear cache" action="RunScript($CWD/libs/commands.py,clear_cache)" />
