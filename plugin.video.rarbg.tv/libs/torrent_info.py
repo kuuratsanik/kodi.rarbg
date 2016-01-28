@@ -103,6 +103,7 @@ def _add_show_info(torrent, tvshows):
         show_info = tvshows[tvdb]
     except KeyError:
         show_info = thetvdb.get_series(tvdb)
+        show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
         with lock:
             tvshows[tvdb] = show_info
     with lock:
