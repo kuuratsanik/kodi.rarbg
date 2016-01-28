@@ -27,15 +27,15 @@ home = {'label': '<< Home',
 commands = os.path.join(plugin.path, 'libs', 'commands.py')
 
 
-@plugin.cached(15)
-def _get_torrents(mode, category='', search_string='', search_tvdb=''):
+#@plugin.cached(15)
+def _get_torrents(mode, category='', search_string='', search_imdb=''):
     """
     Get torrents from Rarbg.to
 
     @param mode:
     @param category:
     @param search_string:
-    @param search_tvdb:
+    @param search_imdb:
     @return:
     """
     rarbg_params = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
@@ -45,8 +45,8 @@ def _get_torrents(mode, category='', search_string='', search_tvdb=''):
         rarbg_params['category'] = category
     if search_string:
         rarbg_params['search_string'] = search_string
-    if search_tvdb:
-        rarbg_params['search_tvdb'] = search_tvdb
+    if search_imdb:
+        rarbg_params['search_imdb'] = search_imdb
     return torrent_info.get_torrents(rarbg_params)
 
 
@@ -275,7 +275,7 @@ def episodes(params):
     """
     myshows = params.get('myshows', False)
     listing = _list_torrents(_get_torrents(params['mode'],
-                                           search_tvdb=params.get('search_tvdb', ''),
+                                           search_imdb=params.get('search_imdb', ''),
                                            category=_get_category()),
                              myshows=myshows)
     if myshows:
@@ -321,7 +321,7 @@ def my_shows(params):
             list_item = {'label': tvshows[show]['SeriesName'],
                          'url': plugin.get_url(action='episodes',
                                                mode='search',
-                                               search_tvdb=show,
+                                               search_imdb=tvshows[show]['IMDB_ID'],
                                                myshows='true'),
                          'context_menu': [('Show info', 'Action(Info)'),
                                           ('Remove from "My Shows"...',

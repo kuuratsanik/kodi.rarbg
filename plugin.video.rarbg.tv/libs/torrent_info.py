@@ -98,13 +98,13 @@ def _add_show_info(torrent, tvshows):
     """
     Add show info from TheTVDB to the torrent
     """
-    imdb = torrent['episode_info']['imdb']
+    tvdb = torrent['episode_info']['tvdb']
     try:
-        show_info = tvshows[imdb]
+        show_info = tvshows[tvdb]
     except KeyError:
-        show_info = thetvdb.get_series(torrent['episode_info']['tvdb'])
+        show_info = thetvdb.get_series(tvdb)
         with lock:
-            tvshows[imdb] = show_info
+            tvshows[tvdb] = show_info
     with lock:
         torrent['show_info'] = show_info
 
@@ -113,14 +113,14 @@ def _add_episode_info(torrent, episodes):
     """
     Add episode info from TheTVDB to the torrent
     """
-    imdb = torrent['episode_info']['imdb']
-    episode_id = '{0}-{1}x{2}'.format(imdb,
+    tvdb = torrent['episode_info']['tvdb']
+    episode_id = '{0}-{1}x{2}'.format(tvdb,
                                       torrent['episode_info']['seasonnum'],
                                       torrent['episode_info']['epnum'])
     try:
         episode_info = episodes[episode_id]
     except KeyError:
-        episode_info = thetvdb.get_episode(torrent['episode_info']['tvdb'],
+        episode_info = thetvdb.get_episode(tvdb,
                                            torrent['episode_info']['seasonnum'],
                                            torrent['episode_info']['epnum'])
         with lock:
