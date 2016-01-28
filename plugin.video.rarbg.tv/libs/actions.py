@@ -27,7 +27,7 @@ home = {'label': '<< Home',
 commands = os.path.join(plugin.path, 'libs', 'commands.py')
 
 
-#@plugin.cached(15)
+@plugin.cached(15)
 def _get_torrents(mode, category='', search_string='', search_imdb=''):
     """
     Get torrents from Rarbg.to
