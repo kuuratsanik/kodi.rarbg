@@ -104,7 +104,7 @@ def _set_info(list_item, torrent, myshows=False):
         if torrent['tvdb_episode_info']:
             video['director'] = torrent['tvdb_episode_info'].get('Director', '',)
             video['premiered'] = torrent['tvdb_episode_info'].get('FirstAired', '')
-            video['credits'] = torrent['tvdb_episode_info'].get('Writer', '')
+            video['credits'] = torrent['tvdb_episode_info'].get('Writer', '').lstrip('|').rstrip('|').replace('|', ', ')
             video['premiered'] = (torrent['tvdb_episode_info'].get('FirstAired', '') or
                                   torrent['episode_info'].get('airdate', ''))
             if torrent['tvdb_episode_info'].get('Rating'):
