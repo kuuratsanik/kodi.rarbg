@@ -36,7 +36,7 @@ download: magnet:?xt=urn:btih:d9678293e0980dcac8d054394444afd1f467ee48&dn=Game.o
 size: 45082604600
 """
 
-from webclient import load_page
+from utilities import load_page
 
 _API = 'http://torrentapi.org/pubapi_v2.php'
 

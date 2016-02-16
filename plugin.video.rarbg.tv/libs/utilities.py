@@ -73,20 +73,26 @@ class ThreadPool(object):
         return True
 
 
-def load_page(url, data=None):
+def load_page(url, data=None, headers=None):
     """
     Web-client
+
+    Loads web-pages via GET requests with optional query string data
 
     :param url: the URL of a web-page to be loaded
     :type url: str
     :param data: data to be sent to a server in a URL query string
     :type data: dict
     :return: response contents or a dictionary of json-decoded data
+    :param headers: additional headers for a HTTP request
+    :type headers: dict
     :rtype: dict -- for JSON response
     :rtype: str -- for other type of responses
     :raises: libs.exceptions.Http404Error -- if 404 error if returned
     """
     plugin.log('URL: {0}, params: {1}'.format(url, str(data)), LOGDEBUG)
+    if headers is not None:
+        HEADERS.update(headers)
     response = requests.get(url, params=data, headers=HEADERS, verify=False)
     if response.status_code == 404:
         message = 'Page {0} with params {1} not found.'.format(url, str(data))

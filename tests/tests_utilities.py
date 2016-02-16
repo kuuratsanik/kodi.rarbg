@@ -17,7 +17,15 @@ sys.modules['requests'] = mock_requests
 sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
 
-from libs.utilities import load_page, HEADERS
+from libs.utilities import load_page
+
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
+    'Accept-Charset': 'UTF-8',
+    'Accept': 'text/html,application/json,application/xml',
+    'Accept-Language': 'en-US, en',
+    'Accept-Encoding': 'gzip, deflate'
+}
 
 
 class LoadPageTestCase(TestCase):
@@ -43,3 +51,10 @@ class LoadPageTestCase(TestCase):
     def test_page_not_found(self):
         self.mock_response.status_code = 404
         self.assertRaises(Http404Error, load_page, 'foo')
+
+    def test_pass_headers(self):
+        self.mock_get.reset_mock()
+        headers = {'content-type': 'application/json'}
+        HEADERS.update(headers)
+        load_page('foo', headers=headers)
+        self.mock_get.assert_called_with('foo', params=None, headers=HEADERS, verify=False)
