@@ -36,9 +36,13 @@ download: magnet:?xt=urn:btih:d9678293e0980dcac8d054394444afd1f467ee48&dn=Game.o
 size: 45082604600
 """
 
+from xbmc import LOGERROR
+from simpleplugin import Plugin
 from utilities import load_page
+from exceptions import NoDataError
 
 _API = 'http://torrentapi.org/pubapi_v2.php'
+_plugin = Plugin()
 
 
 def _get_token():
@@ -46,7 +50,7 @@ def _get_token():
     Get a token to access Rarbg API
 
     The token will expire in 15 min
-    @return:
+    :return:
     """
     data = {'get_token': 'get_token'}
     return load_page(_API, data=data, headers={'content-type': 'application/json'})['token']
@@ -56,12 +60,15 @@ def get_torrents(params):
     """
     Get the list of recent TV episode torrents with extended data
 
-    @param params: dict - Rarbg API query params
-    @return: list - the list of torrents
+    :param params: dict - Rarbg API query params
+    :return: list - the list of torrents
+    :raises: libs.exceptions.NoDataError if Rarbg returns no torrent data
     """
     params['token'] = _get_token()
     params['format'] = 'json_extended'
     try:
         return load_page(_API, data=params, headers={'content-type': 'application/json'})['torrent_results']
     except KeyError:
-        return []
+        message = 'Request {0} to Rarbg returned no torrent results!'.format(str(params))
+        _plugin.log(message, LOGERROR)
+        raise NoDataError(message)
