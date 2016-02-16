@@ -46,49 +46,6 @@ def parse_torrent_name(name):
     return EpData(match.group(1), match.group(2), match.group(3))
 
 
-class ThreadPool(object):
-    """
-    Thread pool class
-    """
-    daemon_threads = True
-    thread_count = 4
-
-    def __init__(self):
-        self._pool = [None] * self.thread_count
-
-    def put(self, func, *args, **kwargs):
-        """
-        Put a function into the thread pool
-
-        If all available threads are busy, the call will block.
-        """
-        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
-        thread.daemon = self.daemon_threads
-        slot = self._get_free_slot()
-        thread.start()
-        self._pool[slot] = thread
-
-    def _get_free_slot(self):
-        while True:
-            slot = -1
-            for i, thread in enumerate(self._pool):
-                if self._pool[i] is None or not thread.is_alive():
-                    slot = i
-                    break
-            if slot >= 0:
-                return slot
-            time.sleep(0.1)
-
-    def is_all_finished(self):
-        """
-        Check if there are no more active threads
-        """
-        for thread in self._pool:
-            if thread is not None and thread.is_alive():
-                return False
-        return True
-
-
 ThreadPool.thread_count = _plugin.thread_count
 thread_pool = ThreadPool()
 lock = threading.Lock()
