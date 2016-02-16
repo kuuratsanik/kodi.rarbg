@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Data>
   <Series>
-    <id>82607</id>
-    <Actors>||</Actors>
-    <Airs_DayOfWeek></Airs_DayOfWeek>
-    <Airs_Time></Airs_Time>
-    <ContentRating></ContentRating>
-    <FirstAired>2003-05-08</FirstAired>
-    <Genre></Genre>
-    <IMDB_ID>tt0407372</IMDB_ID>
+    <id>83462</id>
+    <Actors>|Nathan Fillion|Stana Katic|Molly C. Quinn|Penny Johnson|Jon Huertas|Seamus Dever|Tamala Jones|Susan Sullivan|Ruben Santiago-Hudson|</Actors>
+    <Airs_DayOfWeek>Monday</Airs_DayOfWeek>
+    <Airs_Time>10:00 PM</Airs_Time>
+    <ContentRating>TV-PG</ContentRating>
+    <FirstAired>2009-03-09</FirstAired>
+    <Genre>|Comedy|Crime|Drama|</Genre>
+    <IMDB_ID>tt1219024</IMDB_ID>
     <Language>en</Language>
-    <Network>Channel 4</Network>
+    <Network>ABC (US)</Network>
     <NetworkID></NetworkID>
-    <Overview>Castle presenter and historian Marc Morris introduces us to 10 of the best-preserved examples across the United Kingdom. Castles were both a fortress and a home. Built to withstand armed assault they also housed elegant ladies, poets, priests, children and animals - as well as brutish warriors. </Overview>
-    <Rating>6.1</Rating>
-    <RatingCount>8</RatingCount>
+    <Overview>Rick Castle is one of the world's most successful crime authors. But when his rock star lifestyle isn't enough, this bad boy goes looking for new trouble and finds it working with smart, beautiful Detective Kate Beckett. Inspired by her professional record and intrigued by her buttoned-up personality, Castle's found the model for his bold new character whether she likes it or not. Now with the mayor's permission, Castle is helping solve crime with his own twist.</Overview>
+    <Rating>8.8</Rating>
+    <RatingCount>446</RatingCount>
     <Runtime>45</Runtime>
-    <SeriesID></SeriesID>
-    <SeriesName>Castle</SeriesName>
-    <Status>Ended</Status>
-    <added></added>
-    <addedBy></addedBy>
-    <banner>graphical/82607-g.jpg</banner>
-    <fanart></fanart>
-    <lastupdated>1452454644</lastupdated>
-    <poster>posters/82607-1.jpg</poster>
-    <tms_wanted_old>0</tms_wanted_old>
-    <zap2it_id></zap2it_id>
+    <SeriesID>75394</SeriesID>
+    <SeriesName>Castle (2009)</SeriesName>
+    <Status>Continuing</Status>
+    <added>2008-10-17 15:05:50</added>
+    <addedBy>3071</addedBy>
+    <banner>graphical/83462-g20.jpg</banner>
+    <fanart>fanart/original/83462-41.jpg</fanart>
+    <lastupdated>1455610116</lastupdated>
+    <poster>posters/83462-16.jpg</poster>
+    <tms_wanted_old>1</tms_wanted_old>
+    <zap2it_id>EP01085588</zap2it_id>
   </Series>
 </Data>

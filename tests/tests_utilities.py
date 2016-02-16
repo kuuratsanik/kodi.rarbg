@@ -7,6 +7,7 @@ import os
 import sys
 from unittest import TestCase
 from mock import MagicMock
+from libs.exceptions import Http404Error
 
 basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(basedir, 'plugin.video.rarbg.tv'))
@@ -17,7 +18,6 @@ sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
 
 from libs.utilities import load_page, HEADERS
-from libs.exceptions import Http404Error
 
 
 class LoadPageTestCase(TestCase):

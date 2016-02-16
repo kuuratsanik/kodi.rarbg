@@ -40,6 +40,7 @@ def get_series(tvdbid):
     :type tvdbid: str
     :return: TV series data
     :rtype: dict
+    :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
     """
     page = load_page(_GET_SERIES.format(apikey=_APIKEY, id=tvdbid)).encode('utf-8', 'replace')
     root = etree.fromstring(page)
@@ -50,26 +51,32 @@ def get_series(tvdbid):
         return _parse_items(series)
 
 
-def get_episode(thetvdb_id, season, episode):
+def get_episode(tvdbid, season, episode):
     """
     Get episode info
 
-    :param thetvdb_id: str
-    :param season: str
-    :param episode: str
-    :return:
+    :param tvdbid: TVDB series ID
+    :type tvdbid: str
+    :param season: season # without preceding 0
+    :type season: str
+    :param episode: episode # without preceding 0
+    :type episode: str
+    :return: TV episode data
+    :rtype: dict
+    :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
     """
-    page = load_page(_GET_EPISODE.format(apikey=_APIKEY, id=thetvdb_id,
+    page = load_page(_GET_EPISODE.format(apikey=_APIKEY, id=tvdbid,
                                          season=season.lstrip('0'),
                                          episode=episode.lstrip('0'))).encode('utf-8', 'replace')
-    if 'Not Found' in page:
-        return None
     root = etree.fromstring(page)
     ep_info = root.find('Episode')
-    if ep_info is not None:
-        return _parse_items(ep_info)
+    if ep_info is None:
+        raise NoDataError('TheTVDB has no valid data for episode {0} - S{1}E{2}!'.format(tvdbid,
+                                                                                         season,
+                                                                                         episode))
     else:
-        return None
+        return _parse_items(ep_info)
+
 
 def search_series(seriesname):
     """
