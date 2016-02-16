@@ -45,6 +45,7 @@ _API = 'http://torrentapi.org/pubapi_v2.php'
 _plugin = Plugin()
 
 
+@_plugin.cached()
 def _get_token():
     """
     Get a token to access Rarbg API
@@ -69,6 +70,4 @@ def get_torrents(params):
     try:
         return load_page(_API, data=params, headers={'content-type': 'application/json'})['torrent_results']
     except KeyError:
-        message = 'Request {0} to Rarbg returned no torrent results!'.format(str(params))
-        _plugin.log(message, LOGERROR)
-        raise NoDataError(message)
+        raise NoDataError

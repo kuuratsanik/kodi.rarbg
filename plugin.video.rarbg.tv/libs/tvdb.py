@@ -46,7 +46,7 @@ def get_series(tvdbid):
     root = etree.fromstring(page)
     series = root.find('Series')
     if series is None:
-        raise NoDataError('TheTVDB has no valid data for ID {0}!'.format(tvdbid))
+        raise NoDataError
     else:
         return _parse_items(series)
 
@@ -71,9 +71,7 @@ def get_episode(tvdbid, season, episode):
     root = etree.fromstring(page)
     ep_info = root.find('Episode')
     if ep_info is None:
-        raise NoDataError('TheTVDB has no valid data for episode {0} - S{1}E{2}!'.format(tvdbid,
-                                                                                         season,
-                                                                                         episode))
+        raise NoDataError
     else:
         return _parse_items(ep_info)
 
