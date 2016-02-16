@@ -6,7 +6,7 @@
 
 import xml.etree.ElementTree as etree
 from utilities import load_page
-from exceptions import NoDataError
+from exceptions import NoDataError, Http404Error
 
 _APIKEY = '41277F23AA12DE38'
 _GET_SERIES = 'http://thetvdb.com/api/{apikey}/series/{id}/en.xml'
@@ -40,9 +40,12 @@ def get_series(tvdbid):
     :type tvdbid: str
     :return: TV series data
     :rtype: dict
-    :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
+    :raises: libs.exceptions.NoDataError if TheTVDB returns no data
     """
-    page = load_page(_GET_SERIES.format(apikey=_APIKEY, id=tvdbid)).encode('utf-8', 'replace')
+    try:
+        page = load_page(_GET_SERIES.format(apikey=_APIKEY, id=tvdbid)).encode('utf-8', 'replace')
+    except Http404Error:
+        raise NoDataError
     root = etree.fromstring(page)
     series = root.find('Series')
     if series is None:
@@ -63,11 +66,14 @@ def get_episode(tvdbid, season, episode):
     :type episode: str
     :return: TV episode data
     :rtype: dict
-    :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
+    :raises: libs.exceptions.NoDataError if TheTVDB returns no data
     """
-    page = load_page(_GET_EPISODE.format(apikey=_APIKEY, id=tvdbid,
-                                         season=season.lstrip('0'),
-                                         episode=episode.lstrip('0'))).encode('utf-8', 'replace')
+    try:
+        page = load_page(_GET_EPISODE.format(apikey=_APIKEY, id=tvdbid,
+                                             season=season.lstrip('0'),
+                                             episode=episode.lstrip('0'))).encode('utf-8', 'replace')
+    except Http404Error:
+        raise NoDataError
     root = etree.fromstring(page)
     ep_info = root.find('Episode')
     if ep_info is None:
