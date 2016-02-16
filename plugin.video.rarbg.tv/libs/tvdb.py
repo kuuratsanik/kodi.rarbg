@@ -82,14 +82,19 @@ def search_series(seriesname):
     """
     Search TV series on TheTVDB
 
-    :param seriesname:
-    :param:
+    :param seriesname: a string to search at TheTVDB
+    :type seriesname: str
+    :return: the list of found TV series data as dicts
+    :rtype: list
+    :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
     """
     root = etree.fromstring(load_page(_SEARCH_SERIES, data={'seriesname': seriesname}).encode('utf-8', 'replace'))
     series = root.findall('Series')
-    listing = []
-    if series is not None:
+    if series:
+        listing = []
         for show in series:
             if show.find('IMDB_ID') is not None:
                 listing.append(_parse_items(show))
-    return listing
+        return listing
+    else:
+        raise NoDataError

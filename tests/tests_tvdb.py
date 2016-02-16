@@ -21,10 +21,10 @@ mock_utilities = MagicMock()
 mock_utilities.load_page = mock_load_page
 sys.modules['libs.utilities'] = mock_utilities
 
-from libs.tvdb import get_series, get_episode
+from libs.tvdb import get_series, get_episode, search_series
 
 
-class TVDBTestCase(TestCase):
+class GetSeriesTestCase(TestCase):
     def test_get_series(self):
         with codecs.open(os.path.join(test_data, 'get_series.xml'), encoding='utf-8', mode='rb') as fileobj:
             xml_data = fileobj.read()
@@ -39,6 +39,8 @@ class TVDBTestCase(TestCase):
         mock_load_page.return_value = xml_data
         self.assertRaises(NoDataError, get_series, '82607')
 
+
+class GetEpisodeTestCase(TestCase):
     def test_get_episode(self):
         with codecs.open(os.path.join(test_data, 'get_episode.xml'), encoding='utf-8', mode='rb') as fileobj:
             xml_data = fileobj.read()
@@ -52,3 +54,18 @@ class TVDBTestCase(TestCase):
             xml_data = fileobj.read()
         mock_load_page.return_value = xml_data
         self.assertRaises(NoDataError, get_episode, '82607', '3', '3')
+
+
+class SearchSeriesTestCase(TestCase):
+    def test_search_series(self):
+        with codecs.open(os.path.join(test_data, 'search_series.xml'), encoding='utf-8', mode='rb') as fileobj:
+            xml_data = fileobj.read()
+        mock_load_page.return_value = xml_data
+        result = search_series('Castle')
+        self.assertEqual(len(result), 10)
+
+    def test_search_series_invalid(self):
+        with codecs.open(os.path.join(test_data, 'invalid.xml'), encoding='utf-8', mode='rb') as fileobj:
+            xml_data = fileobj.read()
+        mock_load_page.return_value = xml_data
+        self.assertRaises(NoDataError, search_series, 'FooBar')
