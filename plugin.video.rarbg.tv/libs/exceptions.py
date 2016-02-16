@@ -15,5 +15,5 @@ class Http404Error(RarbgError):
 
 
 class NoDataError(RarbgError):
-    """Exception if a request to TheTVDB returned no valid data"""
+    """Exception if a request to a web-service returnes no valid data"""
     pass
