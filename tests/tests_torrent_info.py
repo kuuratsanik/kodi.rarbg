@@ -5,7 +5,8 @@
 import os
 import sys
 from unittest import TestCase
-from mock import MagicMock
+from mock import MagicMock, patch
+from libs.exceptions import NoDataError
 
 __all__ = ['ParseTorrentNameTestCase', 'AddShowInfoTestCase', 'AddEpisodeInfoTestCase']
 
@@ -14,10 +15,13 @@ sys.path.insert(0, os.path.join(basedir, 'plugin.video.rarbg.tv'))
 
 sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
-mock_tvdb = MagicMock()
-sys.modules['libs.tvdb'] = mock_tvdb
+sys.modules['libs.tvdb'] = MagicMock()
 
 import libs.torrent_info as ti
+
+
+def raise_no_data_error(*args, **kwargs):
+    raise NoDataError
 
 
 class ParseTorrentNameTestCase(TestCase):
@@ -42,14 +46,23 @@ class AddShowInfoTestCase(TestCase):
         ti.add_show_info(torrent, tvshows)
         self.assertEqual(torrent['show_info']['SeriesName'], 'Castle (2009)')
 
-    def test_getting_missing_show_info(self):
+    @patch('libs.torrent_info.tvdb.get_series')
+    def test_getting_missing_show_info(self, mock_get_series):
         torrent = {'episode_info': {'tvdb': '121361', 'imdb': 'tt0944947'}}
         tvshows = {}
-        mock_tvdb.get_series.return_value = {'SeriesName': 'Game of Thrones'}
+        mock_get_series.return_value = {'SeriesName': 'Game of Thrones'}
         ti.add_show_info(torrent, tvshows)
         self.assertEqual(torrent['show_info']['SeriesName'], 'Game of Thrones')
         self.assertEqual(tvshows['121361']['SeriesName'], 'Game of Thrones')
         self.assertEqual(tvshows['121361']['IMDB_ID'], 'tt0944947')
+
+    @patch('libs.torrent_info.tvdb.get_series')
+    def test_get_series_returned_no_data(self, mock_get_series):
+        torrent = {'episode_info': {'tvdb': '121361'}}
+        tvshows = {}
+        mock_get_series.side_effect = raise_no_data_error
+        ti.add_show_info(torrent, tvshows)
+        self.assertIs(torrent['show_info'], None)
 
 
 class AddEpisodeInfoTestCase(TestCase):
