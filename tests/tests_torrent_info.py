@@ -41,14 +41,14 @@ class ParseTorrentNameTestCase(TestCase):
 
 class AddShowInfoTestCase(TestCase):
     def test_adding_existing_show_info(self):
-        torrent = {'episode_info': {'tvdb': '82607'}}
-        tvshows = {'82607': {'SeriesName': 'Castle (2009)'}}
+        torrent = {u'episode_info': {u'tvdb': u'82607'}}
+        tvshows = {u'82607': {u'SeriesName': u'Castle (2009)'}}
         ti.add_show_info(torrent, tvshows)
         self.assertEqual(torrent['show_info']['SeriesName'], 'Castle (2009)')
 
     @patch('libs.torrent_info.tvdb.get_series')
     def test_getting_missing_show_info(self, mock_get_series):
-        torrent = {'episode_info': {'tvdb': '121361', 'imdb': 'tt0944947'}}
+        torrent = {u'episode_info': {u'tvdb': u'121361', u'imdb': u'tt0944947'}}
         tvshows = {}
         mock_get_series.return_value = {'SeriesName': 'Game of Thrones'}
         ti.add_show_info(torrent, tvshows)
@@ -57,8 +57,8 @@ class AddShowInfoTestCase(TestCase):
         self.assertEqual(tvshows['121361']['IMDB_ID'], 'tt0944947')
 
     @patch('libs.torrent_info.tvdb.get_series')
-    def test_get_series_returned_no_data(self, mock_get_series):
-        torrent = {'episode_info': {'tvdb': '121361'}}
+    def test_get_series_returnes_no_data(self, mock_get_series):
+        torrent = {u'episode_info': {u'tvdb': u'121361'}}
         tvshows = {}
         mock_get_series.side_effect = raise_no_data_error
         ti.add_show_info(torrent, tvshows)
@@ -66,4 +66,25 @@ class AddShowInfoTestCase(TestCase):
 
 
 class AddEpisodeInfoTestCase(TestCase):
-    pass
+    def test_adding_existing_episode_info(self):
+        torrent = {u'episode_info': {u'tvdb': u'82607', u'seasonnum': u'3', u'epnum': u'03'}}
+        episodes = {'82607-3x03': {'EpisodeName': 'Under the Gun'}}
+        ti.add_episode_info(torrent, episodes)
+        self.assertEqual(torrent['tvdb_episode_info']['EpisodeName'], 'Under the Gun')
+
+    @patch('libs.torrent_info.tvdb.get_episode')
+    def test_getting_missing_episode_info(self, mock_get_episode):
+        torrent = {u'episode_info': {u'tvdb': u'82607', u'seasonnum': u'3', u'epnum': u'03'}}
+        episodes = {}
+        mock_get_episode.return_value = {'EpisodeName': 'Under the Gun'}
+        ti.add_episode_info(torrent, episodes)
+        self.assertEqual(torrent['tvdb_episode_info']['EpisodeName'], 'Under the Gun')
+        self.assertEqual(episodes['82607-3x03']['EpisodeName'], 'Under the Gun')
+
+    @patch('libs.torrent_info.tvdb.get_episode')
+    def test_get_episode_rerurnes_no_data(self, mock_get_episode):
+        torrent = {u'episode_info': {u'tvdb': u'82607', u'seasonnum': u'3', u'epnum': u'03'}}
+        episodes = {}
+        mock_get_episode.side_effect = raise_no_data_error
+        ti.add_episode_info(torrent, episodes)
+        self.assertIs(torrent['tvdb_episode_info'], None)

@@ -76,27 +76,36 @@ def add_show_info(torrent, tvshows):
     with lock:
         torrent['show_info'] = show_info
 
-'''
+
 def add_episode_info(torrent, episodes):
     """
     Add episode info from TheTVDB to the torrent
+
+    :param torrent: a torrent object from Rarbg
+    :type torrent: dict
+    :param episodes: TV episodes database with info from TheTVDB
+    :type episodes: dict
     """
-    tvdb_info = torrent['episode_info']['tvdb']
-    episode_id = '{0}-{1}x{2}'.format(tvdb,
+    tvdbid = torrent['episode_info']['tvdb']
+    episode_id = '{0}-{1}x{2}'.format(tvdbid,
                                       torrent['episode_info']['seasonnum'],
                                       torrent['episode_info']['epnum'])
     try:
         episode_info = episodes[episode_id]
     except KeyError:
-        episode_info = tvdb.get_episode(tvdb_info,
-                                           torrent['episode_info']['seasonnum'],
-                                           torrent['episode_info']['epnum'])
-        with lock:
-            episodes[episode_id] = episode_info
+        try:
+            episode_info = tvdb.get_episode(tvdbid,
+                                            torrent['episode_info']['seasonnum'],
+                                            torrent['episode_info']['epnum'])
+        except NoDataError:
+            episode_info = None
+        else:
+            with lock:
+                episodes[episode_id] = episode_info
     with lock:
         torrent['tvdb_episode_info'] = episode_info
 
-
+'''
 def add_tvdb_info(torrents):
     """
     Add TV show and episode data from TheTVDB
