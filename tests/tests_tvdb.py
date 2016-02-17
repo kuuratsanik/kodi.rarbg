@@ -10,6 +10,8 @@ import codecs
 from unittest import TestCase
 from mock import MagicMock
 
+__all__ = ['GetSeriesTestCase', 'GetEpisodeTestCase', 'SearchSeriesTestCase']
+
 cwd = os.path.dirname(os.path.abspath(__file__))
 test_data = os.path.join(cwd, 'test_data')
 sys.path.append(os.path.join(os.path.dirname(cwd), 'plugin.video.rarbg.tv'))

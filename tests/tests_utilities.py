@@ -9,6 +9,8 @@ from unittest import TestCase
 from mock import MagicMock
 from libs.exceptions import Http404Error
 
+__all__ = ['LoadPageTestCase']
+
 basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(basedir, 'plugin.video.rarbg.tv'))
 
