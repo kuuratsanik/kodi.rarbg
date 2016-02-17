@@ -9,6 +9,7 @@ import sys
 import os
 import re
 import threading
+import time
 from collections import namedtuple
 from simpleplugin import Plugin
 import tvdb
@@ -30,8 +31,6 @@ episode_regexes = (
     re.compile(r'(.+?)\.(\d+)x(\d+)\.', re.IGNORECASE)
 )
 EpData = namedtuple('EpData', ['name', 'season', 'episode'])
-ThreadPool.thread_count = plugin.thread_count
-thread_pool = ThreadPool()
 lock = threading.Lock()
 
 
@@ -105,27 +104,29 @@ def add_episode_info(torrent, episodes):
     with lock:
         torrent['tvdb_episode_info'] = episode_info
 
-'''
+
 def add_tvdb_info(torrents):
     """
-    Add TV show and episode data from TheTVDB
+    Add TV show and episode data from TheTVDB to torrents
+
+    :param torrents: the list of torrents from Rarbg as dicts
+    :type torrents: list
     """
-    tvshows = _plugin.get_storage('tvshows.pcl')
-    episodes = _plugin.get_storage('episodes.pcl')
+    tvshows = plugin.get_storage('tvshows.pcl')
+    episodes = plugin.get_storage('episodes.pcl')
+    ThreadPool.thread_count = plugin.thread_count
+    thread_pool = ThreadPool()
     try:
         for torrent in torrents:
             thread_pool.put(add_show_info, torrent, tvshows)
             thread_pool.put(add_episode_info, torrent, episodes)
         while not thread_pool.is_all_finished():
             time.sleep(0.1)
-    except:
-        _plugin.log('Error when processing TV shows info:', LOGERROR)
-        _plugin.log(format_exc(), LOGERROR)
     finally:
         tvshows.flush()
         episodes.flush()
 
-
+'''
 def deduplicate_data(torrents):
     """
     Deduplicate data from rarbg based on max seeders
