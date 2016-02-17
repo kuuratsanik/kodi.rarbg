@@ -11,12 +11,14 @@ import re
 import threading
 import time
 from collections import namedtuple
+from xbmc import LOGERROR
 from simpleplugin import Plugin
 import tvdb
+import rarbg
 from utilities import ThreadPool
 from exceptions import NoDataError
 
-__all__ = []
+__all__ = ['get_torrents']
 
 plugin = Plugin()
 
@@ -27,8 +29,8 @@ except ImportError:
     from ordereddict import OrderedDict
 
 episode_regexes = (
-    re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE),
-    re.compile(r'(.+?)\.(\d+)x(\d+)\.', re.IGNORECASE)
+    re.compile(r'(.+?)\.s(\d+)e(\d+)', re.IGNORECASE),
+    re.compile(r'(.+?)\.(\d+)x(\d+)', re.IGNORECASE)
 )
 EpData = namedtuple('EpData', ['name', 'season', 'episode'])
 lock = threading.Lock()
@@ -67,6 +69,7 @@ def add_show_info(torrent, tvshows):
         try:
             show_info = tvdb.get_series(tvdbid)
         except NoDataError:
+            plugin.log('TheTVDB rerturned no data for ID {0}, torrent {1}'.format(tvdbid, torrent['title']), LOGERROR)
             show_info = None
         else:
             show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
@@ -97,6 +100,7 @@ def add_episode_info(torrent, episodes):
                                             torrent['episode_info']['seasonnum'],
                                             torrent['episode_info']['epnum'])
         except NoDataError:
+            plugin.log('TheTVDB returned no data for episode {0}, torrent {1}'.format(episode_id, torrent['title']))
             episode_info = None
         else:
             with lock:
@@ -126,13 +130,15 @@ def add_tvdb_info(torrents):
         tvshows.flush()
         episodes.flush()
 
-'''
-def deduplicate_data(torrents):
-    """
-    Deduplicate data from rarbg based on max seeders
 
-    @param torrents:
-    @return:
+def deduplicate_torrents(torrents):
+    """
+    Deduplicate torrents from rarbg based on max. seeders
+
+    :param torrents: raw torrent list from Rarbg
+    :type torrents: list
+    :return: deduplicated torrents list
+    :rtype: list
     """
     results = OrderedDict()
     for torrent in torrents:
@@ -145,27 +151,28 @@ def deduplicate_data(torrents):
         except ValueError:
             if torrent['episode_info'].get('epnum') is None:
                 continue
-            ep_id = torrent['title'].lower()
         else:
             if not torrent['episode_info'].get('seasonnum'):
                 torrent['episode_info']['seasonnum'] = episode_data.season
             if not torrent['episode_info'].get('epnum'):
                 torrent['episode_info']['epnum'] = episode_data.episode
-            ep_id = episode_data.name + episode_data.season + episode_data.episode
-            if '.720' in torrent['title'] or '.1080' in torrent['title']:
-                ep_id += 'hd'
+        ep_id = torrent['episode_info']['tvdb'] + torrent['episode_info']['seasonnum'] + torrent['episode_info']['epnum']
+        if '.720' in torrent['title'] or '.1080' in torrent['title']:
+            ep_id += 'hd'
         if ep_id not in results or torrent['seeders'] > results[ep_id]['seeders']:
             results[ep_id] = torrent
     return results.values()
 
 
-def get_torrents(params):
+def get_torrents(query):
     """
     Get recent torrents with TheTVDB data
 
-    @return:
+    :param query: query to Rarbg
+    :type query: dict
+    :return: deduplicated episode torrents list with TheTVDB data for shows and episodes
+    :rtype: list
     """
-    torrents = deduplicate_data(rarbg.get_torrents(params))
+    torrents = deduplicate_torrents(rarbg.get_torrents(query))
     add_tvdb_info(torrents)
     return torrents
-'''

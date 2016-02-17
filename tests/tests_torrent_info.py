@@ -8,7 +8,7 @@ from unittest import TestCase
 from mock import MagicMock, patch
 from libs.exceptions import NoDataError
 
-__all__ = ['ParseTorrentNameTestCase', 'AddShowInfoTestCase', 'AddEpisodeInfoTestCase']
+__all__ = ['ParseTorrentNameTestCase', 'AddShowInfoTestCase', 'AddEpisodeInfoTestCase', 'DeduplicateTorrentsTestCase']
 
 basedir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(basedir, 'plugin.video.rarbg.tv'))
@@ -58,7 +58,7 @@ class AddShowInfoTestCase(TestCase):
 
     @patch('libs.torrent_info.tvdb.get_series')
     def test_get_series_returnes_no_data(self, mock_get_series):
-        torrent = {u'episode_info': {u'tvdb': u'121361'}}
+        torrent = {u'title': u'castle.s03e03', u'episode_info': {u'tvdb': u'121361'}}
         tvshows = {}
         mock_get_series.side_effect = raise_no_data_error
         ti.add_show_info(torrent, tvshows)
@@ -83,8 +83,56 @@ class AddEpisodeInfoTestCase(TestCase):
 
     @patch('libs.torrent_info.tvdb.get_episode')
     def test_get_episode_rerurnes_no_data(self, mock_get_episode):
-        torrent = {u'episode_info': {u'tvdb': u'82607', u'seasonnum': u'3', u'epnum': u'03'}}
+        torrent = {u'title': u'castle.s03e03', u'episode_info': {u'tvdb': u'82607',
+                                                                 u'seasonnum': u'3',
+                                                                 u'epnum': u'03'}}
         episodes = {}
         mock_get_episode.side_effect = raise_no_data_error
         ti.add_episode_info(torrent, episodes)
         self.assertIs(torrent['tvdb_episode_info'], None)
+
+
+class DeduplicateTorrentsTestCase(TestCase):
+    def test_torrents_missing_episode_or_tvdb_imdb_id(self):
+        torrents = [{}]
+        result = ti.deduplicate_torrents(torrents)
+        self.assertSequenceEqual(result, [])
+        torrents[0]['episode_info'] = {}
+        result = ti.deduplicate_torrents(torrents)
+        self.assertSequenceEqual(result, [])
+        torrents[0]['episode_info'] = {'tvdb': '12345'}
+        self.assertSequenceEqual(result, [])
+
+    def test_torrents_are_not_episodes(self):
+        torrents = [{'title': 'FooBar', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
+        result = ti.deduplicate_torrents(torrents)
+        self.assertSequenceEqual(result, [])
+
+    def test_torrents_are_episodes(self):
+        torrents1 = [{'title': 'FooBar', 'episode_info': {'tvdb': '12345',
+                                                         'imdb': 'tt12345',
+                                                         'seasonnum': '01',
+                                                         'epnum': '01'}}]
+        result = ti.deduplicate_torrents(torrents1)
+        self.assertSequenceEqual(result, torrents1)
+        torrents2 = [{'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
+        result = ti.deduplicate_torrents(torrents2)
+        self.assertEqual(result[0]['episode_info']['seasonnum'], '01')
+        self.assertEqual(result[0]['episode_info']['epnum'], '01')
+
+    def test_deduplication_based_on_seeders(self):
+        torrents = [
+            {'title': 'Foo.s01e01.avi', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 10},
+            {'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 20},
+        ]
+        result = ti.deduplicate_torrents(torrents)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['seeders'], 20)
+
+    def test_differentiating_sd_and_hd_torrents(self):
+        torrents = [
+            {'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 10},
+            {'title': 'Foo.s01e01.720p.mkv', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 20},
+        ]
+        result = ti.deduplicate_torrents(torrents)
+        self.assertEqual(len(result), 2)
