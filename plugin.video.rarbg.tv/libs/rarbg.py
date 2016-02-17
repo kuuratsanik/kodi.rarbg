@@ -52,8 +52,8 @@ def get_token():
     :return: Rarbg API token
     :rtype: str
     """
-    data = {'get_token': 'get_token'}
-    return load_page(API, data=data, headers={'content-type': 'application/json'})['token']
+    params = {'get_token': 'get_token'}
+    return load_page(API, params=params, headers={'content-type': 'application/json'})['token']
 
 
 def get_torrents(params):
@@ -69,6 +69,6 @@ def get_torrents(params):
     params['token'] = get_token()
     params['format'] = 'json_extended'
     try:
-        return load_page(API, data=params, headers={'content-type': 'application/json'})['torrent_results']
+        return load_page(API, params=params, headers={'content-type': 'application/json'})['torrent_results']
     except KeyError:
         raise NoDataError('Rarbg returned no valid data!')

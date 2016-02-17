@@ -75,7 +75,7 @@ class ThreadPool(object):
         return True
 
 
-def load_page(url, data=None, headers=None):
+def load_page(url, params=None, headers=None):
     """
     Web-client
 
@@ -83,8 +83,8 @@ def load_page(url, data=None, headers=None):
 
     :param url: the URL of a web-page to be loaded
     :type url: str
-    :param data: data to be sent to a server in a URL query string
-    :type data: dict
+    :param params: parameters to be sent to a server in a URL-encoded paramstring
+    :type params: dict
     :param headers: additional headers for a HTTP request
     :type headers: dict
     :return: response contents or a dictionary of json-decoded data
@@ -93,12 +93,12 @@ def load_page(url, data=None, headers=None):
     :raises: libs.exceptions.Http404Error -- if 404 error if returned
     """
     request_headers = dict(HEADERS)
-    plugin.log('URL: {0}, params: {1}'.format(url, str(data)))
+    plugin.log('URL: {0}, params: {1}'.format(url, str(params)))
     if headers is not None:
         request_headers.update(headers)
-    response = requests.get(url, params=data, headers=request_headers, verify=False)
+    response = requests.get(url, params=params, headers=request_headers, verify=False)
     if response.status_code == 404:
-        message = 'URL {0} with params {1} not found.'.format(url, str(data))
+        message = 'URL {0} with params {1} not found.'.format(url, str(params))
         plugin.log(message, LOGERROR)
         raise Http404Error(message)
     if 'application/json' in response.headers['content-type']:

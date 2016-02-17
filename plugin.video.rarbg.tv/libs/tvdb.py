@@ -95,7 +95,7 @@ def search_series(seriesname):
     :rtype: list
     :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
     """
-    root = etree.fromstring(load_page(SEARCH_SERIES, data={'seriesname': seriesname}).encode('utf-8', 'replace'))
+    root = etree.fromstring(load_page(SEARCH_SERIES, params={'seriesname': seriesname}).encode('utf-8', 'replace'))
     series = root.findall('Series')
     if series:
         listing = []
