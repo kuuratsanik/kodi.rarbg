@@ -4,9 +4,8 @@
 # Created on: 15.05.2015
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 # Rarbg API docs: http://torrentapi.org/apidocs_v2.txt
-"""Get torrent info from Rarbg API"""
+"""Get torrent info from Rarbg API
 
-"""
 Link:
 http://torrentapi.org/pubapi_v2.php?mode=list&category=18;41&format=json_extended&token=xxxxxx
 
@@ -36,38 +35,40 @@ download: magnet:?xt=urn:btih:d9678293e0980dcac8d054394444afd1f467ee48&dn=Game.o
 size: 45082604600
 """
 
-from xbmc import LOGERROR
-from simpleplugin import Plugin
 from utilities import load_page
 from exceptions import NoDataError
 
-_API = 'http://torrentapi.org/pubapi_v2.php'
-_plugin = Plugin()
+__all__ = ['get_torrents']
+
+API = 'http://torrentapi.org/pubapi_v2.php'
 
 
-@_plugin.cached()
-def _get_token():
+def get_token():
     """
     Get a token to access Rarbg API
 
     The token will expire in 15 min
-    :return:
+
+    :return: Rarbg API token
+    :rtype: str
     """
     data = {'get_token': 'get_token'}
-    return load_page(_API, data=data, headers={'content-type': 'application/json'})['token']
+    return load_page(API, data=data, headers={'content-type': 'application/json'})['token']
 
 
 def get_torrents(params):
     """
     Get the list of recent TV episode torrents with extended data
 
-    :param params: dict - Rarbg API query params
-    :return: list - the list of torrents
+    :param params: Rarbg API query params
+    :type params: dict
+    :return: the list of torrents as dicts
+    :rtype: list
     :raises: libs.exceptions.NoDataError if Rarbg returns no torrent data
     """
-    params['token'] = _get_token()
+    params['token'] = get_token()
     params['format'] = 'json_extended'
     try:
-        return load_page(_API, data=params, headers={'content-type': 'application/json'})['torrent_results']
+        return load_page(API, data=params, headers={'content-type': 'application/json'})['torrent_results']
     except KeyError:
-        raise NoDataError
+        raise NoDataError('Rarbg returned no valid data!')
