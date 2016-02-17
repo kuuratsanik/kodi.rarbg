@@ -12,13 +12,13 @@ from exceptions import Http404Error
 
 __all__ = ['ThreadPool', 'load_page']
 
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
-    'Accept-Charset': 'UTF-8',
-    'Accept': 'text/html,application/json,application/xml',
-    'Accept-Language': 'en-US, en',
-    'Accept-Encoding': 'gzip, deflate'
-}
+HEADERS = (
+    ('User-Agent', 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:44.0) Gecko/20100101 Firefox/44.0'),
+    ('Accept-Charset', 'UTF-8'),
+    ('Accept', 'text/html,text/plain,application/json,application/xml'),
+    ('Accept-Language', 'en-US, en'),
+    ('Accept-Encoding', 'gzip, deflate'),
+)
 plugin = Plugin()
 
 
@@ -92,10 +92,11 @@ def load_page(url, data=None, headers=None):
     :rtype: str -- for other types of responses
     :raises: libs.exceptions.Http404Error -- if 404 error if returned
     """
+    request_headers = dict(HEADERS)
     plugin.log('URL: {0}, params: {1}'.format(url, str(data)))
     if headers is not None:
-        HEADERS.update(headers)
-    response = requests.get(url, params=data, headers=HEADERS, verify=False)
+        request_headers.update(headers)
+    response = requests.get(url, params=data, headers=request_headers, verify=False)
     if response.status_code == 404:
         message = 'URL {0} with params {1} not found.'.format(url, str(data))
         plugin.log(message, LOGERROR)

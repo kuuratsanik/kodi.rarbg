@@ -18,15 +18,7 @@ sys.modules['requests'] = MagicMock()
 sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
 
-from libs.utilities import load_page
-
-HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
-    'Accept-Charset': 'UTF-8',
-    'Accept': 'text/html,application/json,application/xml',
-    'Accept-Language': 'en-US, en',
-    'Accept-Encoding': 'gzip, deflate'
-}
+from libs.utilities import load_page, HEADERS
 
 
 @patch('libs.utilities.requests.get')
@@ -39,7 +31,7 @@ class LoadPageTestCase(TestCase):
         self.mock_response.json.return_value = {'foo': 'bar'}
         mock_get.return_value = self.mock_response
         result = load_page('foo')
-        mock_get.assert_called_with('foo', params=None, headers=HEADERS, verify=False)
+        mock_get.assert_called_with('foo', params=None, headers=dict(HEADERS), verify=False)
         self.assertEqual(result['foo'], 'bar')
 
     def test_load_page_xml(self, mock_get):
@@ -56,6 +48,6 @@ class LoadPageTestCase(TestCase):
 
     def test_pass_headers(self, mock_get):
         headers = {'content-type': 'application/json'}
-        HEADERS.update(headers)
         load_page('foo', headers=headers)
-        mock_get.assert_called_with('foo', params=None, headers=HEADERS, verify=False)
+        headers.update(dict(HEADERS))
+        mock_get.assert_called_with('foo', params=None, headers=headers, verify=False)
