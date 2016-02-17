@@ -9,23 +9,30 @@ import sys
 import os
 import re
 import threading
-import time
-from traceback import format_exc
 from collections import namedtuple
-from xbmc import LOGERROR
 from simpleplugin import Plugin
-import rarbg
-import thetvdb
+import tvdb
+from utilities import ThreadPool
+from exceptions import NoDataError
 
-_plugin = Plugin()
+__all__ = []
 
-sys.path.append(os.path.join(_plugin.path, 'site-packages'))
-from ordereddict import OrderedDict
+plugin = Plugin()
+
+try:
+    from collections import OrderedDict
+except ImportError:
+    sys.path.append(os.path.join(plugin.path, 'site-packages'))
+    from ordereddict import OrderedDict
 
 episode_regexes = (
     re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE),
     re.compile(r'(.+?)\.(\d+)x(\d+)\.', re.IGNORECASE)
 )
+EpData = namedtuple('EpData', ['name', 'season', 'episode'])
+ThreadPool.thread_count = plugin.thread_count
+thread_pool = ThreadPool()
+lock = threading.Lock()
 
 
 def parse_torrent_name(name):
@@ -41,44 +48,47 @@ def parse_torrent_name(name):
         if match is not None:
             break
     else:
-        raise ValueError('Episode name is not matched!')
-    EpData = namedtuple('EpData', ['name', 'season', 'episode'])
+        raise ValueError
     return EpData(match.group(1), match.group(2), match.group(3))
 
 
-ThreadPool.thread_count = _plugin.thread_count
-thread_pool = ThreadPool()
-lock = threading.Lock()
-
-
-def _add_show_info(torrent, tvshows):
+def add_show_info(torrent, tvshows):
     """
     Add show info from TheTVDB to the torrent
+
+    :param torrent: a torrent object from Rarbg
+    :type torrent: dict
+    :param tvshows: TV shows database with info from TheTVDB
+    :type tvshows: dict
     """
-    tvdb = torrent['episode_info']['tvdb']
+    tvdbid = torrent['episode_info']['tvdb']
     try:
-        show_info = tvshows[tvdb]
+        show_info = tvshows[tvdbid]
     except KeyError:
-        show_info = thetvdb.get_series(tvdb)
-        show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
-        with lock:
-            tvshows[tvdb] = show_info
+        try:
+            show_info = tvdb.get_series(tvdbid)
+        except NoDataError:
+            show_info = None
+        else:
+            show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
+            with lock:
+                tvshows[tvdbid] = show_info
     with lock:
         torrent['show_info'] = show_info
 
-
-def _add_episode_info(torrent, episodes):
+'''
+def add_episode_info(torrent, episodes):
     """
     Add episode info from TheTVDB to the torrent
     """
-    tvdb = torrent['episode_info']['tvdb']
+    tvdb_info = torrent['episode_info']['tvdb']
     episode_id = '{0}-{1}x{2}'.format(tvdb,
                                       torrent['episode_info']['seasonnum'],
                                       torrent['episode_info']['epnum'])
     try:
         episode_info = episodes[episode_id]
     except KeyError:
-        episode_info = thetvdb.get_episode(tvdb,
+        episode_info = tvdb.get_episode(tvdb_info,
                                            torrent['episode_info']['seasonnum'],
                                            torrent['episode_info']['epnum'])
         with lock:
@@ -87,7 +97,7 @@ def _add_episode_info(torrent, episodes):
         torrent['tvdb_episode_info'] = episode_info
 
 
-def _add_tvdb_info(torrents):
+def add_tvdb_info(torrents):
     """
     Add TV show and episode data from TheTVDB
     """
@@ -95,8 +105,8 @@ def _add_tvdb_info(torrents):
     episodes = _plugin.get_storage('episodes.pcl')
     try:
         for torrent in torrents:
-            thread_pool.put(_add_show_info, torrent, tvshows)
-            thread_pool.put(_add_episode_info, torrent, episodes)
+            thread_pool.put(add_show_info, torrent, tvshows)
+            thread_pool.put(add_episode_info, torrent, episodes)
         while not thread_pool.is_all_finished():
             time.sleep(0.1)
     except:
@@ -107,7 +117,7 @@ def _add_tvdb_info(torrents):
         episodes.flush()
 
 
-def _deduplicate_data(torrents):
+def deduplicate_data(torrents):
     """
     Deduplicate data from rarbg based on max seeders
 
@@ -145,6 +155,7 @@ def get_torrents(params):
 
     @return:
     """
-    torrents = _deduplicate_data(rarbg.get_torrents(params))
-    _add_tvdb_info(torrents)
+    torrents = deduplicate_data(rarbg.get_torrents(params))
+    add_tvdb_info(torrents)
     return torrents
+'''

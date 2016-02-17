@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.join(basedir, 'tests'))
 
 from tests_utilities import *
 from tests_tvdb import *
+from tests_torrent_info import *
 
 if __name__ == '__main__':
     unittest.main()
