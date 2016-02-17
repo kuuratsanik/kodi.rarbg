@@ -6,9 +6,11 @@
 import time
 import threading
 import requests
-from xbmc import LOGDEBUG, LOGERROR
+from xbmc import LOGERROR
 from simpleplugin import Plugin
 from exceptions import Http404Error
+
+__all__ = ['ThreadPool', 'load_page']
 
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:37.0) Gecko/20100101 Firefox/37.0',
@@ -83,24 +85,24 @@ def load_page(url, data=None, headers=None):
     :type url: str
     :param data: data to be sent to a server in a URL query string
     :type data: dict
-    :return: response contents or a dictionary of json-decoded data
     :param headers: additional headers for a HTTP request
     :type headers: dict
+    :return: response contents or a dictionary of json-decoded data
     :rtype: dict -- for JSON response
-    :rtype: str -- for other type of responses
+    :rtype: str -- for other types of responses
     :raises: libs.exceptions.Http404Error -- if 404 error if returned
     """
-    plugin.log('URL: {0}, params: {1}'.format(url, str(data)), LOGDEBUG)
+    plugin.log('URL: {0}, params: {1}'.format(url, str(data)))
     if headers is not None:
         HEADERS.update(headers)
     response = requests.get(url, params=data, headers=HEADERS, verify=False)
     if response.status_code == 404:
-        message = 'Page {0} with params {1} not found.'.format(url, str(data))
+        message = 'URL {0} with params {1} not found.'.format(url, str(data))
         plugin.log(message, LOGERROR)
         raise Http404Error(message)
     if 'application/json' in response.headers['content-type']:
         contents = response.json()
     else:
         contents = response.text
-    plugin.log(response.text.encode('utf-8'), LOGDEBUG)
+    plugin.log(response.text.encode('utf-8'))
     return contents
