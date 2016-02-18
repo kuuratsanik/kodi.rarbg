@@ -29,8 +29,8 @@ except ImportError:
     from ordereddict import OrderedDict
 
 episode_regexes = (
-    re.compile(r'(.+?)\.s(\d+)e(\d+)', re.IGNORECASE),
-    re.compile(r'(.+?)\.(\d+)x(\d+)', re.IGNORECASE)
+    re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE),
+    re.compile(r'(.+?)\.(\d+)x(\d+)\.', re.IGNORECASE)
 )
 EpData = namedtuple('EpData', ['name', 'season', 'episode'])
 lock = threading.Lock()
