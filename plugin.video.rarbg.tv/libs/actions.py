@@ -34,13 +34,18 @@ def _get_torrents(mode, category='', search_string='', search_imdb=''):
     """
     Get torrents from Rarbg.to
 
-    @param mode:
-    @param category:
-    @param search_string:
-    @param search_imdb:
-    @return:
+    :param mode: Rarbg query mode -- 'list' or 'search'
+    :type mode: str
+    :param category: Rarbg torrents category
+    :type category: str
+    :param search_string: search query
+    :type search_string: str
+    :param search_imdb: imdb code for a TV show as ttXXXXX
+    :type search_imdb: str
+    :return: the list of torrents matching the query criteria
+    :rtype: list
     """
-    rarbg_query = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
+    rarbg_query = {'mode': mode, 'limit': plugin.itemcount}
     if plugin.get_setting('ignore_weak'):
         rarbg_query['min_seeders'] = plugin.get_setting('min_seeders', False)
     if category:
@@ -56,7 +61,7 @@ def _set_view_mode(content=''):
     """
     Set view mode
 
-    @return:
+    :return:
     """
     view_mode = 50
     if content:
@@ -77,7 +82,7 @@ def _get_category():
     """
     Get Rarbg torrents category
 
-    @return:
+    :return:
     """
     return ('18;41', '18', '41',)[plugin.get_setting('quality')]
 
@@ -126,10 +131,10 @@ def _set_art(list_item, torrent, myshows=False):
     """
     Set graphics for list_item
 
-    @param list_item:
-    @param torrent:
-    @param myshows:
-    @return:
+    :param list_item:
+    :param torrent:
+    :param myshows:
+    :return:
     """
     if torrent['tvdb_episode_info'] and myshows:
         list_item['thumb'] = list_item['icon'] = (torrent['tvdb_episode_info'].get('filename', '') or
@@ -145,9 +150,9 @@ def _set_stream_info(list_item, torrent):
     """
     Set additional video stream info.
 
-    @param list_item:
-    @param torrent:
-    @return:
+    :param list_item:
+    :param torrent:
+    :return:
     """
     list_item['stream_info'] = {'video': {}}
     resolution_match = re.search(r'(720|1080)[pi]', torrent['title'], flags=re.IGNORECASE)
@@ -174,7 +179,7 @@ def _enter_search_query():
     """
     Enter a search query on Kodi on-screen keyboard.
 
-    @return:
+    :return:
     """
     keyboard = xbmc.Keyboard('', 'Enter search text')
     keyboard.doModal()
@@ -190,8 +195,8 @@ def _list_torrents(torrents, myshows=False):
     """
     Show the list of torrents
 
-    @param torrents: list
-    @return:
+    :param torrents: list
+    :return:
     """
     listing = [home]
     for torrent in torrents:
@@ -244,8 +249,8 @@ def root(params):
     """
     Plugin root
 
-    @param params:
-    @return:
+    :param params:
+    :return:
     """
     listing = [{'label': '[My shows]',
                 'thumb': os.path.join(icons, 'bookmarks.png'),
@@ -272,8 +277,8 @@ def episodes(params):
     """
     Show the list of recent episodes
 
-    @param params:
-    @return:
+    :param params:
+    :return:
     """
     myshows = params.get('myshows', False)
     listing = _list_torrents(_get_torrents(params['mode'],
@@ -293,8 +298,8 @@ def search_torrents(params):
     """
     Search torrents and show the list of results
 
-    @param params:
-    @return:
+    :param params:
+    :return:
     """
     results = []
     query = _enter_search_query()
@@ -312,8 +317,8 @@ def my_shows(params):
     """
     'My Shows' list
 
-    @param params:
-    @return:
+    :param params:
+    :return:
     """
     listing = [home]
     with plugin.get_storage('myshows.pcl') as storage:
@@ -345,8 +350,8 @@ def play(params):
     """
     Play torrent via YATP of Pulsar
 
-    @param params:
-    @return:
+    :param params:
+    :return:
     """
     if plugin.get_setting('stream_engine') == 'YATP':
         return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
