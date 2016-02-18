@@ -215,7 +215,12 @@ def _list_torrents(torrents, myshows=False):
                      'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'is_playable': True,
                      'context_menu': [('Show info', 'Action(Info)'),
-                                      ('Mark as watched/unwatched', 'Action(ToggleWatched)')]
+                                      ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
+                                      ('Download torrent',
+                                       'RunScript({commands},download,{torrent})'.format(
+                                            commands=commands,
+                                            torrent=torrent['download'])
+                                       )]
                      }
         _set_info(list_item, torrent, myshows)
         _set_art(list_item, torrent, myshows)
@@ -235,13 +240,6 @@ def _list_torrents(torrents, myshows=False):
                                                   commands=commands,
                                                   config_dir=plugin.config_dir,
                                                   tvdb=torrent['episode_info']['tvdb'])))
-        if plugin.get_setting('stream_engine') == 'YATP':
-            list_item['context_menu'].append(
-                ('Download torrent',
-                 'RunScript({commands},download,{torrent})'.format(
-                    commands=commands,
-                    torrent=torrent['download'])
-                 ))
         listing.append(list_item)
     return listing
 
@@ -351,16 +349,14 @@ def my_shows(params):
 
 def play(params):
     """
-    Play torrent via YATP of Pulsar
+    Play torrent via YATP
 
-    :param params:
-    :return:
+    :param params: SimplePlugin action call params
+    :type params: dict
+    :return: a playable URL for Kodi
+    :rtype: str
     """
-    if plugin.get_setting('stream_engine') == 'YATP':
-        return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
-    else:
-        return plugin.get_url('plugin://plugin.video.pulsar/play', uri=params['torrent'])
-
+    return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
 
 # Map actions
 plugin.actions['root'] = root

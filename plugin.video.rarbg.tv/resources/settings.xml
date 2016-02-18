@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <settings>
   <category label="General">
-    <setting id="stream_engine" type="labelenum" values="YATP|Pulsar"
-             label="Torrent streaming engine" default="YATP" />
     <setting id="quality" type="enum" values="SD and HD|SD only|HD only"
              label="Quality" default="0" />
     <setting id="itemcount" type="labelenum" values="25|50|100"
