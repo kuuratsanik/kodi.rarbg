@@ -13,17 +13,19 @@ import xbmcgui
 import xbmcplugin
 from simpleplugin import Plugin
 import torrent_info
-import thetvdb
+import tvdb
+
+__all__ = ['plugin']
 
 plugin = Plugin()
 icons = os.path.join(plugin.path, 'resources', 'icons')
 home = {'label': '<< Home',
-         'thumb': os.path.join(icons, 'home.png'),
-         'icon': os.path.join(icons, 'home.png'),
-         'art': {'poster': os.path.join(icons, 'home.png')},
-         'fanart': plugin.fanart,
-         'url': plugin.get_url(),
-         'info': {'video': {'title': '<< Home'}}}
+        'thumb': os.path.join(icons, 'home.png'),
+        'icon': os.path.join(icons, 'home.png'),
+        'art': {'poster': os.path.join(icons, 'home.png')},
+        'fanart': plugin.fanart,
+        'url': plugin.get_url(),
+        'info': {'video': {'title': '<< Home'}}}
 commands = os.path.join(plugin.path, 'libs', 'commands.py')
 
 
@@ -38,16 +40,16 @@ def _get_torrents(mode, category='', search_string='', search_imdb=''):
     @param search_imdb:
     @return:
     """
-    rarbg_params = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
+    rarbg_query = {'mode': mode, 'limit': plugin.get_setting('itemcount')}
     if plugin.get_setting('ignore_weak'):
-        rarbg_params['min_seeders'] = plugin.get_setting('min_seeders', False)
+        rarbg_query['min_seeders'] = plugin.get_setting('min_seeders', False)
     if category:
-        rarbg_params['category'] = category
+        rarbg_query['category'] = category
     if search_string:
-        rarbg_params['search_string'] = search_string
+        rarbg_query['search_string'] = search_string
     if search_imdb:
-        rarbg_params['search_imdb'] = search_imdb
-    return torrent_info.get_torrents(rarbg_params)
+        rarbg_query['search_imdb'] = search_imdb
+    return torrent_info.get_torrents(rarbg_query)
 
 
 def _set_view_mode(content=''):
@@ -82,42 +84,42 @@ def _get_category():
 
 def _set_info(list_item, torrent, myshows=False):
     """
-    Set info for list_item
+    Set show and episode info for a list_item
 
-    @param torrent:
-    @return:
+    :param list_item: SimplePlugin list item to be updated
+    :type list_item: dict
+    :param torrent: torrent data
+    :type torrent: dict
+    :param myshows: ``True`` if the item is displayed in "My Shows"
+    :type myshows: bool
     """
-    video = {'genre': torrent['show_info'].get('Genre', '').lstrip('|').rstrip('|').replace('|', ', '),
-             'cast': torrent['show_info'].get('Actors', '').lstrip('|').rstrip('|').split('|'),
-             'mpaa': torrent['show_info'].get('ContentRating', ''),
-             'tvshowtitle': torrent['show_info'].get('SeriesName', ''),
-             'plot': torrent['show_info'].get('Overview', ''),
-             'plotoutline': torrent['show_info'].get('Overview', ''),
-             'studio': torrent['show_info'].get('Network', '')}
-    title = list_item['label']
-    if torrent['tvdb_episode_info'] == {}:
-        title = torrent['show_info'].get('SeriesName', '')
-        video['premiered'] = torrent['show_info'].get('FirstAired', '')
-    else:
+    video = {}
+    if torrent.get('episode_info'):
         video['season'] = int(torrent['episode_info']['seasonnum'])
         video['episode'] = int(torrent['episode_info']['epnum'])
-        if torrent['tvdb_episode_info']:
-            video['director'] = torrent['tvdb_episode_info'].get('Director', '',)
-            video['premiered'] = torrent['tvdb_episode_info'].get('FirstAired', '')
-            video['credits'] = torrent['tvdb_episode_info'].get('Writer', '').lstrip('|').rstrip('|').replace('|', ', ')
-            video['premiered'] = (torrent['tvdb_episode_info'].get('FirstAired', '') or
-                                  torrent['episode_info'].get('airdate', ''))
-            if torrent['tvdb_episode_info'].get('Rating'):
-                video['rating'] = float(torrent['tvdb_episode_info']['Rating'])
-            if myshows:
-                video['plot'] = video['plotoutline'] = torrent['tvdb_episode_info'].get('Overview', '')
-                list_item['label'] = title = (torrent['tvdb_episode_info'].get('EpisodeName') or
-                                              torrent['episode_info']['title'])
-    video['title'] = title
-    if torrent['show_info'].get('FirstAired'):
-        video['year'] = int(torrent['show_info']['FirstAired'][:4])
-    list_item['info'] = {}
-    list_item['info']['video'] = video
+    if torrent.get('show_info') is not None:
+        video['genre'] = torrent['show_info'].get('Genre', '').lstrip('|').rstrip('|').replace('|', ', ')
+        video['cast'] = torrent['show_info'].get('Actors', '').lstrip('|').rstrip('|').split('|')
+        video['mpaa'] = torrent['show_info'].get('ContentRating', '')
+        video['tvshowtitle'] = list_item['label2'] = torrent['show_info'].get('SeriesName', '')
+        video['plot'] = video['plotoutline'] = torrent['show_info'].get('Overview', '')
+        video['studio'] = torrent['show_info'].get('Network', '')
+        if torrent['show_info'].get('FirstAired'):
+            video['year'] = int(torrent['show_info']['FirstAired'][:4])
+    if torrent.get('tvdb_episode_info') is not None:
+        video['director'] = torrent['tvdb_episode_info'].get('Director', '',)
+        video['credits'] = torrent['tvdb_episode_info'].get('Writer', '').lstrip('|').rstrip('|').replace('|', ', ')
+        video['premiered'] = (torrent['tvdb_episode_info'].get('FirstAired', '') or
+                              torrent['episode_info'].get('airdate', ''))
+        if torrent['tvdb_episode_info'].get('Rating'):
+            video['rating'] = float(torrent['tvdb_episode_info']['Rating'])
+        if myshows:
+            video['plot'] = video['plotoutline'] = torrent['tvdb_episode_info'].get('Overview', '')
+            list_item['label'] = (torrent['tvdb_episode_info'].get('EpisodeName') or
+                                  torrent['episode_info'].get('title') or
+                                  torrent['title'])
+    video['title'] = list_item['label']
+    list_item['info'] = {'video': video}
 
 
 def _set_art(list_item, torrent, myshows=False):
@@ -330,9 +332,9 @@ def my_shows(params):
                                                config_dir=plugin.config_dir,
                                                index=index))]}
             if not tvshows.get(show):
-                tvshows[show] = thetvdb.get_series(show)
-            _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
-            _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': {}})
+                tvshows[show] = tvdb.get_series(show)
+            _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
+            _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             listing.append(list_item)
     content = 'tvshows'
     return plugin.create_listing(listing, view_mode=_set_view_mode(content), content=content,
