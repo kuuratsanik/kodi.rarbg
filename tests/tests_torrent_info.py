@@ -6,7 +6,6 @@ import os
 import sys
 from unittest import TestCase
 from mock import MagicMock, patch
-from libs.exceptions import NoDataError
 
 __all__ = ['ParseTorrentNameTestCase', 'AddShowInfoTestCase', 'AddEpisodeInfoTestCase', 'DeduplicateTorrentsTestCase']
 
@@ -18,6 +17,7 @@ sys.modules['simpleplugin'] = MagicMock()
 sys.modules['libs.tvdb'] = MagicMock()
 
 import libs.torrent_info as ti
+from libs.exceptions import NoDataError
 
 
 def raise_no_data_error(*args, **kwargs):

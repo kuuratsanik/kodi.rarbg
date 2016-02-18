@@ -7,7 +7,6 @@ import os
 import sys
 from unittest import TestCase
 from mock import MagicMock, patch
-from libs.exceptions import Http404Error
 
 __all__ = ['LoadPageTestCase']
 
@@ -19,6 +18,7 @@ sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
 
 from libs.utilities import load_page, HEADERS
+from libs.exceptions import Http404Error
 
 
 @patch('libs.utilities.requests.get')
