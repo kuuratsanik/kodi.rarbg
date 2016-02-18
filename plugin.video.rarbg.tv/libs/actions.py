@@ -14,6 +14,7 @@ import xbmcplugin
 from simpleplugin import Plugin
 import torrent_info
 import tvdb
+from exceptions import NoDataError
 
 __all__ = ['plugin']
 
@@ -317,14 +318,18 @@ def my_shows(params):
     """
     'My Shows' list
 
-    :param params:
-    :return:
+    :param params: SimplePlugin action call params
+    :type params: dict
+    :return: SimplePlugin action context
+    :rtype: dict
     """
     listing = [home]
     with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
         for index, show in enumerate(myshows):
+            if show not in tvshows:
+                tvshows[show] = tvdb.get_series(show)
             list_item = {'label': tvshows[show]['SeriesName'],
                          'url': plugin.get_url(action='episodes',
                                                mode='search',
@@ -336,8 +341,6 @@ def my_shows(params):
                                                commands=commands,
                                                config_dir=plugin.config_dir,
                                                index=index))]}
-            if not tvshows.get(show):
-                tvshows[show] = tvdb.get_series(show)
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             listing.append(list_item)
