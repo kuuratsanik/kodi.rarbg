@@ -173,6 +173,11 @@ def get_torrents(query):
     :return: deduplicated episode torrents list with TheTVDB data for shows and episodes
     :rtype: list
     """
-    torrents = deduplicate_torrents(rarbg.get_torrents(query))
-    add_tvdb_info(torrents)
-    return torrents
+    try:
+        raw_torrents = rarbg.get_torrents(query)
+    except NoDataError:
+        return []
+    else:
+        torrents = deduplicate_torrents(raw_torrents)
+        add_tvdb_info(torrents)
+        return torrents
