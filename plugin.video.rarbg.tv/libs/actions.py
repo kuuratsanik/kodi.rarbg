@@ -14,12 +14,12 @@ import xbmcplugin
 from simpleplugin import Plugin
 import torrent_info
 import tvdb
-from exceptions import NoDataError
 
 __all__ = ['plugin']
 
 plugin = Plugin()
 icons = os.path.join(plugin.path, 'resources', 'icons')
+tv_icon = os.path.join(icons, 'tv.png')
 home = {'label': '<< Home',
         'thumb': os.path.join(icons, 'home.png'),
         'icon': os.path.join(icons, 'home.png'),
@@ -62,7 +62,11 @@ def _set_view_mode(content=''):
     """
     Set view mode
 
-    :return:
+    :param content: view content type: 'icons' -- icons view, 'episodes' -- episodes view,
+        '' -- generic Kodi list view
+    :type content: str
+    :return: Numeric view code for the current skin, if supported, or 50 for generic list view.
+    :rtype: int
     """
     view_mode = 50
     if content:
@@ -83,9 +87,10 @@ def _get_category():
     """
     Get Rarbg torrents category
 
-    :return:
+    :return: Rarbg torrnts cagegory for SD episodes/HD episodes/both
+    :rtype: str
     """
-    return ('18;41', '18', '41',)[plugin.get_setting('quality')]
+    return ('18;41', '18', '41',)[plugin.quality]
 
 
 def _set_info(list_item, torrent, myshows=False):
@@ -130,50 +135,58 @@ def _set_info(list_item, torrent, myshows=False):
 
 def _set_art(list_item, torrent, myshows=False):
     """
-    Set graphics for list_item
+    Set graphics for a list_item
 
-    :param list_item:
-    :param torrent:
-    :param myshows:
-    :return:
+    :param list_item: SimplePlugin list item to be updated
+    :type list_item: dict
+    :param torrent: torrent data
+    :type torrent: dict
+    :param myshows: ``True`` if the item is displayed in "My Shows"
+    :type myshows: bool
     """
-    if torrent['tvdb_episode_info'] and myshows:
-        list_item['thumb'] = list_item['icon'] = (torrent['tvdb_episode_info'].get('filename', '') or
-                                                  torrent['show_info'].get('poster', ''))
+    if torrent['show_info'] is not None:
+        if torrent['tvdb_episode_info'] is not None and myshows:
+            list_item['thumb'] = list_item['icon'] = (torrent['tvdb_episode_info'].get('filename', '') or
+                                                      torrent['show_info'].get('poster', ''))
+        else:
+            list_item['thumb'] = list_item['icon'] = torrent['show_info'].get('poster', '')
+        list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
+        list_item['art'] = {'poster': torrent['show_info'].get('poster', ''),
+                            'banner': torrent['show_info'].get('banner', '')}
     else:
-        list_item['thumb'] = list_item['icon'] = torrent['show_info'].get('poster', '')
-    list_item['fanart'] = torrent['show_info'].get('fanart', plugin.fanart)
-    list_item['art'] = {'poster': torrent['show_info'].get('poster', ''),
-                        'banner': torrent['show_info'].get('banner', '')}
+        list_item['thumb'] = list_item['icon'] = tv_icon
+        list_item['fanart'] = plugin.fanart
 
 
 def _set_stream_info(list_item, torrent):
     """
     Set additional video stream info.
 
-    :param list_item:
-    :param torrent:
-    :return:
+    :param list_item: SimplePlugin list item to be updated
+    :type list_item: dict
+    :param torrent: torrent data
+    :type torrent: dict
     """
-    list_item['stream_info'] = {'video': {}}
+    video = {}
     resolution_match = re.search(r'(720|1080)[pi]', torrent['title'], flags=re.IGNORECASE)
     if resolution_match is not None and resolution_match.group(1) == '720':
-        list_item['stream_info']['video']['width'] = 1280
-        list_item['stream_info']['video']['height'] = 720
+        video['width'] = 1280
+        video['height'] = 720
     elif resolution_match is not None and resolution_match.group(1) == '1080':
-        list_item['stream_info']['video']['width'] = 1920
-        list_item['stream_info']['video']['height'] = 1080
+        video['width'] = 1920
+        video['height'] = 1080
     else:
-        list_item['stream_info']['video']['width'] = 720
-        list_item['stream_info']['video']['height'] = 480
+        video['width'] = 720
+        video['height'] = 480
     codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'], flags=re.IGNORECASE)
     if codec_match is not None:
         if codec_match.group(0).endswith('264'):
-            list_item['stream_info']['video']['codec'] = 'h264'
+            video['codec'] = 'h264'
         elif codec_match.group(0) == 'mpeg2':
-            list_item['stream_info']['video']['codec'] = 'mpeg2video'
+            video['codec'] = 'mpeg2video'
         else:
-            list_item['stream_info']['video']['codec'] = codec_match.group(0)
+            video['codec'] = codec_match.group(0)
+    list_item['stream_info'] = {'video': video}
 
 
 def _enter_search_query():
@@ -212,7 +225,7 @@ def _list_torrents(torrents, myshows=False):
                                 size=torrent['size'] / 1048576,
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
-                     'url': plugin.get_url(action='play', torrent=torrent['download']),
+                     'url': plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=torrent['download']),
                      'is_playable': True,
                      'context_menu': [('Show info', 'Action(Info)'),
                                       ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
@@ -259,7 +272,7 @@ def root(params):
                },
                {'label': '[Recent Episodes]',
                 'thumb': os.path.join(icons, 'tv.png'),
-                'icon': os.path.join(icons, 'tv.png'),
+                'icon': tv_icon,
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='episodes', mode='list'),
                 },
@@ -346,21 +359,8 @@ def my_shows(params):
     return plugin.create_listing(listing, view_mode=_set_view_mode(content), content=content,
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
-
-def play(params):
-    """
-    Play torrent via YATP
-
-    :param params: SimplePlugin action call params
-    :type params: dict
-    :return: a playable URL for Kodi
-    :rtype: str
-    """
-    return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
-
 # Map actions
 plugin.actions['root'] = root
 plugin.actions['episodes'] = episodes
 plugin.actions['search_torrents'] = search_torrents
 plugin.actions['my_shows'] = my_shows
-plugin.actions['play'] = play
