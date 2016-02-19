@@ -225,7 +225,7 @@ def _list_torrents(torrents, myshows=False):
                                 size=torrent['size'] / 1048576,
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
-                     'url': plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=torrent['download']),
+                     'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'is_playable': True,
                      'context_menu': [('Show info', 'Action(Info)'),
                                       ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
@@ -359,8 +359,19 @@ def my_shows(params):
     return plugin.create_listing(listing, view_mode=_set_view_mode(content), content=content,
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
+
+def play(params):
+    """
+    Play torrent via YATP
+
+    :param params:
+    :return:
+    """
+    return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
+
 # Map actions
 plugin.actions['root'] = root
 plugin.actions['episodes'] = episodes
 plugin.actions['search_torrents'] = search_torrents
 plugin.actions['my_shows'] = my_shows
+plugin.actions['play'] = play
