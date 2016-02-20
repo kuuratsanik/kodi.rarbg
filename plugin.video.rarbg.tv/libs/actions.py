@@ -168,7 +168,7 @@ def _set_stream_info(list_item, torrent):
     :type torrent: dict
     """
     video = {}
-    resolution_match = re.search(r'(720|1080)[pi]', torrent['title'], flags=re.IGNORECASE)
+    resolution_match = re.search(r'(720|1080)[pi]', torrent['title'].lower())
     if resolution_match is not None and resolution_match.group(1) == '720':
         video['width'] = 1280
         video['height'] = 720
@@ -178,7 +178,7 @@ def _set_stream_info(list_item, torrent):
     else:
         video['width'] = 720
         video['height'] = 480
-    codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'], flags=re.IGNORECASE)
+    codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'].lower())
     if codec_match is not None:
         if codec_match.group(0).endswith('264'):
             video['codec'] = 'h264'
