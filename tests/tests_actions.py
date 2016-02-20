@@ -70,7 +70,7 @@ class SetArtTestCase(TestCase):
 
     def test_setting_art_no_show_info(self):
         actions._set_art(self.list_item, self.torrent)
-        self.assertIn('tv.png', self.list_item['thumb'])
+        self.assertTrue('tv.png' in self.list_item['thumb'])
 
     def test_seting_art_show_info_myshows(self):
         self.torrent['show_info'] = {'SeriesName': 'Castle (2009)', 'poster': 'poster.jpg'}

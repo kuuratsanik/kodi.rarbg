@@ -66,7 +66,7 @@ class AddShowInfoTestCase(TestCase):
         tvshows = {}
         mock_get_series.side_effect = raise_no_data_error
         ti.add_show_info(torrent, tvshows)
-        self.assertIs(torrent['show_info'], None)
+        self.assertTrue(torrent['show_info'] is None)
 
 
 class AddEpisodeInfoTestCase(TestCase):
@@ -93,24 +93,24 @@ class AddEpisodeInfoTestCase(TestCase):
         episodes = {}
         mock_get_episode.side_effect = raise_no_data_error
         ti.add_episode_info(torrent, episodes)
-        self.assertIs(torrent['tvdb_episode_info'], None)
+        self.assertTrue(torrent['tvdb_episode_info'] is None)
 
 
 class DeduplicateTorrentsTestCase(TestCase):
     def test_torrents_missing_episode_or_tvdb_imdb_id(self):
         torrents = [{}]
         result = ti.deduplicate_torrents(torrents)
-        self.assertSequenceEqual(result, [])
+        self.assertEqual(result, [])
         torrents[0]['episode_info'] = {}
         result = ti.deduplicate_torrents(torrents)
-        self.assertSequenceEqual(result, [])
+        self.assertEqual(result, [])
         torrents[0]['episode_info'] = {'tvdb': '12345'}
-        self.assertSequenceEqual(result, [])
+        self.assertEqual(result, [])
 
     def test_torrents_are_not_episodes(self):
         torrents = [{'title': 'FooBar', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
         result = ti.deduplicate_torrents(torrents)
-        self.assertSequenceEqual(result, [])
+        self.assertEqual(result, [])
 
     def test_torrents_are_episodes(self):
         torrents1 = [{'title': 'FooBar', 'episode_info': {'tvdb': '12345',
@@ -118,7 +118,7 @@ class DeduplicateTorrentsTestCase(TestCase):
                                                          'seasonnum': '01',
                                                          'epnum': '01'}}]
         result = ti.deduplicate_torrents(torrents1)
-        self.assertSequenceEqual(result, torrents1)
+        self.assertEqual(result, torrents1)
         torrents2 = [{'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
         result = ti.deduplicate_torrents(torrents2)
         self.assertEqual(result[0]['episode_info']['seasonnum'], '01')
