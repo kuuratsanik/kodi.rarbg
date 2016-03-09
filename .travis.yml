@@ -2,7 +2,7 @@ branches:
   only:
     - develop
     - master
-    - /v\d+\.\d+\.\d+/
+    - /v.\d+\.\d+\.\d+/
 language: python
 python:
   - "2.6"
@@ -11,6 +11,7 @@ install: pip install codecov mock
 script: coverage run tests.py
 after_success:
   - codecov
+before_deploy: wget https://raw.githubusercontent.com/romanvm/travis_scripts/master/deploy_addon.py
 deploy:
   provider: script
   script: python2.7 deploy_addon.py -r
