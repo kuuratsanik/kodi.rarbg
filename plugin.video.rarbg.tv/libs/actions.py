@@ -212,7 +212,7 @@ def _list_torrents(torrents, myshows=False):
     :param torrents: list
     :return:
     """
-    listing = [home]
+    yield home
     for torrent in torrents:
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
@@ -253,8 +253,7 @@ def _list_torrents(torrents, myshows=False):
                                                   commands=commands,
                                                   config_dir=plugin.config_dir,
                                                   tvdb=torrent['episode_info']['tvdb'])))
-        listing.append(list_item)
-    return listing
+        yield list_item
 
 
 def root(params):

@@ -137,9 +137,9 @@ class EpisodesTestCase(TestCase):
             torrents = json.load(fileobj)
         mock_get_torrents.return_value = torrents
         context = actions.episodes({'mode': 'list'})
-        self.assertEqual(len(context['listing']), 71)
+        self.assertEqual(len(list(context['listing'])), 71)
         context = actions.episodes({'mode': 'list', 'myshows': True})
-        self.assertEqual(len(context['listing']), 71)
+        self.assertEqual(len(list(context['listing'])), 71)
 
 
 class MyShowsTestCase(TestCase):
