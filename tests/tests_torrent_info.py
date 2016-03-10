@@ -100,17 +100,17 @@ class DeduplicateTorrentsTestCase(TestCase):
     def test_torrents_missing_episode_or_tvdb_imdb_id(self):
         torrents = [{}]
         result = ti.deduplicate_torrents(torrents)
-        self.assertEqual(result, [])
+        self.assertEqual(list(result), [])
         torrents[0]['episode_info'] = {}
         result = ti.deduplicate_torrents(torrents)
-        self.assertEqual(result, [])
+        self.assertEqual(list(result), [])
         torrents[0]['episode_info'] = {'tvdb': '12345'}
-        self.assertEqual(result, [])
+        self.assertEqual(list(result), [])
 
     def test_torrents_are_not_episodes(self):
         torrents = [{'title': 'FooBar', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
         result = ti.deduplicate_torrents(torrents)
-        self.assertEqual(result, [])
+        self.assertEqual(list(result), [])
 
     def test_torrents_are_episodes(self):
         torrents1 = [{'title': 'FooBar', 'episode_info': {'tvdb': '12345',
@@ -118,11 +118,10 @@ class DeduplicateTorrentsTestCase(TestCase):
                                                          'seasonnum': '01',
                                                          'epnum': '01'}}]
         result = ti.deduplicate_torrents(torrents1)
-        self.assertEqual(result, torrents1)
-        torrents2 = [{'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
+        self.assertEqual(list(result), torrents1)
+        torrents2 = [{'title': 'Foo.s04e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}}]
         result = ti.deduplicate_torrents(torrents2)
-        self.assertEqual(result[0]['episode_info']['seasonnum'], '01')
-        self.assertEqual(result[0]['episode_info']['epnum'], '01')
+        self.assertEqual(list(result)[0]['episode_info']['seasonnum'], '04')
 
     def test_deduplication_based_on_seeders(self):
         torrents = [
@@ -130,8 +129,7 @@ class DeduplicateTorrentsTestCase(TestCase):
             {'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 20},
         ]
         result = ti.deduplicate_torrents(torrents)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['seeders'], 20)
+        self.assertEqual(list(result)[0]['seeders'], 20)
 
     def test_differentiating_sd_and_hd_torrents(self):
         torrents = [
@@ -139,4 +137,4 @@ class DeduplicateTorrentsTestCase(TestCase):
             {'title': 'Foo.s01e01.720p.mkv', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 20},
         ]
         result = ti.deduplicate_torrents(torrents)
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(list(result)), 2)

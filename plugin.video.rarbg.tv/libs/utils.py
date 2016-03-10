@@ -3,8 +3,6 @@
 # Created on: 16.02.2016
 # Author: Roman Miroshnychenko aka Roman V.M. (romanvm@yandex.ua)
 
-import time
-import threading
 import requests
 from xbmc import LOGERROR
 from simpleplugin import Plugin
@@ -20,59 +18,6 @@ HEADERS = (
     ('Accept-Encoding', 'gzip, deflate'),
 )
 plugin = Plugin()
-
-
-class ThreadPool(object):
-    """
-    Thread pool class
-
-    It creates a pool of worker threads to be run in parallel.
-    """
-    daemon_threads = True  #: Daemon threads
-    thread_count = 4  #: The max. number of active threads
-
-    def __init__(self):
-        self._pool = [None] * self.thread_count
-
-    def put(self, func, *args, **kwargs):
-        """
-        Put a function into the thread pool
-
-        If all available threads are busy, the call will block
-        until one of the active threads finishes.
-
-        :param func: a callable object
-        :param args: callable's positional arguments
-        :param kwargs: callable's keyword arguments
-        """
-        thread = threading.Thread(target=func, args=args, kwargs=kwargs)
-        thread.daemon = self.daemon_threads
-        slot = self._get_free_slot()
-        thread.start()
-        self._pool[slot] = thread
-
-    def _get_free_slot(self):
-        while True:
-            slot = -1
-            for i, thread in enumerate(self._pool):
-                if self._pool[i] is None or not thread.is_alive():
-                    slot = i
-                    break
-            if slot >= 0:
-                return slot
-            time.sleep(0.1)
-
-    def is_all_finished(self):
-        """
-        Check if there are no more active threads
-
-        :return: ``True`` if there are no active threads
-        :rtype: bool
-        """
-        for thread in self._pool:
-            if thread is not None and thread.is_alive():
-                return False
-        return True
 
 
 def load_page(url, params=None, headers=None):

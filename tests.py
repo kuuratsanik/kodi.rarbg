@@ -11,7 +11,7 @@ import unittest
 basedir = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(basedir, 'tests'))
 
-from tests_utilities import *
+from tests_utils import *
 from tests_tvdb import *
 from tests_torrent_info import *
 from tests_actions import *

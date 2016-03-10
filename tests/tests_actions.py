@@ -131,7 +131,7 @@ class RootTestCase(TestCase):
 
 
 class EpisodesTestCase(TestCase):
-    @patch('libs.actions._get_torrents')
+    @patch('libs.actions.get_torrents')
     def test_episodes_action(self, mock_get_torrents):
         with open(os.path.join(test_data, 'torrents.json'), mode='rb') as fileobj:
             torrents = json.load(fileobj)
