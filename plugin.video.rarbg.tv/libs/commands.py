@@ -19,6 +19,26 @@ _icon = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'icon.png')
 _config_dir = xbmc.translatePath('special://profile/addon_data/plugin.video.rarbg.tv/').decode('utf-8')
 
 
+def clean_files(pattern):
+    """
+    Clean files by the specified pattern
+
+    :param pattern: a pattern to search for in filenames
+    :type str
+    :return: celeaning result
+    :rtype: bool
+    """
+    folders, files = xbmcvfs.listdir(_config_dir)
+    deleted = True
+    for file_ in files:
+        if pattern in file_:
+            path = os.path.join(_config_dir, file_)
+            xbmcvfs.delete(path)
+            if xbmcvfs.exists(path):
+                deleted = False
+    return deleted
+
+
 def add_to_favorites(config_dir, tvdb):
     """
     Add a TV Show to favorites
@@ -93,9 +113,7 @@ def clear_cache():
     Clear page cache
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
-        cache = os.path.join(_config_dir, 'cache.pcl')
-        xbmcvfs.delete(cache)
-        if not xbmcvfs.exists(cache):
+        if clean_files('cache.'):
             xbmcgui.Dialog().notification('Rarbg', 'Plugin cache cleared successfully.', _icon, 3000)
 
 
@@ -104,15 +122,7 @@ def clear_data():
     Clear all plugin persistent data
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear all the plugin data?'):
-        folders, files = xbmcvfs.listdir(_config_dir)
-        deleted = True
-        for file_ in files:
-            if file_[-3:] == 'pcl':
-                path = os.path.join(_config_dir, file_)
-                xbmcvfs.delete(path)
-                if xbmcvfs.exists(path):
-                    deleted = False
-        if deleted:
+        if clean_files('.pcl'):
             xbmcgui.Dialog().notification('Rarbg', 'Plugin data cleared successfully.', _icon, 3000)
 
 
