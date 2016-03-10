@@ -12,7 +12,7 @@ import xbmc
 import xbmcgui
 import xbmcplugin
 from simpleplugin import Plugin
-from torrent_info import get_torrents
+import torrent_info
 import tvdb
 
 __all__ = ['plugin']
@@ -28,6 +28,34 @@ home = {'label': '<< Home',
         'url': plugin.get_url(),
         'info': {'video': {'title': '<< Home'}}}
 commands = os.path.join(plugin.path, 'libs', 'commands.py')
+
+
+@plugin.cached(15)
+def _get_torrents(mode, category='', search_string='', search_imdb=''):
+    """
+    Get torrents from Rarbg.to
+
+    :param mode: Rarbg query mode -- 'list' or 'search'
+    :type mode: str
+    :param category: Rarbg torrents category
+    :type category: str
+    :param search_string: search query
+    :type search_string: str
+    :param search_imdb: imdb code for a TV show as ttXXXXX
+    :type search_imdb: str
+    :return: the list of torrents matching the query criteria
+    :rtype: list
+    """
+    rarbg_query = {'mode': mode, 'limit': plugin.itemcount}
+    if plugin.get_setting('ignore_weak'):
+        rarbg_query['min_seeders'] = plugin.get_setting('min_seeders', False)
+    if category:
+        rarbg_query['category'] = category
+    if search_string:
+        rarbg_query['search_string'] = search_string
+    if search_imdb:
+        rarbg_query['search_imdb'] = search_imdb
+    return torrent_info.get_torrents(rarbg_query)
 
 
 def _set_view_mode(content=''):
@@ -116,7 +144,6 @@ def _set_art(list_item, torrent, myshows=False):
     :param myshows: ``True`` if the item is displayed in "My Shows"
     :type myshows: bool
     """
-    plugin.log(str(torrent))
     if torrent['show_info'] is not None:
         if torrent['tvdb_episode_info'] is not None and myshows:
             list_item['thumb'] = list_item['icon'] = (torrent['tvdb_episode_info'].get('filename', '') or
@@ -265,9 +292,9 @@ def episodes(params):
     :return:
     """
     myshows = params.get('myshows', False)
-    listing = _list_torrents(get_torrents(params['mode'],
-                                          search_imdb=params.get('search_imdb', ''),
-                                          category=_get_category()),
+    listing = _list_torrents(_get_torrents(params['mode'],
+                                           search_imdb=params.get('search_imdb', ''),
+                                           category=_get_category()),
                              myshows=myshows)
     if myshows:
         content = 'episodes'
@@ -288,9 +315,9 @@ def search_torrents(params):
     results = []
     query = _enter_search_query()
     if query:
-        results = get_torrents(mode='search',
-                               search_string=query,
-                               category=_get_category())
+        results = _get_torrents(mode='search',
+                                search_string=query,
+                                category=_get_category())
         if not results:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
     listing = _list_torrents(results)

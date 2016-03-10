@@ -17,11 +17,11 @@ sys.modules['requests'] = MagicMock()
 sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
 
-from libs.utils import load_page, HEADERS
+from libs.utilities import load_page, HEADERS
 from libs.exceptions import Http404Error
 
 
-@patch('libs.utils.requests.get')
+@patch('libs.utilities.requests.get')
 class LoadPageTestCase(TestCase):
     def setUp(self):
         self.mock_response = MagicMock()
