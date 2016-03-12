@@ -35,12 +35,14 @@ download: magnet:?xt=urn:btih:d9678293e0980dcac8d054394444afd1f467ee48&dn=Game.o
 size: 45082604600
 """
 
+from simpleplugin import Plugin
 from utilities import load_page
 from exceptions import NoDataError
 
-__all__ = ['get_torrents']
+__all__ = ['load_torrents']
 
 API = 'http://torrentapi.org/pubapi_v2.php'
+plugin = Plugin()
 
 
 def get_token():
@@ -56,7 +58,8 @@ def get_token():
     return load_page(API, params=params, headers={'content-type': 'application/json'})['token']
 
 
-def get_torrents(params):
+@plugin.cached(15)
+def load_torrents(params):
     """
     Get the list of recent TV episode torrents with extended data
 
