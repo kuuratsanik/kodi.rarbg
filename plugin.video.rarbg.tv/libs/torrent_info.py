@@ -63,9 +63,8 @@ def add_show_info(torrent, tvshows):
     :type tvshows: dict
     """
     tvdbid = torrent['episode_info']['tvdb']
-    try:
-        show_info = tvshows[tvdbid]
-    except KeyError:
+    show_info = tvshows.get(tvdbid)
+    if show_info is None:
         try:
             show_info = tvdb.get_series(tvdbid)
         except NoDataError:
@@ -73,8 +72,8 @@ def add_show_info(torrent, tvshows):
             show_info = None
         else:
             show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
-            with lock:
-                tvshows[tvdbid] = show_info
+        with lock:
+            tvshows[tvdbid] = show_info
     with lock:
         torrent['show_info'] = show_info
 
@@ -92,9 +91,8 @@ def add_episode_info(torrent, episodes):
     episode_id = '{0}-{1}x{2}'.format(tvdbid,
                                       torrent['episode_info']['seasonnum'],
                                       torrent['episode_info']['epnum'])
-    try:
-        episode_info = episodes[episode_id]
-    except KeyError:
+    episode_info = episodes.get(episode_id)
+    if episode_info is None:
         try:
             episode_info = tvdb.get_episode(tvdbid,
                                             torrent['episode_info']['seasonnum'],
@@ -102,9 +100,8 @@ def add_episode_info(torrent, episodes):
         except NoDataError:
             plugin.log('TheTVDB returned no data for episode {0}, torrent {1}'.format(episode_id, torrent['title']))
             episode_info = None
-        else:
-            with lock:
-                episodes[episode_id] = episode_info
+        with lock:
+            episodes[episode_id] = episode_info
     with lock:
         torrent['tvdb_episode_info'] = episode_info
 
@@ -146,15 +143,13 @@ def deduplicate_torrents(torrents):
                     torrent['episode_info'].get('tvdb') is None or
                     torrent['episode_info'].get('imdb') is None):
             continue  # Skip an item if it's missing from IMDB or TheTVDB
-        try:
-            episode_data = parse_torrent_name(torrent['title'].lower())
-        except ValueError:
-            if torrent['episode_info'].get('epnum') is None:
+        if torrent['episode_info'].get('seasonnum') is None or torrent['episode_info'].get('epnum') is None:
+            try:
+                episode_data = parse_torrent_name(torrent['title'].lower())
+            except ValueError:
                 continue
-        else:
-            if not torrent['episode_info'].get('seasonnum'):
+            else:
                 torrent['episode_info']['seasonnum'] = episode_data.season
-            if not torrent['episode_info'].get('epnum'):
                 torrent['episode_info']['epnum'] = episode_data.episode
         ep_id = torrent['episode_info']['tvdb'] + torrent['episode_info']['seasonnum'] + torrent['episode_info']['epnum']
         if '.720' in torrent['title'] or '.1080' in torrent['title']:
