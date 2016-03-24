@@ -31,11 +31,9 @@ def raise_no_data_error(*args, **kwargs):
 class ParseTorrentNameTestCase(TestCase):
     def test_parse_torrent_name(self):
         result = ti.parse_torrent_name('Foo.S05E06.mp4')
-        self.assertEqual(result.name, 'Foo')
         self.assertEqual(result.season, '05')
         self.assertEqual(result.episode, '06')
         result = ti.parse_torrent_name('Bar.03x07.mkv')
-        self.assertEqual(result.name, 'Bar')
         self.assertEqual(result.season, '03')
         self.assertEqual(result.episode, '07')
 
@@ -140,3 +138,12 @@ class DeduplicateTorrentsTestCase(TestCase):
         ]
         result = ti.deduplicate_torrents(torrents)
         self.assertEqual(len(result), 2)
+
+    def test_deduplication_based_on_repack(self):
+        torrents = [
+            {'title': 'Foo.s01e01.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 20},
+            {'title': 'Foo.s01e01.REPACK.mp4', 'episode_info': {'tvdb': '12345', 'imdb': 'tt12345'}, 'seeders': 10},
+        ]
+        result = ti.deduplicate_torrents(torrents)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['seeders'], 10)

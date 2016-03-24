@@ -29,10 +29,11 @@ except ImportError:
     from ordereddict import OrderedDict
 
 episode_regexes = (
-    re.compile(r'(.+?)\.s(\d+)e(\d+)\.', re.IGNORECASE),
-    re.compile(r'(.+?)\.(\d+)x(\d+)\.', re.IGNORECASE)
+    re.compile(r'^.+?\.s(\d+)e(\d+)\.', re.I | re.U),
+    re.compile(r'^.+?\.(\d+)x(\d+)\.', re.I | re.U)
 )
-EpData = namedtuple('EpData', ['name', 'season', 'episode'])
+repack_regex = re.compile(r'^.+?\.(s\d+e\d+|\d+x\d+)\..*?(proper|repack).*?$', re.I | re.U)
+EpData = namedtuple('EpData', ['season', 'episode'])
 lock = threading.Lock()
 
 
@@ -41,7 +42,9 @@ def parse_torrent_name(name):
     Check a torrent name if this is an episode
 
     :param name: torrent name
-    :returns: episode data: name, season, episode
+    :type name: str
+    :returns: season #, episode #
+    :rtype: EpData
     :raises: ValueError if episode pattern is not matched
     """
     for regex in episode_regexes:
@@ -50,7 +53,7 @@ def parse_torrent_name(name):
             break
     else:
         raise ValueError
-    return EpData(match.group(1), match.group(2), match.group(3))
+    return EpData(match.group(1), match.group(2))
 
 
 def add_show_info(torrent, tvshows):
@@ -154,19 +157,19 @@ def deduplicate_torrents(torrents):
         ep_id = torrent['episode_info']['tvdb'] + torrent['episode_info']['seasonnum'] + torrent['episode_info']['epnum']
         if '.720' in torrent['title'] or '.1080' in torrent['title']:
             ep_id += 'hd'
-        if ep_id not in results or torrent['seeders'] > results[ep_id]['seeders']:
+        if (ep_id not in results or
+                    torrent['seeders'] > results[ep_id]['seeders'] or
+                    re.match(repack_regex, torrent['title']) is not None):
             results[ep_id] = torrent
     return results.values()
 
 
-def get_torrents(mode, category='', search_string='', search_imdb=''):
+def get_torrents(mode, search_string='', search_imdb=''):
     """
     Get recent torrents with TheTVDB data
 
     :param mode: Rarbg query mode -- 'list' or 'search'
     :type mode: str
-    :param category: Rarbg torrents category
-    :type category: str
     :param search_string: search query
     :type search_string: str
     :param search_imdb: imdb code for a TV show as ttXXXXX
@@ -174,11 +177,9 @@ def get_torrents(mode, category='', search_string='', search_imdb=''):
     :return: the list of torrents matching the query criteria
     :rtype: list
     """
-    rarbg_query = {'mode': mode, 'limit': plugin.itemcount}
+    rarbg_query = {'mode': mode, 'limit': plugin.itemcount, 'category': ('18;41', '18', '41')[plugin.quality]}
     if plugin.get_setting('ignore_weak'):
         rarbg_query['min_seeders'] = plugin.get_setting('min_seeders', False)
-    if category:
-        rarbg_query['category'] = category
     if search_string:
         rarbg_query['search_string'] = search_string
     if search_imdb:

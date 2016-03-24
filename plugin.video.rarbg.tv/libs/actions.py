@@ -55,16 +55,6 @@ def _set_view_mode(content=''):
     return view_mode
 
 
-def _get_category():
-    """
-    Get Rarbg torrents category
-
-    :return: Rarbg torrnts cagegory for SD episodes/HD episodes/both
-    :rtype: str
-    """
-    return ('18;41', '18', '41',)[plugin.quality]
-
-
 def _set_info(list_item, torrent, myshows=False):
     """
     Set show and episode info for a list_item
@@ -264,10 +254,7 @@ def episodes(params):
     :return:
     """
     myshows = params.get('myshows', False)
-    listing = _list_torrents(get_torrents(params['mode'],
-                                           search_imdb=params.get('search_imdb', ''),
-                                           category=_get_category()),
-                             myshows=myshows)
+    listing = _list_torrents(get_torrents(params['mode'], search_imdb=params.get('search_imdb', '')), myshows=myshows)
     if myshows:
         content = 'episodes'
         sort_methods = (xbmcplugin.SORT_METHOD_EPISODE,)
@@ -287,9 +274,7 @@ def search_torrents(params):
     results = []
     query = _enter_search_query()
     if query:
-        results = get_torrents(mode='search',
-                                search_string=query,
-                                category=_get_category())
+        results = get_torrents(mode='search', search_string=query)
         if not results:
             xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
     listing = _list_torrents(results)
