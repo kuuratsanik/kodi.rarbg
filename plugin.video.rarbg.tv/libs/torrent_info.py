@@ -164,7 +164,7 @@ def deduplicate_torrents(torrents):
     return results.values()
 
 
-def get_torrents(mode, search_string='', search_imdb=''):
+def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True):
     """
     Get recent torrents with TheTVDB data
 
@@ -174,21 +174,30 @@ def get_torrents(mode, search_string='', search_imdb=''):
     :type search_string: str
     :param search_imdb: imdb code for a TV show as ttXXXXX
     :type search_imdb: str
+    :param limit: max number of torrents from Rarbg
+    :type limit: str
+    :param add_info: add info from TheTVDB to torrents
+    :type add_info: bool
     :return: the list of torrents matching the query criteria
     :rtype: list
     """
-    rarbg_query = {'mode': mode, 'limit': plugin.itemcount, 'category': ('18;41', '18', '41')[plugin.quality]}
+    rarbg_query = {'mode': mode, 'category': ('18;41', '18', '41')[plugin.quality]}
     if plugin.get_setting('ignore_weak'):
         rarbg_query['min_seeders'] = plugin.get_setting('min_seeders', False)
     if search_string:
         rarbg_query['search_string'] = search_string
     if search_imdb:
         rarbg_query['search_imdb'] = search_imdb
+    if limit:
+        rarbg_query['limit'] = limit
+    else:
+        rarbg_query['limit'] = plugin.itemcount
     try:
         raw_torrents = rarbg.load_torrents(rarbg_query)
     except NoDataError:
         return []
     else:
         torrents = deduplicate_torrents(raw_torrents)
-        add_tvdb_info(torrents)
+        if add_info:
+            add_tvdb_info(torrents)
         return torrents
