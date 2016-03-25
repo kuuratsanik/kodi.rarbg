@@ -18,7 +18,7 @@ import rarbg
 from utilities import ThreadPool
 from exceptions import NoDataError
 
-__all__ = ['get_torrents']
+__all__ = ['get_torrents', 'OrderedDict']
 
 plugin = Plugin()
 
@@ -48,7 +48,7 @@ def parse_torrent_name(name):
     :raises: ValueError if episode pattern is not matched
     """
     for regex in episode_regexes:
-        match = re.match(regex, name)
+        match = re.search(regex, name)
         if match is not None:
             break
     else:

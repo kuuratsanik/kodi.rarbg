@@ -15,6 +15,7 @@ from tests_utilities import *
 from tests_tvdb import *
 from tests_torrent_info import *
 from tests_actions import *
+from tests_autodownloader import *
 
 if __name__ == '__main__':
     unittest.main()
