@@ -18,6 +18,7 @@ import tvdb
 __all__ = ['plugin']
 
 title_regex = re.compile(r'^(.+?)\.(?:s\d+e\d+|\d+x\d+)\.', re.U | re.I)
+forbidden_chars_regex = re.compile(r'[<>:"/\\|\?\*]', re.U | re.I)
 plugin = Plugin()
 icons = os.path.join(plugin.path, 'resources', 'icons')
 tv_icon = os.path.join(icons, 'tv.png')
@@ -195,7 +196,7 @@ def _list_torrents(torrents, myshows=False):
         _set_art(list_item, torrent, myshows)
         _set_stream_info(list_item, torrent)
         if torrent['show_info'] is not None:
-            show_title = torrent['show_info']['SeriesName']
+            show_title = re.sub(forbidden_chars_regex, '', torrent['show_info']['SeriesName'])
         else:
             title_match = re.search(title_regex, torrent['title'])
             if title_match is not None:
