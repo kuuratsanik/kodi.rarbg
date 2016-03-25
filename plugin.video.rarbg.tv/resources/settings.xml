@@ -16,4 +16,8 @@
     <setting type="action"
              label="Clear all the plugin data" action="RunScript($CWD/libs/commands.py,clear_data)" />
   </category>
+  <category label="Auto Download">
+      <setting id="enable_autodownload" type="bool"
+           label="Enable automatic torrents download" default="true" />
+  </category>
 </settings>

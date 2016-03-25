@@ -53,9 +53,13 @@ def save_filters(filters):
 def filter_torrents():
     """
     Filter episode torrents from Rarbg by given criteria
+
+    :return: ``True`` if at least one matching torrent found
+    :rtype: bool
     """
     torrents = get_torrents('list', limit='50', add_info=False)
     filters = load_filters()
+    torrents_found = False
     for torrent in torrents:
         tvdb = torrent['episode_info']['tvdb']
         if tvdb in filters:
@@ -69,3 +73,5 @@ def filter_torrents():
             else:
                 download_torrent(torrent['download'], filters[tvdb]['save_path'])
                 del filters[tvdb]
+                torrents_found = True
+    return torrents_found
