@@ -16,11 +16,11 @@ from simpleplugin import Plugin
 import tvdb
 import rarbg
 from utilities import ThreadPool
-from exceptions import NoDataError
+from rarbg_exceptions import NoDataError
 
 __all__ = ['get_torrents', 'OrderedDict']
 
-plugin = Plugin()
+plugin = Plugin('plugin.video.rarbg.tv')
 
 try:
     from collections import OrderedDict

@@ -17,6 +17,7 @@ import tvdb
 
 __all__ = ['plugin']
 
+title_regex = re.compile(r'^(.+?)\.(?:s\d+e\d+|\d+x\d+)\.', re.U | re.I)
 plugin = Plugin()
 icons = os.path.join(plugin.path, 'resources', 'icons')
 tv_icon = os.path.join(icons, 'tv.png')
@@ -189,17 +190,32 @@ def _list_torrents(torrents, myshows=False):
                                 leechers=torrent['leechers']),
                      'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'is_playable': True,
-                     'context_menu': [('Show info', 'Action(Info)'),
-                                      ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
-                                      ('Download torrent',
-                                       'RunScript({commands},download,{torrent})'.format(
-                                            commands=commands,
-                                            torrent=torrent['download'])
-                                       )]
                      }
         _set_info(list_item, torrent, myshows)
         _set_art(list_item, torrent, myshows)
         _set_stream_info(list_item, torrent)
+        if torrent['show_info'] is not None:
+            show_title = torrent['show_info']['SeriesName']
+        else:
+            title_match = re.search(title_regex, torrent['title'])
+            if title_match is not None:
+                show_title = title_match.group(1)
+            else:
+                show_title = torrent['title']
+        list_item['context_menu'] = [('Show info', 'Action(Info)'),
+                                     ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
+                                     ('Download torrent',
+                                      'RunScript({commands},download,{torrent},{show_title})'.format(
+                                          commands=commands,
+                                          torrent=torrent['download'],
+                                          show_title=show_title)
+                                      ),
+                                     ('Add autodownload filter',
+                                      'RunScript({commands},add_filter,{tvdb},{show_title})'.format(
+                                          commands=commands,
+                                          tvdb=torrent['episode_info']['tvdb'],
+                                          show_title=show_title)
+                                      )]
         if myshows:
             list_item['context_menu'].append(
                 ('Torrent info',
@@ -211,9 +227,8 @@ def _list_torrents(torrents, myshows=False):
                     leechers=torrent['leechers'])))
         else:
             list_item['context_menu'].append(('Add to "My shows"...',
-                                              'RunScript({commands},myshows_add,{config_dir},{tvdb})'.format(
+                                              'RunScript({commands},myshows_add,{tvdb})'.format(
                                                   commands=commands,
-                                                  config_dir=plugin.config_dir,
                                                   tvdb=torrent['episode_info']['tvdb'])))
         yield list_item
 
@@ -304,9 +319,8 @@ def my_shows(params):
                                                myshows='true'),
                          'context_menu': [('Show info', 'Action(Info)'),
                                           ('Remove from "My Shows"...',
-                                           'RunScript({commands},myshows_remove,{config_dir},{index})'.format(
+                                           'RunScript({commands},myshows_remove,{index})'.format(
                                                commands=commands,
-                                               config_dir=plugin.config_dir,
                                                index=index))]}
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})

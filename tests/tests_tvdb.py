@@ -16,7 +16,7 @@ cwd = os.path.dirname(os.path.abspath(__file__))
 test_data = os.path.join(cwd, 'test_data')
 sys.path.append(os.path.join(os.path.dirname(cwd), 'plugin.video.rarbg.tv'))
 
-from libs.exceptions import NoDataError, Http404Error
+from libs.rarbg_exceptions import NoDataError, Http404Error
 
 sys.modules['libs.utilities'] = MagicMock()
 

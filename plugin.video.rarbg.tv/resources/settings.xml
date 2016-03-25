@@ -18,6 +18,10 @@
   </category>
   <category label="Auto Download">
       <setting id="enable_autodownload" type="bool"
-           label="Enable automatic torrents download" default="true" />
+           label="Enable automatic episode download" default="true" />
+      <setting id="download_dir" type="folder"
+           label="Base download folder" default="" enable="eq(-1,true)"/>
+      <setting id="update_library" type="bool"
+           label="Update video library ever 30 minutes" default="true" enable="eq(-2,true)" />
   </category>
 </settings>

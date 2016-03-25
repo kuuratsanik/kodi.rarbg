@@ -6,7 +6,7 @@
 
 import xml.etree.ElementTree as etree
 from utilities import load_page
-from exceptions import NoDataError, Http404Error
+from rarbg_exceptions import NoDataError, Http404Error
 
 __all__ = ['get_series', 'get_episode', 'search_series']
 

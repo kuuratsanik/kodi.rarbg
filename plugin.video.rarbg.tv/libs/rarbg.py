@@ -37,12 +37,12 @@ size: 45082604600
 
 from simpleplugin import Plugin
 from utilities import load_page
-from exceptions import NoDataError
+from rarbg_exceptions import NoDataError
 
 __all__ = ['load_torrents']
 
 API = 'http://torrentapi.org/pubapi_v2.php'
-plugin = Plugin()
+plugin = Plugin('plugin.video.rarbg.tv')
 
 
 def get_token():

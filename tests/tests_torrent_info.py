@@ -21,7 +21,7 @@ with patch('simpleplugin.Plugin') as mock_Plugin:
     mock_plugin.path = os.path.join(basedir, 'plugin.video.rarbg.tv')
     mock_Plugin.return_value = mock_plugin
     import libs.torrent_info as ti
-    from libs.exceptions import NoDataError
+    from libs.rarbg_exceptions import NoDataError
 
 
 def raise_no_data_error(*args, **kwargs):

@@ -8,7 +8,7 @@ import threading
 import requests
 from xbmc import LOGERROR
 from simpleplugin import Plugin
-from exceptions import Http404Error
+from rarbg_exceptions import Http404Error
 
 __all__ = ['ThreadPool', 'load_page']
 
@@ -19,7 +19,7 @@ HEADERS = (
     ('Accept-Language', 'en-US, en'),
     ('Accept-Encoding', 'gzip, deflate'),
 )
-plugin = Plugin()
+plugin = Plugin('plugin.video.rarbg.tv')
 
 
 class ThreadPool(object):
