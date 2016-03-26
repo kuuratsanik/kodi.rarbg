@@ -41,7 +41,6 @@ def add_to_favorites(tvdb):
     """
     Add a TV Show to favorites
 
-    :param config_dir: str - Addon config folder
     :param tvdb: str - TheTVDB ID
     :return:
     """
@@ -60,7 +59,6 @@ def remove_from_favorites(index):
     """
     Remove a TV show from "My Shows"
 
-    :param config_dir: str - Addon config folder
     :param index: str - digital index of the item to be removed
     :return:
     """
