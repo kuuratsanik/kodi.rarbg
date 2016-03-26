@@ -22,7 +22,7 @@ def clean_files(pattern):
     Clean files by the specified pattern
 
     :param pattern: a pattern to search for in filenames
-    :type str
+    :type pattern: str
     :return: celeaning result
     :rtype: bool
     """
