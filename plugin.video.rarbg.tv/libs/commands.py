@@ -137,15 +137,18 @@ def add_filter(tvdb, show_title):
     """
     filters = load_filters()
     if addon.download_dir and tvdb not in filters:
-        filters[tvdb] = {'save_path': os.path.join(addon.download_dir, show_title),
-                         'extra_filter': '',
-                         'exclude': ''}
+        filters[tvdb] = {
+            'name': show_title,
+            'save_path': os.path.join(addon.download_dir, show_title),
+            'extra_filter': '',
+            'exclude': ''
+            }
         save_filters(filters)
         xbmcgui.Dialog().notification('Rarbg', 'Added download filter for {0}'.format(show_title),
-                                      addon.icon, 5000, sound=False)
+                                      addon.icon, sound=False)
     elif tvdb in filters:
         xbmcgui.Dialog().notification('Rarbg', 'The show {0} is already set for downloading!'.format(show_title), 
-                                      addon.icon, 5000)
+                                      addon.icon)
     elif not addon.download_dir and xbmcgui.Dialog().yesno('Rarbg',
                                                            'To add episode download filter',
                                                            'you need to set base download directory first!',
