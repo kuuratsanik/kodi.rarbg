@@ -18,7 +18,7 @@ start_time = time.time()
 while not xbmc.abortRequested:
     if time.time() - start_time > 1800:  # Filter new torrents every 30 minutes
         filter_torrents()
-        if addon.updat_library:
+        if addon.update_library:
             xbmc.executebuiltin('UpdateLibrary(video)')
         start_time = time.time()
     if not started:
