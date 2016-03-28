@@ -60,7 +60,7 @@ def filter_torrents():
         for torrent in torrents:
             tvdb = torrent['episode_info']['tvdb']
             if tvdb in filters:
-                episode_id = 'x'.join((torrent['episode_info']['seasonnum'], torrent['episode_info']['epnum']))
+                episode_id = (int(torrent['episode_info']['seasonnum']), int(torrent['episode_info']['epnum']))
                 if ((downloaded_episodes.get(tvdb) is not None and episode_id in downloaded_episodes[tvdb]) or
                         (filters[tvdb].get('extra_filter') and not re.search(filters[tvdb]['extra_filter'],
                                                                              torrent['title'],
