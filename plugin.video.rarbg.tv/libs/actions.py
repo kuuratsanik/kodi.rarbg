@@ -9,11 +9,14 @@ import os
 import re
 import urllib
 import xbmc
-import xbmcgui
 import xbmcplugin
+from xbmcgui import Dialog
 from simpleplugin import Plugin
 from torrent_info import get_torrents
 import tvdb
+from gui import FilterList
+from autodownloader import load_filters, save_filters
+
 
 __all__ = ['plugin']
 
@@ -30,6 +33,7 @@ home = {'label': '<< Home',
         'url': plugin.get_url(),
         'info': {'video': {'title': '<< Home'}}}
 commands = os.path.join(plugin.path, 'libs', 'commands.py')
+dialog = Dialog()
 
 
 def _set_view_mode(content=''):
@@ -258,7 +262,14 @@ def root(params):
                 'icon': os.path.join(icons, 'search.png'),
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='search_torrents')
-               }]
+               },
+               {'label' : '[Autodownlaod Filters...]',
+                'thumb' : os.path.join(icons, 'down.png'),
+                'icon'  : os.path.join(icons, 'down.png'),
+                'fanart': plugin.fanart,
+                'url'   : plugin.get_url(action='autodownload'),
+                'is_folder': False
+                }]
     return plugin.create_listing(listing, view_mode=_set_view_mode('icons'))
 
 
@@ -292,7 +303,7 @@ def search_torrents(params):
     if query:
         results = get_torrents(mode='search', search_string=query)
         if not results:
-            xbmcgui.Dialog().ok('Nothing found!', 'Adjust your search string and try again.')
+            dialog.ok('Nothing found!', 'Adjust your search string and try again.')
     listing = _list_torrents(results)
     return plugin.create_listing(listing, cache_to_disk=True)
 
@@ -340,9 +351,23 @@ def play(params):
     """
     return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
 
+
+def autodownaload(params):
+    """
+    Open the list of episode autodownload filters
+    """
+    filter_list = FilterList(load_filters())
+    filter_list.doModal()
+    if filter_list.dirty and dialog.yesno('Saving filters', 'Do you want to save filters?'):
+        save_filters(filter_list.filters)
+        dialog.notification('Rarbg', 'Autodownload filters saved.', icon=plugin.icon, time=3000, sound=False)
+    del filter_list
+
+
 # Map actions
 plugin.actions['root'] = root
 plugin.actions['episodes'] = episodes
 plugin.actions['search_torrents'] = search_torrents
 plugin.actions['my_shows'] = my_shows
 plugin.actions['play'] = play
+plugin.actions['autodownload'] = autodownaload
