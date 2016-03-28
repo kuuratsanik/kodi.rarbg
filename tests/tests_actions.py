@@ -19,6 +19,7 @@ sys.modules['xbmc'] = MagicMock()
 sys.modules['xbmcgui'] = MagicMock()
 sys.modules['xbmcplugin'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
+sys.modules['libs.gui'] = MagicMock()
 
 
 def create_listing(listing, succeeded=True, update_listing=False, cache_to_disk=False, sort_methods=None,
@@ -28,14 +29,16 @@ def create_listing(listing, succeeded=True, update_listing=False, cache_to_disk=
             'content': content}
 
 
-with patch('simpleplugin.Plugin') as mock_Plugin:
+with patch('simpleplugin.Plugin') as mock_Plugin, patch('simpleplugin.Addon') as mock_Addon:
     mock_plugin = MagicMock()
     mock_plugin.path = '/foo'
+    mock_plugin.config_dir = '/bar'
     mock_plugin.fanart = 'fanarg.jpg'
     mock_storage = MagicMock()
     mock_plugin.get_storage.return_value = mock_storage
     mock_plugin.create_listing.side_effect = create_listing
     mock_Plugin.return_value = mock_plugin
+    mock_Addon.return_value = mock_plugin
     from libs import actions
 
 
@@ -127,7 +130,7 @@ class SetStreamInfoTestCase(TestCase):
 class RootTestCase(TestCase):
     def test_root_action(self):
         context = actions.root({})
-        self.assertEqual(len(context['listing']), 3)
+        self.assertEqual(len(context['listing']), 4)
 
 
 class EpisodesTestCase(TestCase):
