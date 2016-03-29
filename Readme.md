@@ -7,8 +7,7 @@ Rarbg.to TV Shows
 
 A plugin for [Kodi mediacenter](www.kodi.tv) to watch ongoing US TV show torrents from *rarbg.to* site
 dicrectly in Kodi mediacenter.
-The plugin requires external [YATP](https://github.com/romanvm/kodi.yatp) (preferred)
-or [Pulsar](https://github.com/steeve/plugin.video.pulsar) torrent-streaming plugins.
+The plugin requires external [YATP](https://github.com/romanvm/kodi.yatp) torrent streaming plugin.
 
 The plugin can be installed in Kodi from [my addon repository](https://github.com/romanvm/kodi_repo).
 
