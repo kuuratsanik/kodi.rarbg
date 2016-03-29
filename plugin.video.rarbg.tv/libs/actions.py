@@ -193,6 +193,7 @@ def _list_torrents(torrents, myshows=False):
                                 size=torrent['size'] / 1048576,
                                 seeders=seeders,
                                 leechers=torrent['leechers']),
+                     'url': plugin.get_url(action='play', torrent=torrent['download']),
                      'is_playable': True,
                      }
         _set_info(list_item, torrent, myshows)
@@ -206,7 +207,6 @@ def _list_torrents(torrents, myshows=False):
                 show_title = title_match.group(1)
             else:
                 show_title = torrent['title']
-        list_item['url'] = plugin.get_url(action='play', torrent=torrent['download'], subfolder=show_title)
         list_item['context_menu'] = [('Show info', 'Action(Info)'),
                                      ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
                                      ('Download torrent',
@@ -349,8 +349,7 @@ def play(params):
     :param params:
     :return:
     """
-    save_path = os.path.join(plugin.download_dir, params['subfolder'])
-    return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'], save_path=save_path)
+    return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
 
 
 def autodownaload(params):
