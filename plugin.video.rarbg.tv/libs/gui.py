@@ -24,8 +24,8 @@ class RarbgDialog(pyxbmct.AddonDialogWindow):
         self._set_navigation()
 
     def setAnimation(self, control):
-        control.setAnimations([('WindowOpen', 'effect=fade start=0 end=100 time=250'),
-                               ('WindowClose', 'effect=fade start=100 end=0 time=250')])
+        control.setAnimations([('WindowOpen', 'effect=fade start=0 end=100 time=200'),
+                               ('WindowClose', 'effect=fade start=100 end=0 time=200')])
 
     def _set_controls(self):
         raise NotImplementedError
