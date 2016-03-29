@@ -20,8 +20,10 @@ while not xbmc.abortRequested:
         filter_torrents()
         if addon.update_library:
             xbmc.executebuiltin('UpdateLibrary(video)')
+            addon.log('Video library updated', xbmc.LOGDEBUG)
         start_time = time.time()
     if not started:
         addon.log('Autodownload service started.', xbmc.LOGNOTICE)
         started = True
     xbmc.sleep(250)
+addon.log('Autodownload service stopped.', xbmc.LOGNOTICE)

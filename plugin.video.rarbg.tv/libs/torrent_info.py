@@ -18,7 +18,7 @@ import rarbg
 from utilities import ThreadPool
 from rarbg_exceptions import NoDataError
 
-__all__ = ['get_torrents', 'OrderedDict']
+__all__ = ['get_torrents', 'OrderedDict', 'check_proper']
 
 plugin = Plugin('plugin.video.rarbg.tv')
 
@@ -35,6 +35,18 @@ episode_regexes = (
 repack_regex = re.compile(r'^.+?\.(s\d+e\d+|\d+x\d+)\..*?(proper|repack).*?$', re.I | re.U)
 EpData = namedtuple('EpData', ['season', 'episode'])
 lock = threading.Lock()
+
+
+def check_proper(name):
+    """
+    Check if a torrent is a proper/repack release
+
+    :param name: torrent name
+    :type name: str
+    :return: ``True`` if it is a proper/repack, else ``False``
+    :rtype: bool
+    """
+    return re.search(repack_regex, name) is not None
 
 
 def parse_torrent_name(name):
@@ -158,8 +170,8 @@ def deduplicate_torrents(torrents):
         if '.720' in torrent['title'] or '.1080' in torrent['title']:
             ep_id += 'hd'
         if (ep_id not in results or
-                    torrent['seeders'] > results[ep_id]['seeders'] or
-                    re.match(repack_regex, torrent['title']) is not None):
+                torrent['seeders'] > results[ep_id]['seeders'] or
+                check_proper(torrent['title'])):
             results[ep_id] = torrent
     return results.values()
 

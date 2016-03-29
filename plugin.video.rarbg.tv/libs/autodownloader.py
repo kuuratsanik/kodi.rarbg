@@ -7,7 +7,7 @@ import re
 import cPickle as pickle
 from requests import post
 from simpleplugin import Addon
-from torrent_info import get_torrents, OrderedDict
+from torrent_info import get_torrents, OrderedDict, check_proper
 
 addon = Addon('plugin.video.rarbg.tv')
 yatp_addon = Addon('plugin.video.yatp')
@@ -60,7 +60,9 @@ def filter_torrents():
         for torrent in torrents:
             tvdb = torrent['episode_info']['tvdb']
             if tvdb in filters:
-                episode_id = (int(torrent['episode_info']['seasonnum']), int(torrent['episode_info']['epnum']))
+                episode_id = (int(torrent['episode_info']['seasonnum']),
+                              int(torrent['episode_info']['epnum']),
+                              check_proper(torrent['title']))
                 if ((downloaded_episodes.get(tvdb) is not None and episode_id in downloaded_episodes[tvdb]) or
                         (filters[tvdb].get('extra_filter') and not re.search(filters[tvdb]['extra_filter'],
                                                                              torrent['title'],
