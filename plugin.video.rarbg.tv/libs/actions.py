@@ -263,9 +263,9 @@ def root(params):
                 'fanart': plugin.fanart,
                 'url': plugin.get_url(action='search_torrents')
                },
-               {'label' : '[Autodownlaod Filters...]',
-                'thumb' : os.path.join(icons, 'down.png'),
-                'icon'  : os.path.join(icons, 'down.png'),
+               {'label' : '[Autodownload Filters...]',
+                'thumb' : os.path.join(icons, 'download.png'),
+                'icon'  : os.path.join(icons, 'download.png'),
                 'fanart': plugin.fanart,
                 'url'   : plugin.get_url(action='autodownload'),
                 'is_folder': False
