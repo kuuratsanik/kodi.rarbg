@@ -182,6 +182,7 @@ def _list_torrents(torrents, myshows=False):
     """
     yield home
     for torrent in torrents:
+        plugin.log(str(torrent), xbmc.LOGDEBUG)
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
         elif torrent['seeders'] <= 25:
@@ -210,13 +211,13 @@ def _list_torrents(torrents, myshows=False):
         list_item['context_menu'] = [('Show info', 'Action(Info)'),
                                      ('Mark as watched/unwatched', 'Action(ToggleWatched)'),
                                      ('Download torrent',
-                                      'RunScript({commands},download,{torrent},{show_title})'.format(
+                                      u'RunScript({commands},download,{torrent},{show_title})'.format(
                                           commands=commands,
                                           torrent=torrent['download'],
                                           show_title=show_title)
                                       ),
                                      ('Add autodownload filter',
-                                      'RunScript({commands},add_filter,{tvdb},{show_title})'.format(
+                                      u'RunScript({commands},add_filter,{tvdb},{show_title})'.format(
                                           commands=commands,
                                           tvdb=torrent['episode_info']['tvdb'],
                                           show_title=show_title)
