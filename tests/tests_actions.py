@@ -29,17 +29,18 @@ def create_listing(listing, succeeded=True, update_listing=False, cache_to_disk=
             'content': content}
 
 
-with patch('simpleplugin.Plugin') as mock_Plugin, patch('simpleplugin.Addon') as mock_Addon:
-    mock_plugin = MagicMock()
-    mock_plugin.path = '/foo'
-    mock_plugin.config_dir = '/bar'
-    mock_plugin.fanart = 'fanarg.jpg'
-    mock_storage = MagicMock()
-    mock_plugin.get_storage.return_value = mock_storage
-    mock_plugin.create_listing.side_effect = create_listing
-    mock_Plugin.return_value = mock_plugin
-    mock_Addon.return_value = mock_plugin
-    from libs import actions
+with patch('simpleplugin.Plugin') as mock_Plugin:
+    with patch('simpleplugin.Addon') as mock_Addon:
+        mock_plugin = MagicMock()
+        mock_plugin.path = '/foo'
+        mock_plugin.config_dir = '/bar'
+        mock_plugin.fanart = 'fanarg.jpg'
+        mock_storage = MagicMock()
+        mock_plugin.get_storage.return_value = mock_storage
+        mock_plugin.create_listing.side_effect = create_listing
+        mock_Plugin.return_value = mock_plugin
+        mock_Addon.return_value = mock_plugin
+        from libs import actions
 
 
 class SetInfoTestCase(TestCase):
