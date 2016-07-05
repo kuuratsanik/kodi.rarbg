@@ -4,7 +4,7 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 """Get info from TheTVDB"""
 
-import xml.etree.cElementTree as etree
+import xml.etree.ElementTree as etree
 from utilities import load_page
 from rarbg_exceptions import NoDataError, Http404Error
 
