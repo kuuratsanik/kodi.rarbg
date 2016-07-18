@@ -25,13 +25,6 @@ forbidden_chars_regex = re.compile(r'[<>:"/\\|\?\*]', re.U | re.I)
 plugin = Plugin()
 icons = os.path.join(plugin.path, 'resources', 'icons')
 tv_icon = os.path.join(icons, 'tv.png')
-home = {'label': '<< Home',
-        'thumb': os.path.join(icons, 'home.png'),
-        'icon': os.path.join(icons, 'home.png'),
-        'art': {'poster': os.path.join(icons, 'home.png')},
-        'fanart': plugin.fanart,
-        'url': plugin.get_url(),
-        'info': {'video': {'title': '<< Home'}}}
 commands = os.path.join(plugin.path, 'libs', 'commands.py')
 dialog = Dialog()
 
@@ -180,7 +173,6 @@ def _list_torrents(torrents, myshows=False):
     :param torrents: list
     :return:
     """
-    yield home
     for torrent in torrents:
         plugin.log(str(torrent), xbmc.LOGDEBUG)
         if torrent['seeders'] <= 10:
@@ -318,7 +310,7 @@ def my_shows(params):
     :return: SimplePlugin action context
     :rtype: dict
     """
-    listing = [home]
+    listing = []
     with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
