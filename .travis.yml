@@ -1,16 +1,17 @@
 branches:
   only:
-    - develop
-    - master
+#    - develop
+#    - master
     - /v.\d+\.\d+\.\d+/
 language: python
 python:
-  - "2.6"
+#  - "2.6"
   - "2.7"
-install: pip install codecov mock ordereddict
-script: coverage run tests.py
-after_success:
-  - codecov
+#install: pip install codecov mock ordereddict
+#script: coverage run tests.py
+script: echo "Skipping tests..."
+#after_success:
+#  - codecov
 before_deploy: wget https://raw.githubusercontent.com/romanvm/travis_scripts/master/deploy_addon.py
 deploy:
   provider: script
