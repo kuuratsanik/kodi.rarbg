@@ -22,5 +22,6 @@ while not xbmc.abortRequested:
     if not started:
         addon.log('Autodownload service started.', xbmc.LOGNOTICE)
         started = True
+        filter_torrents()
     xbmc.sleep(250)
 addon.log('Autodownload service stopped.', xbmc.LOGNOTICE)
