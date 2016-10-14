@@ -37,12 +37,15 @@ size: 45082604600
 
 from simpleplugin import Plugin
 from utilities import load_page
-from rarbg_exceptions import NoDataError
 
 __all__ = ['load_torrents']
 
 API = 'http://torrentapi.org/pubapi_v2.php'
 plugin = Plugin('plugin.video.rarbg.tv')
+
+
+class RarbgError(Exception):
+    pass
 
 
 def get_token():
@@ -67,11 +70,12 @@ def load_torrents(params):
     :type params: dict
     :return: the list of torrents as dicts
     :rtype: list
-    :raises: libs.exceptions.NoDataError if Rarbg returns no torrent data
+    :raises RarbgError: if Rarbg returns no torrent data
     """
     params['token'] = get_token()
     params['format'] = 'json_extended'
-    try:
-        return load_page(API, params=params, headers={'content-type': 'application/json'})['torrent_results']
-    except KeyError:
-        raise NoDataError('Rarbg returned no valid data!')
+    response = load_page(API, params=params, headers={'content-type': 'application/json'})
+    if 'torrent_results' not in response:
+        plugin.log_error('Rarbg returned error: {0}'.format(response))
+        raise RarbgError
+    return response['torrent_results']
