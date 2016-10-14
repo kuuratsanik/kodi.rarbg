@@ -35,6 +35,7 @@ download: magnet:?xt=urn:btih:d9678293e0980dcac8d054394444afd1f467ee48&dn=Game.o
 size: 45082604600
 """
 
+import time
 from simpleplugin import Plugin
 from utilities import load_page
 
@@ -73,6 +74,7 @@ def load_torrents(params):
     :raises RarbgError: if Rarbg returns no torrent data
     """
     params['token'] = get_token()
+    time.sleep(2)
     params['format'] = 'json_extended'
     response = load_page(API, params=params, headers={'content-type': 'application/json'})
     if 'torrent_results' not in response:
