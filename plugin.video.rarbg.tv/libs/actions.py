@@ -51,6 +51,13 @@ def _set_view_mode(content=''):
                 view_mode = 550
             else:
                 view_mode = 500
+        elif xbmc.getSkinDir() in ('skin.estuary', 'skin.estouchy') and content == 'icons':
+            view_mode = 50
+    else:
+        if xbmc.getSkinDir() == 'skin.estuary':
+            view_mode = 55
+        elif xbmc.getSkinDir() == 'skin.estouchy':
+            view_mode = 500
     return view_mode
 
 
@@ -283,7 +290,10 @@ def episodes(params):
     else:
         content = ''
         sort_methods = ()
-    return plugin.create_listing(listing, content=content, view_mode=_set_view_mode(content), sort_methods=sort_methods)
+    return plugin.create_listing(listing,
+                                 content=content,
+                                 view_mode=_set_view_mode(content),
+                                 sort_methods=sort_methods)
 
 
 @plugin.action()
