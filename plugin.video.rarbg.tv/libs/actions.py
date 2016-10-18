@@ -51,6 +51,13 @@ def _set_view_mode(content=''):
                 view_mode = 550
             else:
                 view_mode = 500
+        elif xbmc.getSkinDir() in ('skin.estuary', 'skin.estouchy') and content == 'icons':
+            view_mode = 50
+    else:
+        if xbmc.getSkinDir() == 'skin.estuary':
+            view_mode = 55
+        elif xbmc.getSkinDir() == 'skin.estouchy':
+            view_mode = 500
     return view_mode
 
 
@@ -174,7 +181,7 @@ def _list_torrents(torrents, myshows=False):
     :return:
     """
     for torrent in torrents:
-        plugin.log(str(torrent), xbmc.LOGDEBUG)
+        plugin.log_debug(str(torrent))
         if torrent['seeders'] <= 10:
             seeders = '[COLOR=red]{0}[/COLOR]'.format(torrent['seeders'])
         elif torrent['seeders'] <= 25:
@@ -231,6 +238,7 @@ def _list_torrents(torrents, myshows=False):
         yield list_item
 
 
+@plugin.action()
 def root(params):
     """
     Plugin root
@@ -266,6 +274,7 @@ def root(params):
     return plugin.create_listing(listing, view_mode=_set_view_mode('icons'))
 
 
+@plugin.action()
 def episodes(params):
     """
     Show the list of recent episodes
@@ -281,9 +290,13 @@ def episodes(params):
     else:
         content = ''
         sort_methods = ()
-    return plugin.create_listing(listing, content=content, view_mode=_set_view_mode(content), sort_methods=sort_methods)
+    return plugin.create_listing(listing,
+                                 content=content,
+                                 view_mode=_set_view_mode(content),
+                                 sort_methods=sort_methods)
 
 
+@plugin.action()
 def search_torrents(params):
     """
     Search torrents and show the list of results
@@ -301,6 +314,7 @@ def search_torrents(params):
     return plugin.create_listing(listing, cache_to_disk=True)
 
 
+@plugin.action()
 def my_shows(params):
     """
     'My Shows' list
@@ -335,6 +349,7 @@ def my_shows(params):
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
 
+@plugin.action()
 def play(params):
     """
     Play torrent via YATP
@@ -345,6 +360,7 @@ def play(params):
     return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
 
 
+@plugin.action()
 def autodownaload(params):
     """
     Open the list of episode autodownload filters
@@ -355,12 +371,3 @@ def autodownaload(params):
         save_filters(filter_list.filters)
         dialog.notification('Rarbg', 'Autodownload filters saved.', icon=plugin.icon, time=3000, sound=False)
     del filter_list
-
-
-# Map actions
-plugin.actions['root'] = root
-plugin.actions['episodes'] = episodes
-plugin.actions['search_torrents'] = search_torrents
-plugin.actions['my_shows'] = my_shows
-plugin.actions['play'] = play
-plugin.actions['autodownload'] = autodownaload

@@ -5,8 +5,7 @@
 """Get info from TheTVDB"""
 
 import xml.etree.ElementTree as etree
-from utilities import load_page
-from rarbg_exceptions import NoDataError, Http404Error
+from utilities import load_page, Http404Error
 
 __all__ = ['get_series', 'get_episode', 'search_series']
 
@@ -16,6 +15,10 @@ GET_EPISODE = 'http://thetvdb.com/api/{apikey}/series/{id}/default/{season}/{epi
 SEARCH_SERIES = 'http://thetvdb.com/api/GetSeries.php'
 GET_BY_ID = 'http://thetvdb.com/api/GetSeriesByRemoteID.php'
 GRAPHICS = 'http://thetvdb.com/banners/'
+
+
+class TvdbError(Exception):
+    pass
 
 
 def parse_items(parent):
@@ -43,16 +46,16 @@ def get_series(tvdbid):
     :type tvdbid: str
     :return: TV series data
     :rtype: dict
-    :raises: libs.exceptions.NoDataError if TheTVDB returns no data
+    :raises TvdbError: if TheTVDB returns no data
     """
     try:
         page = load_page(GET_SERIES.format(apikey=APIKEY, id=tvdbid)).encode('utf-8', 'replace')
     except Http404Error:
-        raise NoDataError('TheTVDB returned 404 page!')
+        raise TvdbError('TheTVDB returned 404 page!')
     root = etree.fromstring(page)
     series = root.find('Series')
     if series is None:
-        raise NoDataError('TheTVDB returned invalid XML data!')
+        raise TvdbError('TheTVDB returned invalid XML data!')
     else:
         return parse_items(series)
 
@@ -69,18 +72,18 @@ def get_episode(tvdbid, season, episode):
     :type episode: str
     :return: TV episode data
     :rtype: dict
-    :raises: libs.exceptions.NoDataError if TheTVDB returns no data
+    :raises TvdbError: if TheTVDB returns no data
     """
     try:
         page = load_page(GET_EPISODE.format(apikey=APIKEY, id=tvdbid,
                                             season=season.lstrip('0'),
                                             episode=episode.lstrip('0'))).encode('utf-8', 'replace')
     except Http404Error:
-        raise NoDataError('TheTVDB returned 404 page!')
+        raise TvdbError('TheTVDB returned 404 page!')
     root = etree.fromstring(page)
     ep_info = root.find('Episode')
     if ep_info is None:
-        raise NoDataError('TheTVDB returned invalid XML data!')
+        raise TvdbError('TheTVDB returned invalid XML data!')
     else:
         return parse_items(ep_info)
 
@@ -93,7 +96,7 @@ def search_series(seriesname):
     :type seriesname: str
     :return: the list of found TV series data as dicts
     :rtype: list
-    :raises: libs.exceptions.NoDataError if TheTVDB returns empty XML
+    :raises TvdbError: if TheTVDB returns empty XML
     """
     root = etree.fromstring(load_page(SEARCH_SERIES, params={'seriesname': seriesname}).encode('utf-8', 'replace'))
     series = root.findall('Series')
@@ -104,4 +107,4 @@ def search_series(seriesname):
                 listing.append(parse_items(show))
         return listing
     else:
-        raise NoDataError('TheTVDB returned invalid XML data!')
+        raise TvdbError('TheTVDB returned invalid XML data!')

@@ -35,14 +35,18 @@ download: magnet:?xt=urn:btih:d9678293e0980dcac8d054394444afd1f467ee48&dn=Game.o
 size: 45082604600
 """
 
+import time
 from simpleplugin import Plugin
 from utilities import load_page
-from rarbg_exceptions import NoDataError
 
 __all__ = ['load_torrents']
 
 API = 'http://torrentapi.org/pubapi_v2.php'
 plugin = Plugin('plugin.video.rarbg.tv')
+
+
+class RarbgError(Exception):
+    pass
 
 
 def get_token():
@@ -67,11 +71,13 @@ def load_torrents(params):
     :type params: dict
     :return: the list of torrents as dicts
     :rtype: list
-    :raises: libs.exceptions.NoDataError if Rarbg returns no torrent data
+    :raises RarbgError: if Rarbg returns no torrent data
     """
     params['token'] = get_token()
+    time.sleep(2)
     params['format'] = 'json_extended'
-    try:
-        return load_page(API, params=params, headers={'content-type': 'application/json'})['torrent_results']
-    except KeyError:
-        raise NoDataError('Rarbg returned no valid data!')
+    response = load_page(API, params=params, headers={'content-type': 'application/json'})
+    if 'torrent_results' not in response:
+        plugin.log_error('Rarbg returned error: {0}'.format(response))
+        raise RarbgError
+    return response['torrent_results']

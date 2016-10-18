@@ -11,12 +11,10 @@ import re
 import threading
 import time
 from collections import namedtuple
-from xbmc import LOGERROR
 from simpleplugin import Plugin
 import tvdb
 import rarbg
 from utilities import ThreadPool
-from rarbg_exceptions import NoDataError
 
 __all__ = ['get_torrents', 'OrderedDict', 'check_proper']
 
@@ -32,9 +30,9 @@ episode_regexes = (
     re.compile(r'^.+?\.s(\d+)e(\d+)\.', re.I | re.U),
     re.compile(r'^.+?\.(\d+)x(\d+)\.', re.I | re.U)
 )
-repack_regex = re.compile(r'^.+?\.(s\d+e\d+|\d+x\d+)\..*?(proper|repack).*?$', re.I | re.U)
+proper_regex = re.compile(r'^.+?\.(s\d+e\d+|\d+x\d+)\..*?(proper|repack).*?$', re.I)
 EpData = namedtuple('EpData', ['season', 'episode'])
-lock = threading.Lock()
+lock = threading.RLock()
 
 
 def check_proper(name):
@@ -46,7 +44,7 @@ def check_proper(name):
     :return: ``True`` if it is a proper/repack, else ``False``
     :rtype: bool
     """
-    return re.search(repack_regex, name) is not None
+    return re.search(proper_regex, name) is not None
 
 
 def parse_torrent_name(name):
@@ -82,8 +80,8 @@ def add_show_info(torrent, tvshows):
     if show_info is None:
         try:
             show_info = tvdb.get_series(tvdbid)
-        except NoDataError:
-            plugin.log('TheTVDB rerturned no data for ID {0}, torrent {1}'.format(tvdbid, torrent['title']), LOGERROR)
+        except tvdb.TvdbError:
+            plugin.log_error('TheTVDB rerturned no data for ID {0}, torrent {1}'.format(tvdbid, torrent['title']))
             show_info = None
         else:
             show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
@@ -112,8 +110,11 @@ def add_episode_info(torrent, episodes):
             episode_info = tvdb.get_episode(tvdbid,
                                             torrent['episode_info']['seasonnum'],
                                             torrent['episode_info']['epnum'])
-        except NoDataError:
-            plugin.log('TheTVDB returned no data for episode {0}, torrent {1}'.format(episode_id, torrent['title']))
+        except tvdb.TvdbError:
+            plugin.log_error('TheTVDB returned no data for episode {0}, torrent {1}'.format(
+                episode_id,
+                torrent['title'])
+            )
             episode_info = None
         with lock:
             episodes[episode_id] = episode_info
@@ -206,7 +207,7 @@ def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True
         rarbg_query['limit'] = plugin.itemcount
     try:
         raw_torrents = rarbg.load_torrents(rarbg_query)
-    except NoDataError:
+    except rarbg.RarbgError:
         return []
     else:
         torrents = deduplicate_torrents(raw_torrents)

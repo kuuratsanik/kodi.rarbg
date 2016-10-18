@@ -11,10 +11,10 @@ import os
 import xbmcgui
 import xbmc
 import xbmcvfs
-from simpleplugin import Addon
+from simpleplugin import Plugin
 from autodownloader import load_filters, save_filters, download_torrent
 
-addon = Addon('plugin.video.rarbg.tv')
+plugin = Plugin('plugin.video.rarbg.tv')
 
 
 def clean_files(pattern):
@@ -26,11 +26,11 @@ def clean_files(pattern):
     :return: celeaning result
     :rtype: bool
     """
-    folders, files = xbmcvfs.listdir(addon.config_dir)
+    folders, files = xbmcvfs.listdir(plugin.config_dir)
     deleted = True
     for file_ in files:
         if pattern in file_:
-            path = os.path.join(addon.config_dir, file_)
+            path = os.path.join(plugin.config_dir, file_)
             xbmcvfs.delete(path)
             if xbmcvfs.exists(path):
                 deleted = False
@@ -44,13 +44,13 @@ def add_to_favorites(tvdb):
     :param tvdb: str - TheTVDB ID
     :return:
     """
-    with addon.get_storage('myshows.pcl') as storage:
+    with plugin.get_storage('myshows.pcl') as storage:
         mshows = storage.get('myshows', [])
         if tvdb not in mshows:
             mshows.append(tvdb)
             storage['myshows'] = mshows
-            xbmcgui.Dialog().notification('Rarbg', 'The show successfully added to "My Shows"', addon.icon, 3000,
-                                          sound=False)
+            xbmcgui.Dialog().notification('Rarbg', 'The show successfully added to "My Shows"',
+                                          plugin.icon, 3000, sound=False)
         else:
             xbmcgui.Dialog().notification('Rarbg', 'The show is already in "My Shows"!', 'error', 3000)
 
@@ -62,9 +62,9 @@ def remove_from_favorites(index):
     :param index: str - digital index of the item to be removed
     :return:
     """
-    with addon.get_storage('myshows.pcl') as storage:
+    with plugin.get_storage('myshows.pcl') as storage:
         del storage['myshows'][int(index)]
-    xbmcgui.Dialog().notification('Rarbg', 'The show removed from "My Shows"', addon.icon, 3000, sound=False)
+    xbmcgui.Dialog().notification('Rarbg', 'The show removed from "My Shows"', plugin.icon, 3000, sound=False)
     xbmc.executebuiltin('Container.Refresh')
 
 
@@ -87,13 +87,14 @@ def download(torrent, show_title):
     :param torrent:
     :return:
     """
-    if addon.download_dir:
-        download_torrent(torrent, os.path.join(addon.download_dir, show_title))
-        xbmcgui.Dialog().notification('Rarbg', 'Torrent added to YATP for downloading.', addon.icon, 3000, sound=False)
-    elif not addon.downlaod_dir and xbmcgui.Dialog().yesno('Rarbg', 'To download torrent you need',
+    if plugin.download_dir:
+        download_torrent(torrent, os.path.join(plugin.download_dir, show_title))
+        xbmcgui.Dialog().notification('Rarbg', 'Torrent added to YATP for downloading.',
+                                      plugin.icon, 3000, sound=False)
+    elif not plugin.downlaod_dir and xbmcgui.Dialog().yesno('Rarbg', 'To download torrent you need',
                                                            'to set base download directory first!',
                                                            'Open plugin settings?'):
-        addon.addon.openSettings()
+        plugin.addon.openSettings()
 
 
 def torrent_info(title, size, seeders, leechers):
@@ -117,7 +118,8 @@ def clear_cache():
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
         if clean_files('cache.'):
-            xbmcgui.Dialog().notification('Rarbg', 'Plugin cache cleared successfully.', addon.icon, 3000, sound=False)
+            xbmcgui.Dialog().notification('Rarbg', 'Plugin cache cleared successfully.',
+                                          plugin.icon, 3000, sound=False)
 
 
 def clear_data():
@@ -126,7 +128,8 @@ def clear_data():
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear all the plugin data?'):
         if clean_files('.pcl'):
-            xbmcgui.Dialog().notification('Rarbg', 'Plugin data cleared successfully.', addon.icon, 3000, sound=False)
+            xbmcgui.Dialog().notification('Rarbg', 'Plugin data cleared successfully.',
+                                          plugin.icon, 3000, sound=False)
 
 
 def add_filter(tvdb, show_title):
@@ -134,24 +137,24 @@ def add_filter(tvdb, show_title):
     Add filter for episode autodownloading
     """
     filters = load_filters()
-    if addon.download_dir and tvdb not in filters:
+    if plugin.download_dir and tvdb not in filters:
         filters[tvdb] = {
             'name': show_title,
-            'save_path': os.path.join(addon.download_dir, show_title),
+            'save_path': os.path.join(plugin.download_dir, show_title),
             'extra_filter': '',
             'exclude': ''
             }
         save_filters(filters)
         xbmcgui.Dialog().notification('Rarbg', 'Added download filter for {0}'.format(show_title),
-                                      addon.icon, sound=False)
+                                      plugin.icon, sound=False)
     elif tvdb in filters:
         xbmcgui.Dialog().notification('Rarbg', 'The show {0} is already set for downloading!'.format(show_title), 
-                                      addon.icon)
-    elif not addon.download_dir and xbmcgui.Dialog().yesno('Rarbg',
-                                                           'To add episode download filter',
-                                                           'you need to set base download directory first!',
-                                                           'Open plugin settings?'):
-        addon.addon.openSettings()
+                                      plugin.icon)
+    elif not plugin.download_dir and xbmcgui.Dialog().yesno('Rarbg',
+                                                            'To add episode download filter',
+                                                            'you need to set base download directory first!',
+                                                            'Open plugin settings?'):
+        plugin.addon.openSettings()
 
 
 if __name__ == '__main__':

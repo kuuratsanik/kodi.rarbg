@@ -8,7 +8,6 @@ import threading
 import requests
 from xbmc import LOGERROR
 from simpleplugin import Plugin
-from rarbg_exceptions import Http404Error
 
 __all__ = ['ThreadPool', 'load_page']
 
@@ -20,6 +19,10 @@ HEADERS = (
     ('Accept-Encoding', 'gzip, deflate'),
 )
 plugin = Plugin('plugin.video.rarbg.tv')
+
+
+class Http404Error(Exception):
+    pass
 
 
 class ThreadPool(object):
@@ -90,7 +93,7 @@ def load_page(url, params=None, headers=None):
     :return: response contents or a dictionary of json-decoded data
     :rtype: dict -- for JSON response
     :rtype: str -- for other types of responses
-    :raises: libs.exceptions.Http404Error -- if 404 error if returned
+    :raises Http404Error: if 404 error if returned
     """
     request_headers = dict(HEADERS)
     plugin.log('URL: {0}, params: {1}'.format(url, str(params)))
@@ -105,5 +108,5 @@ def load_page(url, params=None, headers=None):
         contents = response.json()
     else:
         contents = response.text
-    plugin.log(response.text.encode('utf-8'))
+    plugin.log_debug(response.text.encode('utf-8'))
     return contents

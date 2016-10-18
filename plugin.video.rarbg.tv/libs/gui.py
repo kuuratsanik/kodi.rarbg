@@ -5,11 +5,11 @@
 import re
 import xbmcgui
 import pyxbmct
-from simpleplugin import Addon
-from tvdb import get_series, NoDataError
+from simpleplugin import Plugin
+from tvdb import get_series, TvdbError
 
 dialog = xbmcgui.Dialog()
-addon = Addon()
+plugin = Plugin()
 
 
 class RarbgDialog(pyxbmct.AddonDialogWindow):
@@ -122,12 +122,12 @@ class FilterEditor(RarbgDialog):
             dialog.ok('Invalid TheTVDB ID!', '"TheTVDB ID" field must contain only numbers.')
             return False
         else:
-            with addon.get_storage('tvshows.pcl') as tvshows:
+            with plugin.get_storage('tvshows.pcl') as tvshows:
                 show = tvshows.get(self.filter['tvdb'])
                 if show is None:
                     try:
                         show = get_series(self.filter['tvdb'])
-                    except NoDataError:
+                    except TvdbError:
                         dialog.ok('Invalid TheTVDB ID!', 'TheTVDB does not have a TV show with such ID.')
                         return False
                     else:
