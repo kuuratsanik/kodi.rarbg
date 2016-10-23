@@ -50,6 +50,22 @@ def save_filters(filters):
         pickle.dump(filters, fo)
 
 
+def check_episode_id(episode_id, tvdb, downloaded_episodes):
+    return (tvdb not in downloaded_episodes or
+            (tvdb in downloaded_episodes and episode_id not in downloaded_episodes[tvdb]))
+
+
+def check_extra_filter(filters, torrent, tvdb):
+    has_extra_filter = filters[tvdb].get('extra_filter')
+    return (not has_extra_filter or
+            (has_extra_filter and re.search(filters[tvdb]['extra_filter'], torrent['title'], re.I)))
+
+
+def check_exclude(filters, torrent, tvdb):
+    has_exclude = filters[tvdb].get('exclude')
+    return not has_exclude or (has_exclude and not re.search(filters[tvdb]['exclude'], torrent['title'], re.I))
+
+
 def filter_torrents():
     """
     Filter episode torrents from Rarbg by given criteria
@@ -63,16 +79,11 @@ def filter_torrents():
                 episode_id = (int(torrent['episode_info']['seasonnum']),
                               int(torrent['episode_info']['epnum']),
                               check_proper(torrent['title']))
-                if not ((downloaded_episodes.get(tvdb) is not None and episode_id in downloaded_episodes[tvdb]) or
-                        (filters[tvdb].get('extra_filter') and not re.search(filters[tvdb]['extra_filter'],
-                                                                             torrent['title'],
-                                                                             re.I)) or
-                        (filters[tvdb].get('exclude') and re.search(filters[tvdb]['exclude'],
-                                                                    torrent['title'],
-                                                                    re.I))):
+                if (check_episode_id(episode_id, tvdb, downloaded_episodes) and
+                        check_extra_filter(filters, torrent, tvdb) and
+                        check_exclude(filters, torrent, tvdb)):
                     download_torrent(torrent['download'], filters[tvdb]['save_path'])
-                    del filters[tvdb]
-                    if downloaded_episodes.get(tvdb) is None:
+                    if tvdb not in downloaded_episodes:
                         downloaded_episodes[tvdb] = []
                     downloaded_episodes[tvdb].append(episode_id)
-                    addon.log('Torrent {0} added for downloading'.format(torrent['title']), 2)
+                    addon.log_notice('Torrent {0} added for downloading'.format(torrent['title']))
