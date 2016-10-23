@@ -361,7 +361,7 @@ def play(params):
 
 
 @plugin.action()
-def autodownaload(params):
+def autodownload(params):
     """
     Open the list of episode autodownload filters
     """

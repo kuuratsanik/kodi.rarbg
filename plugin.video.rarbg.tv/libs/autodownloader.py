@@ -63,15 +63,13 @@ def filter_torrents():
                 episode_id = (int(torrent['episode_info']['seasonnum']),
                               int(torrent['episode_info']['epnum']),
                               check_proper(torrent['title']))
-                if ((downloaded_episodes.get(tvdb) is not None and episode_id in downloaded_episodes[tvdb]) or
+                if not ((downloaded_episodes.get(tvdb) is not None and episode_id in downloaded_episodes[tvdb]) or
                         (filters[tvdb].get('extra_filter') and not re.search(filters[tvdb]['extra_filter'],
                                                                              torrent['title'],
                                                                              re.I)) or
                         (filters[tvdb].get('exclude') and re.search(filters[tvdb]['exclude'],
                                                                     torrent['title'],
                                                                     re.I))):
-                    continue
-                else:
                     download_torrent(torrent['download'], filters[tvdb]['save_path'])
                     del filters[tvdb]
                     if downloaded_episodes.get(tvdb) is None:

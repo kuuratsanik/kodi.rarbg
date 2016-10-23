@@ -117,7 +117,7 @@ def clear_cache():
     Clear page cache
     """
     if xbmcgui.Dialog().yesno('Rarbg TV Shows', 'Do you really want to clear the plugin cache?'):
-        if clean_files('cache.'):
+        if clean_files('cache'):
             xbmcgui.Dialog().notification('Rarbg', 'Plugin cache cleared successfully.',
                                           plugin.icon, 3000, sound=False)
 

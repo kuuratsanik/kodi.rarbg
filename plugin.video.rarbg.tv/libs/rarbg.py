@@ -37,7 +37,7 @@ size: 45082604600
 
 import time
 from simpleplugin import Plugin
-from utilities import load_page
+from web_client import load_page
 
 __all__ = ['load_torrents']
 
