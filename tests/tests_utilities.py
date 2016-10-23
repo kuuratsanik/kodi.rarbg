@@ -17,7 +17,7 @@ sys.modules['requests'] = MagicMock()
 sys.modules['xbmc'] = MagicMock()
 sys.modules['simpleplugin'] = MagicMock()
 
-from libs.utilities import load_page, HEADERS
+from libs.web_client import load_page, HEADERS
 from libs.rarbg_exceptions import Http404Error
 
 

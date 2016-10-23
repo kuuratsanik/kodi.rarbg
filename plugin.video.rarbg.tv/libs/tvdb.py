@@ -5,7 +5,7 @@
 """Get info from TheTVDB"""
 
 import xml.etree.ElementTree as etree
-from utilities import load_page, Http404Error
+from web_client import load_page, Http404Error
 
 __all__ = ['get_series', 'get_episode', 'search_series']
 

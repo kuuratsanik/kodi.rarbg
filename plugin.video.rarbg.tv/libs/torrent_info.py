@@ -8,31 +8,28 @@
 import sys
 import os
 import re
-import threading
-import time
 from collections import namedtuple
+from traceback import format_exc
 from simpleplugin import Plugin
 import tvdb
 import rarbg
-from utilities import ThreadPool
 
 __all__ = ['get_torrents', 'OrderedDict', 'check_proper']
 
 plugin = Plugin('plugin.video.rarbg.tv')
-
+sys.path.append(os.path.join(plugin.path, 'site-packages'))
+import concurrent.futures as futures
 try:
     from collections import OrderedDict
 except ImportError:
-    sys.path.append(os.path.join(plugin.path, 'site-packages'))
     from ordereddict import OrderedDict
 
 episode_regexes = (
-    re.compile(r'^.+?\.s(\d+)e(\d+)\.', re.I | re.U),
-    re.compile(r'^.+?\.(\d+)x(\d+)\.', re.I | re.U)
+    re.compile(r'^.+?\.s(\d+)e(\d+)\.', re.I),
+    re.compile(r'^.+?\.(\d+)x(\d+)\.', re.I)
 )
 proper_regex = re.compile(r'^.+?\.(s\d+e\d+|\d+x\d+)\..*?(proper|repack).*?$', re.I)
 EpData = namedtuple('EpData', ['season', 'episode'])
-lock = threading.RLock()
 
 
 def check_proper(name):
@@ -85,10 +82,8 @@ def add_show_info(torrent, tvshows):
             show_info = None
         else:
             show_info['IMDB_ID'] = torrent['episode_info']['imdb']  # This fix is mostly for the new "The X-Files"
-        with lock:
-            tvshows[tvdbid] = show_info
-    with lock:
-        torrent['show_info'] = show_info
+        tvshows[tvdbid] = show_info
+    torrent['show_info'] = show_info
 
 
 def add_episode_info(torrent, episodes):
@@ -116,10 +111,26 @@ def add_episode_info(torrent, episodes):
                 torrent['title'])
             )
             episode_info = None
-        with lock:
-            episodes[episode_id] = episode_info
-    with lock:
-        torrent['tvdb_episode_info'] = episode_info
+        episodes[episode_id] = episode_info
+    torrent['tvdb_episode_info'] = episode_info
+
+
+def add_info_to_torrent(torrent, tvshows, episodes):
+    """
+    Add TVDB info to one torrent
+
+    :param torrent: a torrent object from Rarbg
+    :type torrent: dict
+    :param tvshows: TV shows database from TVDB
+    :type tvshows: dict
+    :param episodes: episode database from TVDB
+    :type episodes: dict
+    :return: torrent with info
+    :rtype: dict
+    """
+    add_show_info(torrent, tvshows)
+    add_episode_info(torrent, episodes)
+    return torrent
 
 
 def add_tvdb_info(torrents):
@@ -128,20 +139,20 @@ def add_tvdb_info(torrents):
 
     :param torrents: the list of torrents from Rarbg as dicts
     :type torrents: list
+    :return: the generator of torrents with added TVDB info
+    :rtype: types.GeneratorType
     """
-    tvshows = plugin.get_storage('tvshows.pcl')
-    episodes = plugin.get_storage('episodes.pcl')
-    ThreadPool.thread_count = plugin.thread_count
-    thread_pool = ThreadPool()
-    try:
-        for torrent in torrents:
-            thread_pool.put(add_show_info, torrent, tvshows)
-            thread_pool.put(add_episode_info, torrent, episodes)
-        while not thread_pool.is_all_finished():
-            time.sleep(0.1)
-    finally:
-        tvshows.flush()
-        episodes.flush()
+    with plugin.get_storage('tvshows.pcl') as tvshows:
+        with plugin.get_storage('episodes.pcl') as episodes:
+            with futures.ThreadPoolExecutor(max_workers=plugin.thread_count) as executor:
+                torrent_futures = [executor.submit(add_info_to_torrent, torrent, tvshows, episodes)
+                                   for torrent in torrents]
+                futures.wait(torrent_futures)
+                for future in torrent_futures:
+                    try:
+                        yield future.result()
+                    except:
+                        plugin.log_error(format_exc())
 
 
 def deduplicate_torrents(torrents):
@@ -151,7 +162,7 @@ def deduplicate_torrents(torrents):
     :param torrents: raw torrent list from Rarbg
     :type torrents: list
     :return: deduplicated torrents list
-    :rtype: list
+    :rtype: types.GeneratorType
     """
     results = OrderedDict()
     for torrent in torrents:
@@ -174,7 +185,7 @@ def deduplicate_torrents(torrents):
                 torrent['seeders'] > results[ep_id]['seeders'] or
                 check_proper(torrent['title'])):
             results[ep_id] = torrent
-    return results.values()
+    return results.itervalues()
 
 
 def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True):
@@ -191,8 +202,8 @@ def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True
     :type limit: str
     :param add_info: add info from TheTVDB to torrents
     :type add_info: bool
-    :return: the list of torrents matching the query criteria
-    :rtype: list
+    :return: the generator of torrents matching the query criteria
+    :rtype: types.GeneratorType
     """
     rarbg_query = {'mode': mode, 'category': ('18;41', '18', '41')[plugin.quality]}
     if plugin.get_setting('ignore_weak'):
@@ -212,5 +223,5 @@ def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True
     else:
         torrents = deduplicate_torrents(raw_torrents)
         if add_info:
-            add_tvdb_info(torrents)
+            torrents = add_tvdb_info(torrents)
         return torrents
