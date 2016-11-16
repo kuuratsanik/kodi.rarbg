@@ -4,8 +4,17 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 """Get info from TheTVDB"""
 
-import xml.etree.ElementTree as etree
+from simpleplugin import Plugin
 from web_client import load_page, Http404Error
+
+plugin = Plugin('plugin.video.rarbg.tv')
+
+import xml.etree.cElementTree as etree
+try:
+    etree.fromstring('<?xml version="1.0"?><foo><bar/></foo>')
+except TypeError:
+    plugin.log_warning('cElementTree is not available! Falling back to ElementTree.')
+    import xml.etree.ElementTree as etree
 
 __all__ = ['get_series', 'get_episode', 'search_series']
 
