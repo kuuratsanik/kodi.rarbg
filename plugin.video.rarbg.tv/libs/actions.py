@@ -29,38 +29,6 @@ commands = os.path.join(plugin.path, 'libs', 'commands.py')
 dialog = Dialog()
 
 
-def _set_view_mode(content=''):
-    """
-    Set view mode
-
-    :param content: view content type: 'icons' -- icons view, 'episodes' -- episodes view,
-        '' -- generic Kodi list view
-    :type content: str
-    :return: Numeric view code for the current skin, if supported, or 50 for generic list view.
-    :rtype: int
-    """
-    view_mode = 50
-    if content:
-        if xbmc.getSkinDir() == 'skin.confluence':
-            if content == 'icons':
-                view_mode = 500
-            else:
-                view_mode = 503
-        elif xbmc.getSkinDir() == 'skin.re-touched':
-            if content == 'episodes':
-                view_mode = 550
-            else:
-                view_mode = 500
-        elif xbmc.getSkinDir() in ('skin.estuary', 'skin.estouchy') and content == 'icons':
-            view_mode = 50
-    else:
-        if xbmc.getSkinDir() == 'skin.estuary':
-            view_mode = 55
-        elif xbmc.getSkinDir() == 'skin.estouchy':
-            view_mode = 500
-    return view_mode
-
-
 def _set_info(list_item, torrent, myshows=False):
     """
     Set show and episode info for a list_item
@@ -271,7 +239,7 @@ def root(params):
                 'url'   : plugin.get_url(action='autodownload'),
                 'is_folder': False
                 }]
-    return plugin.create_listing(listing, view_mode=_set_view_mode('icons'))
+    return listing
 
 
 @plugin.action()
@@ -290,10 +258,7 @@ def episodes(params):
     else:
         content = ''
         sort_methods = ()
-    return plugin.create_listing(listing,
-                                 content=content,
-                                 view_mode=_set_view_mode(content),
-                                 sort_methods=sort_methods)
+    return plugin.create_listing(listing, content=content, sort_methods=sort_methods)
 
 
 @plugin.action()
@@ -345,7 +310,8 @@ def my_shows(params):
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             listing.append(list_item)
     content = 'tvshows'
-    return plugin.create_listing(listing, view_mode=_set_view_mode(content), content=content,
+    return plugin.create_listing(listing,
+                                 content=content,
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
 
