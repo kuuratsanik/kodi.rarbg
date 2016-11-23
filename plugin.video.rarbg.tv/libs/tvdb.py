@@ -58,7 +58,7 @@ def get_series(tvdbid):
     :raises TvdbError: if TheTVDB returns no data
     """
     try:
-        page = load_page(GET_SERIES.format(apikey=APIKEY, id=tvdbid)).encode('utf-8', 'replace')
+        page = load_page(GET_SERIES.format(apikey=APIKEY, id=tvdbid))
     except Http404Error:
         raise TvdbError('TheTVDB returned 404 page!')
     root = etree.fromstring(page)
@@ -86,7 +86,7 @@ def get_episode(tvdbid, season, episode):
     try:
         page = load_page(GET_EPISODE.format(apikey=APIKEY, id=tvdbid,
                                             season=season.lstrip('0'),
-                                            episode=episode.lstrip('0'))).encode('utf-8', 'replace')
+                                            episode=episode.lstrip('0')))
     except Http404Error:
         raise TvdbError('TheTVDB returned 404 page!')
     root = etree.fromstring(page)
@@ -95,25 +95,3 @@ def get_episode(tvdbid, season, episode):
         raise TvdbError('TheTVDB returned invalid XML data!')
     else:
         return parse_items(ep_info)
-
-
-def search_series(seriesname):
-    """
-    Search TV series on TheTVDB
-
-    :param seriesname: a string to search at TheTVDB
-    :type seriesname: str
-    :return: the list of found TV series data as dicts
-    :rtype: list
-    :raises TvdbError: if TheTVDB returns empty XML
-    """
-    root = etree.fromstring(load_page(SEARCH_SERIES, params={'seriesname': seriesname}).encode('utf-8', 'replace'))
-    series = root.findall('Series')
-    if series:
-        listing = []
-        for show in series:
-            if show.find('IMDB_ID') is not None:
-                listing.append(parse_items(show))
-        return listing
-    else:
-        raise TvdbError('TheTVDB returned invalid XML data!')

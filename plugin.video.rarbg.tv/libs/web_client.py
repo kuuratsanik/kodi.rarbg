@@ -49,8 +49,8 @@ def load_page(url, params=None, headers=None):
         plugin.log_error(message)
         raise Http404Error(message)
     if 'application/json' in response.headers['content-type']:
-        contents = response.json()
+        content = response.json()
     else:
-        contents = response.text
-    plugin.log_debug(response.text.encode('utf-8'))
-    return contents
+        content = response.content
+    plugin.log_debug(response.content)
+    return content
