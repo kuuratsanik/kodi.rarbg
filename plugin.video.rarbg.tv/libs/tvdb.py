@@ -5,7 +5,8 @@
 """Get info from TheTVDB"""
 
 from simpleplugin import Plugin
-from web_client import load_page, Http404Error
+from web_client import load_page
+from rarbg_exceptions import TvdbError
 
 plugin = Plugin('plugin.video.rarbg.tv')
 
@@ -24,10 +25,6 @@ GET_EPISODE = 'http://thetvdb.com/api/{apikey}/series/{id}/default/{season}/{epi
 SEARCH_SERIES = 'http://thetvdb.com/api/GetSeries.php'
 GET_BY_ID = 'http://thetvdb.com/api/GetSeriesByRemoteID.php'
 GRAPHICS = 'http://thetvdb.com/banners/'
-
-
-class TvdbError(Exception):
-    pass
 
 
 def parse_items(parent):
@@ -57,10 +54,7 @@ def get_series(tvdbid):
     :rtype: dict
     :raises TvdbError: if TheTVDB returns no data
     """
-    try:
-        page = load_page(GET_SERIES.format(apikey=APIKEY, id=tvdbid))
-    except Http404Error:
-        raise TvdbError('TheTVDB returned 404 page!')
+    page = load_page(GET_SERIES.format(apikey=APIKEY, id=tvdbid))
     root = etree.fromstring(page)
     series = root.find('Series')
     if series is None:
@@ -83,12 +77,9 @@ def get_episode(tvdbid, season, episode):
     :rtype: dict
     :raises TvdbError: if TheTVDB returns no data
     """
-    try:
-        page = load_page(GET_EPISODE.format(apikey=APIKEY, id=tvdbid,
-                                            season=season.lstrip('0'),
-                                            episode=episode.lstrip('0')))
-    except Http404Error:
-        raise TvdbError('TheTVDB returned 404 page!')
+    page = load_page(GET_EPISODE.format(apikey=APIKEY, id=tvdbid,
+                                        season=season.lstrip('0'),
+                                        episode=episode.lstrip('0')))
     root = etree.fromstring(page)
     ep_info = root.find('Episode')
     if ep_info is None:

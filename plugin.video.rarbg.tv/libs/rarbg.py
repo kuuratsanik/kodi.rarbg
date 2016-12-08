@@ -38,15 +38,12 @@ size: 45082604600
 import time
 from simpleplugin import Plugin
 from web_client import load_page
+from rarbg_exceptions import RarbgApiError
 
 __all__ = ['load_torrents']
 
 API = 'http://torrentapi.org/pubapi_v2.php'
 plugin = Plugin('plugin.video.rarbg.tv')
-
-
-class RarbgError(Exception):
-    pass
 
 
 def get_token():
@@ -79,5 +76,5 @@ def load_torrents(params):
     response = load_page(API, params=params, headers={'content-type': 'application/json'})
     if 'torrent_results' not in response:
         plugin.log_error('Rarbg returned error: {0}'.format(response))
-        raise RarbgError
+        raise RarbgApiError
     return response['torrent_results']

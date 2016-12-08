@@ -13,6 +13,7 @@ from traceback import format_exc
 from simpleplugin import Plugin
 import tvdb
 import rarbg
+from rarbg_exceptions import RarbgError
 
 __all__ = ['get_torrents', 'OrderedDict', 'check_proper']
 
@@ -77,7 +78,7 @@ def add_show_info(torrent, tvshows):
     if show_info is None:
         try:
             show_info = tvdb.get_series(tvdbid)
-        except tvdb.TvdbError:
+        except RarbgError:
             plugin.log_error('TheTVDB rerturned no data for ID {0}, torrent {1}'.format(tvdbid, torrent['title']))
             show_info = None
         else:
@@ -105,7 +106,7 @@ def add_episode_info(torrent, episodes):
             episode_info = tvdb.get_episode(tvdbid,
                                             torrent['episode_info']['seasonnum'],
                                             torrent['episode_info']['epnum'])
-        except tvdb.TvdbError:
+        except RarbgError:
             plugin.log_error('TheTVDB returned no data for episode {0}, torrent {1}'.format(
                 episode_id,
                 torrent['title'])
@@ -218,7 +219,7 @@ def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True
         rarbg_query['limit'] = plugin.itemcount
     try:
         raw_torrents = rarbg.load_torrents(rarbg_query)
-    except rarbg.RarbgError:
+    except rarbg.RarbgApiError:
         return []
     else:
         torrents = deduplicate_torrents(raw_torrents)
