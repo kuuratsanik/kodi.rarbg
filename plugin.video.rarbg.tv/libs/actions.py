@@ -20,8 +20,8 @@ from autodownloader import load_filters, save_filters
 
 __all__ = ['plugin']
 
-title_regex = re.compile(r'^(.+?)\.(?:s\d+e\d+|\d+x\d+)\.', re.U | re.I)
-forbidden_chars_regex = re.compile(r'[<>:"/\\|\?\*]', re.U | re.I)
+title_regex = re.compile(r'^(.+?)\.(?:s\d+e\d+|\d+x\d+)\.', re.I)
+forbidden_chars_regex = re.compile(r'[<>:"/\\|\?\*]', re.I)
 plugin = Plugin()
 icons = os.path.join(plugin.path, 'resources', 'icons')
 tv_icon = os.path.join(icons, 'tv.png')
@@ -104,7 +104,7 @@ def _set_stream_info(list_item, torrent):
     :type torrent: dict
     """
     video = {}
-    resolution_match = re.search(r'(720|1080)[pi]', torrent['title'].lower())
+    resolution_match = re.search(r'(720|1080)[pi]', torrent['title'], re.I)
     if resolution_match is not None and resolution_match.group(1) == '720':
         video['width'] = 1280
         video['height'] = 720
@@ -114,7 +114,7 @@ def _set_stream_info(list_item, torrent):
     else:
         video['width'] = 720
         video['height'] = 480
-    codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'].lower())
+    codec_match = re.search(r'[hx]\.?264|xvid|divx|mpeg2', torrent['title'], re.I)
     if codec_match is not None:
         if codec_match.group(0).endswith('264'):
             video['codec'] = 'h264'
@@ -128,8 +128,6 @@ def _set_stream_info(list_item, torrent):
 def _enter_search_query():
     """
     Enter a search query on Kodi on-screen keyboard.
-
-    :return:
     """
     keyboard = xbmc.Keyboard('', 'Enter search text')
     keyboard.doModal()
@@ -146,7 +144,6 @@ def _list_torrents(torrents, myshows=False):
     Show the list of torrents
 
     :param torrents: list
-    :return:
     """
     for torrent in torrents:
         plugin.log_debug(str(torrent))
@@ -210,35 +207,34 @@ def _list_torrents(torrents, myshows=False):
 def root(params):
     """
     Plugin root
-
-    :param params:
-    :return:
     """
-    listing = [{'label': '[My shows]',
-                'thumb': os.path.join(icons, 'bookmarks.png'),
-                'icon': os.path.join(icons, 'bookmarks.png'),
-                'fanart': plugin.fanart,
-                'url': plugin.get_url(action='my_shows'),
-               },
-               {'label': '[Recent Episodes]',
-                'thumb': os.path.join(icons, 'tv.png'),
-                'icon': tv_icon,
-                'fanart': plugin.fanart,
-                'url': plugin.get_url(action='episodes', mode='list'),
-                },
-               {'label': '[Search TV torrents...]',
-                'thumb': os.path.join(icons, 'search.png'),
-                'icon': os.path.join(icons, 'search.png'),
-                'fanart': plugin.fanart,
-                'url': plugin.get_url(action='search_torrents')
-               },
-               {'label' : '[Autodownload Filters...]',
-                'thumb' : os.path.join(icons, 'download.png'),
-                'icon'  : os.path.join(icons, 'download.png'),
-                'fanart': plugin.fanart,
-                'url'   : plugin.get_url(action='autodownload'),
-                'is_folder': False
-                }]
+    listing = [
+        {'label': '[My shows]',
+        'thumb': os.path.join(icons, 'bookmarks.png'),
+        'icon': os.path.join(icons, 'bookmarks.png'),
+        'fanart': plugin.fanart,
+        'url': plugin.get_url(action='my_shows'),
+       },
+       {'label': '[Recent Episodes]',
+        'thumb': os.path.join(icons, 'tv.png'),
+        'icon': tv_icon,
+        'fanart': plugin.fanart,
+        'url': plugin.get_url(action='episodes', mode='list'),
+        },
+       {'label': '[Search TV torrents...]',
+        'thumb': os.path.join(icons, 'search.png'),
+        'icon': os.path.join(icons, 'search.png'),
+        'fanart': plugin.fanart,
+        'url': plugin.get_url(action='search_torrents')
+       },
+       {'label' : '[Autodownload Filters...]',
+        'thumb' : os.path.join(icons, 'download.png'),
+        'icon'  : os.path.join(icons, 'download.png'),
+        'fanart': plugin.fanart,
+        'url'   : plugin.get_url(action='autodownload'),
+        'is_folder': False
+        }
+    ]
     return listing
 
 
@@ -246,9 +242,6 @@ def root(params):
 def episodes(params):
     """
     Show the list of recent episodes
-
-    :param params:
-    :return:
     """
     myshows = params.get('myshows', False)
     listing = _list_torrents(get_torrents(params['mode'], search_imdb=params.get('search_imdb', '')), myshows=myshows)
@@ -265,9 +258,6 @@ def episodes(params):
 def search_torrents(params):
     """
     Search torrents and show the list of results
-
-    :param params:
-    :return:
     """
     results = []
     query = _enter_search_query()
@@ -279,17 +269,7 @@ def search_torrents(params):
     return plugin.create_listing(listing, cache_to_disk=True)
 
 
-@plugin.action()
-def my_shows(params):
-    """
-    'My Shows' list
-
-    :param params: SimplePlugin action call params
-    :type params: dict
-    :return: SimplePlugin action context
-    :rtype: dict
-    """
-    listing = []
+def _my_shows():
     with plugin.get_storage('myshows.pcl') as storage:
         myshows = storage.get('myshows', [])
     with plugin.get_storage('tvshows.pcl') as tvshows:
@@ -308,10 +288,16 @@ def my_shows(params):
                                                index=index))]}
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
-            listing.append(list_item)
-    content = 'tvshows'
-    return plugin.create_listing(listing,
-                                 content=content,
+            yield list_item
+
+
+@plugin.action()
+def my_shows(params):
+    """
+    'My Shows' list
+    """
+    return plugin.create_listing(_my_shows(),
+                                 content='tvshows',
                                  sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
 
 
@@ -319,9 +305,6 @@ def my_shows(params):
 def play(params):
     """
     Play torrent via YATP
-
-    :param params:
-    :return:
     """
     return plugin.get_url('plugin://plugin.video.yatp/', action='play', torrent=params['torrent'])
 
