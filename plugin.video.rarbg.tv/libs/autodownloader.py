@@ -70,7 +70,7 @@ def filter_torrents():
     """
     Filter episode torrents from Rarbg by given criteria
     """
-    torrents = get_torrents('list', limit='50', add_info=False)
+    torrents = get_torrents('list', limit='50', show_info=False, episode_info=False)
     filters = load_filters()
     with addon.get_storage('downloaded_episodes.pcl') as downloaded_episodes:
         for torrent in torrents:

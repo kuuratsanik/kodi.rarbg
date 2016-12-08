@@ -81,7 +81,7 @@ def _set_art(list_item, torrent, myshows=False):
     :type myshows: bool
     """
     if torrent['show_info'] is not None:
-        if torrent['tvdb_episode_info'] is not None and myshows:
+        if torrent.get('tvdb_episode_info') is not None and myshows:
             list_item['thumb'] = list_item['icon'] = (torrent['tvdb_episode_info'].get('filename', '') or
                                                       torrent['show_info'].get('poster', ''))
         else:
@@ -244,7 +244,11 @@ def episodes(params):
     Show the list of recent episodes
     """
     myshows = params.get('myshows', False)
-    listing = _list_torrents(get_torrents(params['mode'], search_imdb=params.get('search_imdb', '')), myshows=myshows)
+    listing = _list_torrents(
+        get_torrents(params['mode'],
+                     search_imdb=params.get('search_imdb', ''),
+                     episode_info=myshows),
+        myshows=myshows)
     if myshows:
         content = 'episodes'
         sort_methods = (xbmcplugin.SORT_METHOD_EPISODE,)

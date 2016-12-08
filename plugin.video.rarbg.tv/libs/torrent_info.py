@@ -130,30 +130,41 @@ def add_info_to_torrent(torrent, tvshows, episodes):
     :rtype: dict
     """
     add_show_info(torrent, tvshows)
-    add_episode_info(torrent, episodes)
+    if episodes is not None:
+        add_episode_info(torrent, episodes)
     return torrent
 
 
-def add_tvdb_info(torrents):
+def add_tvdb_info(torrents, episode_info):
     """
     Add TV show and episode data from TheTVDB to torrents
 
     :param torrents: the list of torrents from Rarbg as dicts
     :type torrents: list
+    :param episode_info: add TV episode info
+    :type episode_info: bool
     :return: the generator of torrents with added TVDB info
     :rtype: types.GeneratorType
     """
-    with plugin.get_storage('tvshows.pcl') as tvshows:
-        with plugin.get_storage('episodes.pcl') as episodes:
-            with futures.ThreadPoolExecutor(max_workers=plugin.thread_count) as executor:
-                torrent_futures = [executor.submit(add_info_to_torrent, torrent, tvshows, episodes)
-                                   for torrent in torrents]
-                futures.wait(torrent_futures)
-                for future in torrent_futures:
-                    try:
-                        yield future.result()
-                    except:
-                        plugin.log_error(format_exc())
+    tvshows = plugin.get_storage('tvshows.pcl')
+    if episode_info:
+        episodes = plugin.get_storage('episodes.pcl')
+    else:
+        episodes = None
+    try:
+        with futures.ThreadPoolExecutor(max_workers=plugin.thread_count) as executor:
+            torrent_futures = [executor.submit(add_info_to_torrent, torrent, tvshows, episodes)
+                               for torrent in torrents]
+            futures.wait(torrent_futures)
+            for future in torrent_futures:
+                try:
+                    yield future.result()
+                except:
+                    plugin.log_error(format_exc())
+    finally:
+        tvshows.flush()
+        if episodes is not None:
+            episodes.flush()
 
 
 def deduplicate_torrents(torrents):
@@ -189,7 +200,7 @@ def deduplicate_torrents(torrents):
     return results.itervalues()
 
 
-def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True):
+def get_torrents(mode, search_string='', search_imdb='', limit='', show_info=True, episode_info=False):
     """
     Get recent torrents with TheTVDB data
 
@@ -201,8 +212,10 @@ def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True
     :type search_imdb: str
     :param limit: max number of torrents from Rarbg
     :type limit: str
-    :param add_info: add info from TheTVDB to torrents
-    :type add_info: bool
+    :param show_info: add TV show info from TheTVDB to torrents
+    :type show_info: bool
+    :param episode_info: add TV episode info from TVDB to torrents
+    :type episode_info: bool
     :return: the generator of torrents matching the query criteria
     :rtype: types.GeneratorType
     """
@@ -223,6 +236,6 @@ def get_torrents(mode, search_string='', search_imdb='', limit='', add_info=True
         return []
     else:
         torrents = deduplicate_torrents(raw_torrents)
-        if add_info:
-            torrents = add_tvdb_info(torrents)
+        if show_info:
+            torrents = add_tvdb_info(torrents, episode_info)
         return torrents
