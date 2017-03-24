@@ -40,7 +40,7 @@ def _set_info(list_item, torrent, myshows=False):
     :param myshows: ``True`` if the item is displayed in "My Shows"
     :type myshows: bool
     """
-    video = {}
+    video = {'mediatype': 'episode'}
     if torrent.get('episode_info'):
         video['season'] = int(torrent['episode_info']['seasonnum'])
         video['episode'] = int(torrent['episode_info']['epnum'])
