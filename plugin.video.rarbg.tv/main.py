@@ -5,6 +5,9 @@
 # License: GPL v.3 https://www.gnu.org/copyleft/gpl.html
 """The Main Plugin Module"""
 
+from simpleplugin import debug_exception
 from libs.actions import plugin
 
-plugin.run()
+with debug_exception(plugin.log_error):
+    plugin.run()
+

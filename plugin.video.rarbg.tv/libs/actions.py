@@ -40,7 +40,7 @@ def _set_info(list_item, torrent, myshows=False):
     :param myshows: ``True`` if the item is displayed in "My Shows"
     :type myshows: bool
     """
-    video = {'mediatype': 'episode'}
+    video = {}
     if torrent.get('episode_info'):
         video['season'] = int(torrent['episode_info']['seasonnum'])
         video['episode'] = int(torrent['episode_info']['epnum'])
@@ -164,6 +164,7 @@ def _list_torrents(torrents, myshows=False):
         _set_info(list_item, torrent, myshows)
         _set_art(list_item, torrent, myshows)
         _set_stream_info(list_item, torrent)
+        list_item['info']['video']['mediatype'] = 'episode'
         if torrent['show_info'] is not None:
             show_title = re.sub(forbidden_chars_regex, '', torrent['show_info']['SeriesName'])
         else:
@@ -204,7 +205,7 @@ def _list_torrents(torrents, myshows=False):
 
 
 @plugin.action()
-def root(params):
+def root():
     """
     Plugin root
     """
@@ -235,7 +236,7 @@ def root(params):
         'is_folder': False
         }
     ]
-    return listing
+    return plugin.create_listing(listing, category='Rarbg TV Shows')
 
 
 @plugin.action()
@@ -255,11 +256,12 @@ def episodes(params):
     else:
         content = ''
         sort_methods = ()
-    return plugin.create_listing(listing, content=content, sort_methods=sort_methods)
+    return plugin.create_listing(listing, content=content, sort_methods=sort_methods,
+                                 category='Rarbg: Recent Episodes')
 
 
 @plugin.action()
-def search_torrents(params):
+def search_torrents():
     """
     Search torrents and show the list of results
     """
@@ -270,7 +272,8 @@ def search_torrents(params):
         if not results:
             dialog.ok('Nothing found!', 'Adjust your search string and try again.')
     listing = _list_torrents(results)
-    return plugin.create_listing(listing, cache_to_disk=True)
+    return plugin.create_listing(listing, cache_to_disk=True,
+                                 category='Search Results for {0}'.format(query))
 
 
 def _my_shows():
@@ -292,17 +295,18 @@ def _my_shows():
                                                index=index))]}
             _set_info(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
             _set_art(list_item, {'show_info': tvshows[show], 'tvdb_episode_info': None})
+            list_item['info']['video']['mediatype'] = 'tvshow'
             yield list_item
 
 
 @plugin.action()
-def my_shows(params):
+def my_shows():
     """
     'My Shows' list
     """
     return plugin.create_listing(_my_shows(),
                                  content='tvshows',
-                                 sort_methods=(xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE,))
+                                 sort_methods=xbmcplugin.SORT_METHOD_TITLE_IGNORE_THE)
 
 
 @plugin.action()
@@ -314,7 +318,7 @@ def play(params):
 
 
 @plugin.action()
-def autodownload(params):
+def autodownload():
     """
     Open the list of episode autodownload filters
     """

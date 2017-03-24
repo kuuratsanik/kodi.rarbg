@@ -10,18 +10,19 @@ from libs.autodownloader import filter_torrents
 
 
 addon = Addon()
+monitor = xbmc.Monitor()
 if not addon.enable_autodownload:
-    addon.log('Autodownload service is disabled.', xbmc.LOGWARNING)
+    addon.log_warning('Autodownload service is disabled.')
     sys.exit()
 started = False
 start_time = time.time()
-while not xbmc.abortRequested:
+while not monitor.abortRequested():
     if time.time() - start_time > 1800:  # Filter new torrents every 30 minutes
         filter_torrents()
         start_time = time.time()
     if not started:
-        addon.log('Autodownload service started.', xbmc.LOGNOTICE)
+        addon.log_notice('Autodownload service started.')
         started = True
         filter_torrents()
     xbmc.sleep(250)
-addon.log('Autodownload service stopped.', xbmc.LOGNOTICE)
+addon.log_notice('Autodownload service stopped.')
