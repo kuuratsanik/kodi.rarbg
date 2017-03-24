@@ -5,6 +5,7 @@
 
 import requests
 from simpleplugin import Plugin
+from rarbg_exceptions import Http404Error
 
 __all__ = ['ThreadPool', 'load_page']
 
@@ -16,10 +17,6 @@ HEADERS = (
     ('Accept-Encoding', 'gzip, deflate'),
 )
 plugin = Plugin('plugin.video.rarbg.tv')
-
-
-class Http404Error(Exception):
-    pass
 
 
 def load_page(url, params=None, headers=None):
